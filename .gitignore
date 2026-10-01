@@ -1,0 +1,42 @@
+# VS Code
+.vscode/
+
+# Go build and test artifacts
+*.exe
+*.test
+*.out
+*.cover
+coverage.out
+
+# Node dependencies and logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Frontend build output and caches
+dist/
+build/
+.next/
+out/
+.angular/cache/
+.vite/
+.parcel-cache/
+.turbo/
+.cache/
+coverage/
+*.tsbuildinfo
+.eslintcache
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Bundled VS Code installation at workspace root
+/VSCode-golang1.140.0/
