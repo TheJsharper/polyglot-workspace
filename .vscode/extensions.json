@@ -19,6 +19,8 @@
     "ms-playwright.playwright",
     "ms-vscode-remote.remote-containers",
     "nrwl.angular-console",
+    "premparihar.gotestexplorer",
+    "hbenl.vscode-test-explorer",
     "pkief.material-icon-theme",
     "pkief.material-product-icons",
     "qwtel.sqlite-viewer",
