@@ -1,0 +1,28 @@
+{
+  "recommendations": [
+    "angular.ng-template",
+    "cyrilletuzi.angular-schematics",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "firsttris.vscode-jest-runner",
+    "golang.go",
+    "johnpapa.angular-essentials",
+    "johnpapa.angular2",
+    "johnpapa.vscode-peacock",
+    "johnpapa.winteriscoming",
+    "mhutchie.git-graph",
+    "mikael.angular-beastcode",
+    "ms-azuretools.vscode-containers",
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.vscode-dotnet-runtime",
+    "ms-playwright.playwright",
+    "ms-vscode-remote.remote-containers",
+    "nrwl.angular-console",
+    "pkief.material-icon-theme",
+    "pkief.material-product-icons",
+    "qwtel.sqlite-viewer",
+    "shd101wyy.markdown-preview-enhanced",
+    "sst-dev.opencode"
+  ]
+}
