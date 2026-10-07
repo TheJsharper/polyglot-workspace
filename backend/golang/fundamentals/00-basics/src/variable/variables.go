@@ -27,3 +27,4 @@ var (
 	InitializedBool    bool       = false
 	InitializedComplex complex128 = complex(3, 4)
 )
+var Name, Age, Email, Address, Phone, Occupation = "John Doe", 30, "john.doe@example.com", "123 Main St", "555-1234", "Software Engineer"
