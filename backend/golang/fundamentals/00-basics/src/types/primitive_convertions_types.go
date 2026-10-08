@@ -1,12 +1,12 @@
 package types
 
-var value float32 = 3.14
+var Value float32 = 3.14
 
 var value_1 int = 3
 
 var Result float32 = float32(value_1)
 
-var value_2 float64 = 3.141592653589793
+var Value_2 float64 = 3.141592653589793
 
 var Result_1 float64 = float64(value_1)
 

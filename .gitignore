@@ -2,6 +2,8 @@
 .vscode/
 !/.vscode/
 /.vscode/*
+VSCode*/
+VSCode*.zip
 !/.vscode/extensions.json
 
 # Go build and test artifacts
