@@ -1,23 +1,15 @@
-package collections_test
+package slices_basics_test
 
 import (
 	"fmt"
 	"reflect"
 	"testing"
 
-	c "github.com/TheJsharper/polyglot-workspace/01-basics/src/collections"
+	"github.com/TheJsharper/polyglot-workspace/01-basics/src/collections/slices_basics"
 )
 
-func TestRunAllSlices(t *testing.T) {
-	t.Run("TestNilSlice", TestNilSlice)
-	t.Run("TestLiteralSlice", TestLiteralSlice)
-	t.Run("TestMadeSlice", TestMadeSlice)
-	t.Run("TestSliceOfArray", TestSliceOfArray)
-	t.Run("TestAppend", TestAppend)
-}
-
 func TestNilSlice(t *testing.T) {
-	s := c.NilSlice
+	s := slices_basics.NilSlice
 	fmt.Println("nil:", s)
 
 	if s != nil || len(s) != 0 || cap(s) != 0 {
@@ -26,7 +18,7 @@ func TestNilSlice(t *testing.T) {
 }
 
 func TestLiteralSlice(t *testing.T) {
-	s := c.LiteralSlice
+	s := slices_basics.LiteralSlice
 	fmt.Println("lit:", s)
 
 	// Unlike [5]int, the type has no length.
@@ -39,7 +31,7 @@ func TestLiteralSlice(t *testing.T) {
 }
 
 func TestMadeSlice(t *testing.T) {
-	s := c.MadeSlice
+	s := slices_basics.MadeSlice
 	fmt.Println("make:", s)
 
 	if len(s) != 3 || cap(s) != 5 {
@@ -73,7 +65,7 @@ func TestAppend(t *testing.T) {
 	if !reflect.DeepEqual(s, []int{1, 2, 3}) {
 		t.Errorf("s = %v, want [1 2 3]", s)
 	}
-	if c.NilSlice != nil {
+	if slices_basics.NilSlice != nil {
 		t.Error("append must not touch the nil package slice")
 	}
 }

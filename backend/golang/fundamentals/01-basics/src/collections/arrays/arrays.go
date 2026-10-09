@@ -1,4 +1,4 @@
-package collections
+package arrays
 
 var ExampleArray = [3]int{1, 2, 3}
 

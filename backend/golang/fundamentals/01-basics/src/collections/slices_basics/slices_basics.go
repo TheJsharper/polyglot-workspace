@@ -1,4 +1,4 @@
-package collections
+package slices_basics
 
 // NilSlice is the zero value: nil, len 0, cap 0.
 var NilSlice []int

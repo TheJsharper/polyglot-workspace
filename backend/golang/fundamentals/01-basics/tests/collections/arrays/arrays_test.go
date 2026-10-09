@@ -1,90 +1,69 @@
-package collections_test
+package arrays_test
 
 import (
 	"fmt"
 	"reflect"
 	"testing"
 
-	c "github.com/TheJsharper/polyglot-workspace/01-basics/src/collections"
+	"github.com/TheJsharper/polyglot-workspace/01-basics/src/collections/arrays"
 )
 
-func TestRunAllArrays(t *testing.T) {
-	t.Run("TestArrayAccess", TestArrayAccess)
-	t.Run("TestAccessLast", TestAccessLast)
-	t.Run("TestAccessByVariable", TestAccessByVariable)
-	t.Run("TestAccessForLoop", TestAccessForLoop)
-	t.Run("TestAccessRange", TestAccessRange)
-	t.Run("TestAccessRangeIndexOnly", TestAccessRangeIndexOnly)
-	t.Run("TestAccessViaPointer", TestAccessViaPointer)
-	t.Run("TestAccessAndModify", TestAccessAndModify)
-	t.Run("TestAccessDestructure", TestAccessDestructure)
-	t.Run("TestAccessMatrix", TestAccessMatrix)
-	t.Run("TestEmptyArray", TestEmptyArray)
-	t.Run("TestDeclaredArray", TestDeclaredArray)
-	t.Run("TestInferredArray", TestInferredArray)
-	t.Run("TestTwoDArray", TestTwoDArray)
-	t.Run("TestTwoDInferredArray", TestTwoDInferredArray)
-	t.Run("TestEmptyArrayModification", TestEmptyArrayModification)
-	t.Run("TestEmptyArrayAccess", TestEmptyArrayAccess)
-	t.Run("TestEmptyArrayLength", TestEmptyArrayLength)
-	t.Run("TestEmptyArrayCapacity", TestEmptyArrayCapacity)
-}
 func TestArrayAccess(t *testing.T) {
 
-	if got := c.AccessByIndex(c.ExampleArray); got != 1 {
+	if got := arrays.AccessByIndex(arrays.ExampleArray); got != 1 {
 		t.Errorf("AccessByIndex = %d, want 1", got)
 	}
 }
 
 func TestAccessLast(t *testing.T) {
-	if got := c.AccessLast(c.ExampleArray); got != 3 {
+	if got := arrays.AccessLast(arrays.ExampleArray); got != 3 {
 		t.Errorf("AccessLast = %d, want 3", got)
 	}
 }
 
 func TestAccessByVariable(t *testing.T) {
-	if got := c.AccessByVariable(c.ExampleArray, 1); got != 2 {
+	if got := arrays.AccessByVariable(arrays.ExampleArray, 1); got != 2 {
 		t.Errorf("AccessByVariable = %d, want 2", got)
 	}
 }
 
 func TestAccessForLoop(t *testing.T) {
-	if got := c.AccessForLoop(c.ExampleArray); got != 6 {
+	if got := arrays.AccessForLoop(arrays.ExampleArray); got != 6 {
 		t.Errorf("AccessForLoop = %d, want 6", got)
 	}
 }
 
 func TestAccessRange(t *testing.T) {
-	if got := c.AccessRange(c.ExampleArray); got != 6 {
+	if got := arrays.AccessRange(arrays.ExampleArray); got != 6 {
 		t.Errorf("AccessRange = %d, want 6", got)
 	}
 }
 
 func TestAccessRangeIndexOnly(t *testing.T) {
-	if got := c.AccessRangeIndexOnly(c.ExampleArray); got != 3 {
+	if got := arrays.AccessRangeIndexOnly(arrays.ExampleArray); got != 3 {
 		t.Errorf("AccessRangeIndexOnly = %d, want 3", got)
 	}
 }
 
 func TestAccessViaPointer(t *testing.T) {
-	if got := c.AccessViaPointer(&c.ExampleArray); got != 2 {
+	if got := arrays.AccessViaPointer(&arrays.ExampleArray); got != 2 {
 		t.Errorf("AccessViaPointer = %d, want 2", got)
 	}
 }
 
 func TestAccessAndModify(t *testing.T) {
-	a := c.ExampleArray
-	c.AccessAndModify(&a, 0, 99)
+	a := arrays.ExampleArray
+	arrays.AccessAndModify(&a, 0, 99)
 	if a[0] != 99 {
 		t.Errorf("AccessAndModify: a[0] = %d, want 99", a[0])
 	}
-	if c.ExampleArray[0] != 1 {
+	if arrays.ExampleArray[0] != 1 {
 		t.Error("original array must be unchanged (value semantics)")
 	}
 }
 
 func TestAccessDestructure(t *testing.T) {
-	x, y, z := c.AccessDestructure(c.ExampleArray)
+	x, y, z := arrays.AccessDestructure(arrays.ExampleArray)
 	if x != 1 || y != 2 || z != 3 {
 		t.Errorf("AccessDestructure = %d,%d,%d", x, y, z)
 	}
@@ -92,13 +71,13 @@ func TestAccessDestructure(t *testing.T) {
 
 func TestAccessMatrix(t *testing.T) {
 	m := [2][3]int{{1, 2, 3}, {4, 5, 6}}
-	if got := c.AccessMatrix(m, 1, 2); got != 6 {
+	if got := arrays.AccessMatrix(m, 1, 2); got != 6 {
 		t.Errorf("AccessMatrix = %d, want 6", got)
 	}
 }
 
 func TestEmptyArray(t *testing.T) {
-	a := c.EmptyArray
+	a := arrays.EmptyArray
 	fmt.Println("emp:", a)
 
 	if got := reflect.TypeOf(a).String(); got != "[5]int" {
@@ -109,38 +88,38 @@ func TestEmptyArray(t *testing.T) {
 	}
 }
 func TestEmptyArrayModification(t *testing.T) {
-	a := c.EmptyArray
+	a := arrays.EmptyArray
 	a[0] = 99
 	if a[0] != 99 {
 		t.Errorf("modified EmptyArray copy: a[0] = %d, want 99", a[0])
 	}
-	if c.EmptyArray[0] != 0 {
+	if arrays.EmptyArray[0] != 0 {
 		t.Error("original empty array must be unchanged (value semantics)")
 	}
 }
 func TestEmptyArrayAccess(t *testing.T) {
-	a := c.EmptyArray
+	a := arrays.EmptyArray
 	if a[0] != 0 || a[4] != 0 {
 		t.Errorf("EmptyArray access = %d,%d, want 0,0", a[0], a[4])
 	}
 }
 
 func TestEmptyArrayLength(t *testing.T) {
-	a := c.EmptyArray
+	a := arrays.EmptyArray
 	if len(a) != 5 {
 		t.Errorf("EmptyArray length = %d, want 5", len(a))
 	}
 }
 
 func TestEmptyArrayCapacity(t *testing.T) {
-	a := c.EmptyArray
+	a := arrays.EmptyArray
 	if cap(a) != 5 {
 		t.Errorf("EmptyArray capacity = %d, want 5", cap(a))
 	}
 }
 
 func TestDeclaredArray(t *testing.T) {
-	b := c.DeclaredArray
+	b := arrays.DeclaredArray
 	fmt.Println("dcl:", b)
 
 	if got := reflect.TypeOf(b).String(); got != "[5]int" {
@@ -155,7 +134,7 @@ func TestDeclaredArray(t *testing.T) {
 }
 
 func TestInferredArray(t *testing.T) {
-	b := c.InferredArray
+	b := arrays.InferredArray
 	fmt.Println("dcl:", b)
 
 	// [...] is resolved at compile time: the type is still [5]int, not a slice.
@@ -165,13 +144,13 @@ func TestInferredArray(t *testing.T) {
 	if len(b) != 5 || cap(b) != 5 {
 		t.Errorf("len = %d, cap = %d, want 5 and 5", len(b), cap(b))
 	}
-	if b != c.DeclaredArray {
-		t.Errorf("b = %v, want %v", b, c.DeclaredArray)
+	if b != arrays.DeclaredArray {
+		t.Errorf("b = %v, want %v", b, arrays.DeclaredArray)
 	}
 }
 
 func TestTwoDArray(t *testing.T) {
-	d := c.TwoD
+	d := arrays.TwoD
 	fmt.Println("2d:", d)
 
 	if got := reflect.TypeOf(d).String(); got != "[2][3]int" {
@@ -186,13 +165,13 @@ func TestTwoDArray(t *testing.T) {
 }
 
 func TestTwoDInferredArray(t *testing.T) {
-	d := c.TwoDInferred
+	d := arrays.TwoDInferred
 	fmt.Println("2d:", d)
 
 	if got := reflect.TypeOf(d).String(); got != "[2][3]int" {
 		t.Errorf("type = %s, want [2][3]int", got)
 	}
-	if d != c.TwoD {
-		t.Errorf("d = %v, want %v", d, c.TwoD)
+	if d != arrays.TwoD {
+		t.Errorf("d = %v, want %v", d, arrays.TwoD)
 	}
 }
