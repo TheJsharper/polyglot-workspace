@@ -24,5 +24,6 @@ func TestRunAll(t *testing.T) {
 	t.Run("TestEmptyArrayLength", TestEmptyArrayLength)
 	t.Run("TestEmptyArrayCapacity", TestEmptyArrayCapacity)
 	t.Run("TestArrayBuiltin", TestArrayBuiltin)
+	t.Run("TestArrayBuildinPart2", TestArrayBuildinPart2)
 
 }
