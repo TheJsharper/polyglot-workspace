@@ -23,4 +23,6 @@ func TestRunAll(t *testing.T) {
 	t.Run("TestEmptyArrayAccess", TestEmptyArrayAccess)
 	t.Run("TestEmptyArrayLength", TestEmptyArrayLength)
 	t.Run("TestEmptyArrayCapacity", TestEmptyArrayCapacity)
+	t.Run("TestArrayBuiltin", TestArrayBuiltin)
+
 }
