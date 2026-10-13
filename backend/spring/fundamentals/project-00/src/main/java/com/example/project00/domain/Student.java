@@ -14,6 +14,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * An enrolled student, identified by a unique {@code studentId}.
+ * <p>
+ * A student attends many lectures (*..*) and writes {@link Notes} for them. The attended-lecture set is the
+ * inverse side and is maintained by {@link Lecture}. A student is enrolled in many courses; that set is maintained
+ * by {@link Course}.
+ */
 @Getter
 @Entity
 @Table(name = "students")
@@ -34,12 +41,23 @@ public class Student extends BaseEntity {
 	@ManyToMany(mappedBy = "attendees")
 	private Set<Lecture> attendedLectures = new HashSet<>();
 
+	@ManyToMany(mappedBy = "enrolledStudents")
+	private Set<Course> enrolledCourses = new HashSet<>();
+
+	/**
+	 * Creates a student.
+	 * @param studentId unique business key, e.g. {@code S-1}
+	 * @param name full name
+	 * @param enrollmentYear year of enrollment
+	 * @throws NullPointerException if {@code studentId} or {@code name} is {@code null}
+	 */
 	public Student(String studentId, String name, int enrollmentYear) {
 		this.studentId = Objects.requireNonNull(studentId, "studentId");
 		this.name = Objects.requireNonNull(name, "name");
 		this.enrollmentYear = enrollmentYear;
 	}
 
+	/** @return a read-only view of the lectures this student attends */
 	public Set<Lecture> getAttendedLectures() {
 		return Collections.unmodifiableSet(attendedLectures);
 	}
@@ -50,6 +68,19 @@ public class Student extends BaseEntity {
 
 	void removeAttendedLecture(Lecture lecture) {
 		attendedLectures.remove(lecture);
+	}
+
+	/** @return a read-only view of the courses this student is enrolled in */
+	public Set<Course> getEnrolledCourses() {
+		return Collections.unmodifiableSet(enrolledCourses);
+	}
+
+	void addEnrolledCourse(Course course) {
+		enrolledCourses.add(course);
+	}
+
+	void removeEnrolledCourse(Course course) {
+		enrolledCourses.remove(course);
 	}
 
 }

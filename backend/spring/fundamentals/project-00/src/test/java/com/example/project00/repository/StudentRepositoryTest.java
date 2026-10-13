@@ -65,6 +65,8 @@ class StudentRepositoryTest {
 		Student student = studentRepository.save(new Student("S-1", "Alan", 2025));
 		Professor professor = entityManager.persist(new Professor("E-1", "Ada", "CS"));
 		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
+		course.enroll(student);
 		Lecture lecture = new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables",
 				"A-101");
 		lecture.addAttendee(student);
@@ -74,6 +76,22 @@ class StudentRepositoryTest {
 		assertThat(studentRepository.findByStudentId("S-1").orElseThrow().getAttendedLectures())
 			.extracting(Lecture::getTopic)
 			.containsExactly("Variables");
+	}
+
+	@Test
+	void persistsEnrollmentInJoinTableAndLoadsItFromInverseSide() {
+		Student student = studentRepository.save(new Student("S-1", "Alan", 2025));
+		Course course = new Course("CS101", "Programming", 6);
+		course.enroll(student);
+		entityManager.persist(course);
+		flushAndClear();
+
+		assertThat(studentRepository.findByStudentId("S-1").orElseThrow().getEnrolledCourses())
+			.extracting(Course::getCourseCode)
+			.containsExactly("CS101");
+		assertThat(((Number) entityManager.getEntityManager()
+			.createNativeQuery("SELECT COUNT(*) FROM course_enrollment")
+			.getSingleResult()).longValue()).isEqualTo(1);
 	}
 
 	private void flushAndClear() {

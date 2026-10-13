@@ -1,6 +1,7 @@
 {
   "peacock.color": "#6DB33F",
-  "workbench.iconTheme": "material-icon-theme",
+  "workbench.iconTheme": "vscode-icons",
+  "workbench.productIconTheme": "material-product-icons",
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.configuration.runtimes": [
     {

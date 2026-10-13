@@ -16,6 +16,7 @@ import com.example.project00.domain.Course;
 import com.example.project00.domain.Lecture;
 import com.example.project00.domain.Professor;
 import com.example.project00.repository.ProfessorRepository;
+import com.example.project00.repository.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,9 @@ class ProfessorServiceTest {
 
 	@Mock
 	private ProfessorRepository professorRepository;
+
+	@Mock
+	private UserAccountRepository userAccountRepository;
 
 	@InjectMocks
 	private ProfessorService professorService;
@@ -83,24 +87,31 @@ class ProfessorServiceTest {
 	}
 
 	@Test
-	void deleteRemovesProfessorWithoutLectures() {
+	void deleteRemovesProfessorWithoutLecturesTogetherWithTeachingAndAccount() {
 		Professor professor = new Professor("E-1", "Ada", "CS");
+		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
 		given(professorRepository.findByEmployeeId("E-1")).willReturn(Optional.of(professor));
 
 		professorService.delete("E-1");
 
+		assertThat(course.getTeachers()).isEmpty();
+		assertThat(professor.getTaughtCourses()).isEmpty();
+		then(userAccountRepository).should().deleteByProfessor(professor);
 		then(professorRepository).should().delete(professor);
 	}
 
 	@Test
 	void deleteRejectsProfessorWhoStillDeliversLectures() {
 		Professor professor = new Professor("E-1", "Ada", "CS");
-		new Lecture(new Course("CS101", "Programming", 6), professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0),
-				"Variables", "A-101");
+		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
+		new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
 		given(professorRepository.findByEmployeeId("E-1")).willReturn(Optional.of(professor));
 
 		assertThatThrownBy(() -> professorService.delete("E-1")).isInstanceOf(IllegalStateException.class)
 			.hasMessage("Professor E-1 still delivers 1 lecture(s)");
+		then(userAccountRepository).should(never()).deleteByProfessor(any());
 		then(professorRepository).should(never()).delete(any());
 	}
 

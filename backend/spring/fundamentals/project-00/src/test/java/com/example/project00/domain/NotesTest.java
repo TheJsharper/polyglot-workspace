@@ -24,8 +24,11 @@ class NotesTest {
 	void setUp() {
 		professor = new Professor("E-1", "Ada", "CS");
 		student = new Student("S-1", "Alan", 2025);
-		lecture = new Lecture(new Course("CS101", "Programming", 6), professor, LocalDate.of(2026, 10, 14),
-				LocalTime.of(9, 0), "Variables", "A-101");
+		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
+		course.enroll(student);
+		lecture = new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables",
+				"A-101");
 		lecture.addAttendee(student);
 	}
 

@@ -63,6 +63,7 @@ class ProfessorRepositoryTest {
 	void loadsDeliveredLectures() {
 		Professor professor = professorRepository.save(new Professor("E-1", "Ada", "CS"));
 		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
 		new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
 		new Lecture(course, professor, LocalDate.of(2026, 10, 15), LocalTime.of(9, 0), "Loops", "A-101");
 		entityManager.persist(course);
@@ -77,6 +78,7 @@ class ProfessorRepositoryTest {
 	void professorDeliveringLecturesCannotBeDeleted() {
 		Professor professor = professorRepository.save(new Professor("E-1", "Ada", "CS"));
 		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
 		new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
 		entityManager.persist(course);
 		flushAndClear();

@@ -34,7 +34,10 @@ class LectureRepositoryTest {
 	void setUp() {
 		professor = entityManager.persist(new Professor("E-1", "Ada", "CS"));
 		student = entityManager.persist(new Student("S-1", "Alan", 2025));
-		course = entityManager.persist(new Course("CS101", "Programming", 6));
+		course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
+		course.enroll(student);
+		entityManager.persist(course);
 	}
 
 	@Test
@@ -80,6 +83,7 @@ class LectureRepositoryTest {
 	@Test
 	void assigningNewProfessorIsPersisted() {
 		Professor replacement = entityManager.persist(new Professor("E-2", "Grace", "CS"));
+		course.assignTeacher(replacement);
 		Lecture lecture = lectureRepository.save(lecture(course, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables"));
 
 		lecture.assignProfessor(replacement);
@@ -91,7 +95,9 @@ class LectureRepositoryTest {
 
 	@Test
 	void findByCourseReturnsOnlyThatCoursesLecturesInChronologicalOrder() {
-		Course otherCourse = entityManager.persist(new Course("CS102", "Databases", 4));
+		Course otherCourse = new Course("CS102", "Databases", 4);
+		otherCourse.assignTeacher(professor);
+		entityManager.persist(otherCourse);
 		lectureRepository.save(lecture(course, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables"));
 		lectureRepository.save(lecture(course, LocalDate.of(2026, 10, 14), LocalTime.of(8, 0), "Intro"));
 		lectureRepository.save(lecture(course, LocalDate.of(2026, 10, 13), LocalTime.of(10, 0), "Setup"));
@@ -111,6 +117,7 @@ class LectureRepositoryTest {
 	@Test
 	void findByProfessorReturnsOnlyTheirLectures() {
 		Professor other = entityManager.persist(new Professor("E-2", "Grace", "CS"));
+		course.assignTeacher(other);
 		lectureRepository.save(lecture(course, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables"));
 		lectureRepository.save(new Lecture(course, other, LocalDate.of(2026, 10, 15), LocalTime.of(9, 0), "Loops", "B-1"));
 		flushAndClear();

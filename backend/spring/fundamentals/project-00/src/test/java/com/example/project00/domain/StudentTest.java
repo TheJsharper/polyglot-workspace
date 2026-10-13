@@ -43,13 +43,29 @@ class StudentTest {
 	@Test
 	void attendedLecturesAreTrackedAndReadOnly() {
 		Student student = new Student("S-1", "Alan", 2025);
-		Lecture lecture = new Lecture(new Course("CS101", "Programming", 6), new Professor("E-1", "Ada", "CS"),
-				LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
+		Course course = new Course("CS101", "Programming", 6);
+		Professor professor = new Professor("E-1", "Ada", "CS");
+		course.assignTeacher(professor);
+		course.enroll(student);
+		Lecture lecture = new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables",
+				"A-101");
 
 		lecture.addAttendee(student);
 
 		assertThat(student.getAttendedLectures()).containsExactly(lecture);
 		assertThatThrownBy(() -> student.getAttendedLectures().clear())
+			.isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	@Test
+	void enrolledCoursesAreTrackedAndReadOnly() {
+		Student student = new Student("S-1", "Alan", 2025);
+		Course course = new Course("CS101", "Programming", 6);
+
+		course.enroll(student);
+
+		assertThat(student.getEnrolledCourses()).containsExactly(course);
+		assertThatThrownBy(() -> student.getEnrolledCourses().clear())
 			.isInstanceOf(UnsupportedOperationException.class);
 	}
 

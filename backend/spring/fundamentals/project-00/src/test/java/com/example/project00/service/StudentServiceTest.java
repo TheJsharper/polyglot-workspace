@@ -19,6 +19,7 @@ import com.example.project00.domain.Professor;
 import com.example.project00.domain.Student;
 import com.example.project00.repository.NotesRepository;
 import com.example.project00.repository.StudentRepository;
+import com.example.project00.repository.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,6 +34,9 @@ class StudentServiceTest {
 
 	@Mock
 	private NotesRepository notesRepository;
+
+	@Mock
+	private UserAccountRepository userAccountRepository;
 
 	@InjectMocks
 	private StudentService studentService;
@@ -89,9 +93,10 @@ class StudentServiceTest {
 	}
 
 	@Test
-	void deleteUnlinksAttendanceAndRemovesStudent() {
+	void deleteUnlinksAttendanceEnrollmentAndAccountAndRemovesStudent() {
 		Student student = new Student("S-1", "Alan", 2025);
 		Lecture lecture = lecture();
+		lecture.getCourse().enroll(student);
 		lecture.addAttendee(student);
 		given(studentRepository.findByStudentId("S-1")).willReturn(Optional.of(student));
 		given(notesRepository.findByStudent(student)).willReturn(List.of());
@@ -100,6 +105,9 @@ class StudentServiceTest {
 
 		assertThat(lecture.getAttendees()).isEmpty();
 		assertThat(student.getAttendedLectures()).isEmpty();
+		assertThat(student.getEnrolledCourses()).isEmpty();
+		assertThat(lecture.getCourse().getEnrolledStudents()).isEmpty();
+		then(userAccountRepository).should().deleteByStudent(student);
 		then(studentRepository).should().delete(student);
 	}
 
@@ -107,6 +115,7 @@ class StudentServiceTest {
 	void deleteRejectsStudentWithNotes() {
 		Student student = new Student("S-1", "Alan", 2025);
 		Lecture lecture = lecture();
+		lecture.getCourse().enroll(student);
 		lecture.addAttendee(student);
 		given(studentRepository.findByStudentId("S-1")).willReturn(Optional.of(student));
 		given(notesRepository.findByStudent(student)).willReturn(List.of(new Notes(student, lecture, "Notes", false)));
@@ -114,12 +123,15 @@ class StudentServiceTest {
 		assertThatThrownBy(() -> studentService.delete("S-1")).isInstanceOf(IllegalStateException.class)
 			.hasMessage("Student S-1 still has notes");
 		assertThat(lecture.hasAttendee(student)).isTrue();
+		then(userAccountRepository).should(never()).deleteByStudent(any());
 		then(studentRepository).should(never()).delete(any());
 	}
 
 	private static Lecture lecture() {
-		return new Lecture(new Course("CS101", "Programming", 6), new Professor("E-1", "Ada", "CS"),
-				LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
+		Course course = new Course("CS101", "Programming", 6);
+		Professor professor = new Professor("E-1", "Ada", "CS");
+		course.assignTeacher(professor);
+		return new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
 	}
 
 }

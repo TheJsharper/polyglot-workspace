@@ -7,6 +7,12 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import org.hibernate.Hibernate;
 
+/**
+ * Common superclass of all entities: provides the database-generated {@code id} and id-based equality.
+ * <p>
+ * Two entities are equal only when they are of the same (unproxied) class and share a non-null id, so
+ * transient entities are only equal to themselves.
+ */
 @Getter
 @MappedSuperclass
 public abstract class BaseEntity {

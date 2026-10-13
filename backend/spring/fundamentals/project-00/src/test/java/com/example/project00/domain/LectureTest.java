@@ -28,6 +28,8 @@ class LectureTest {
 		course = new Course("CS101", "Programming", 6);
 		professor = new Professor("E-1", "Ada", "CS");
 		student = new Student("S-1", "Alan", 2025);
+		course.assignTeacher(professor);
+		course.enroll(student);
 		lecture = new Lecture(course, professor, DATE, TIME, "Variables", "A-101");
 	}
 
@@ -66,6 +68,17 @@ class LectureTest {
 	}
 
 	@Test
+	void constructorRejectsProfessorWhoDoesNotTeachTheCourse() {
+		Professor outsider = new Professor("E-9", "Linus", "CS");
+
+		assertThatThrownBy(() -> new Lecture(course, outsider, DATE, TIME, "T", "R"))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("Professor E-9 does not teach course CS101");
+		assertThat(course.getLectures()).containsExactly(lecture);
+		assertThat(outsider.getLectures()).isEmpty();
+	}
+
+	@Test
 	void settersUpdateSchedulingFields() {
 		lecture.setDate(DATE.plusDays(1));
 		lecture.setTime(TIME.plusHours(2));
@@ -94,6 +107,16 @@ class LectureTest {
 
 		assertThat(lecture.getAttendees()).hasSize(1);
 		assertThat(student.getAttendedLectures()).hasSize(1);
+	}
+
+	@Test
+	void addAttendeeRejectsStudentNotEnrolledInTheCourse() {
+		Student outsider = new Student("S-9", "Grace", 2024);
+
+		assertThatThrownBy(() -> lecture.addAttendee(outsider)).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("Student S-9 is not enrolled in course CS101");
+		assertThat(lecture.getAttendees()).isEmpty();
+		assertThat(outsider.getAttendedLectures()).isEmpty();
 	}
 
 	@Test
@@ -131,12 +154,23 @@ class LectureTest {
 	@Test
 	void assignProfessorMovesLectureBetweenProfessors() {
 		Professor replacement = new Professor("E-2", "Grace", "CS");
+		course.assignTeacher(replacement);
 
 		lecture.assignProfessor(replacement);
 
 		assertThat(lecture.getProfessor()).isSameAs(replacement);
 		assertThat(replacement.getLectures()).containsExactly(lecture);
 		assertThat(professor.getLectures()).isEmpty();
+	}
+
+	@Test
+	void assignProfessorRejectsProfessorWhoDoesNotTeachTheCourse() {
+		Professor outsider = new Professor("E-9", "Linus", "CS");
+
+		assertThatThrownBy(() -> lecture.assignProfessor(outsider)).isInstanceOf(IllegalArgumentException.class);
+
+		assertThat(lecture.getProfessor()).isSameAs(professor);
+		assertThat(outsider.getLectures()).isEmpty();
 	}
 
 	@Test

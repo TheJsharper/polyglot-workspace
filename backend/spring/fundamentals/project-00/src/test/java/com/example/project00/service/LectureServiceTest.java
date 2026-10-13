@@ -62,6 +62,8 @@ class LectureServiceTest {
 		course = new Course("CS101", "Programming", 6);
 		professor = new Professor("E-1", "Ada", "CS");
 		student = new Student("S-1", "Alan", 2025);
+		course.assignTeacher(professor);
+		course.enroll(student);
 	}
 
 	@Test
@@ -86,6 +88,17 @@ class LectureServiceTest {
 
 		assertThatThrownBy(() -> lectureService.schedule("NOPE", "E-1", DATE, TIME, "Variables", "A-101"))
 			.isInstanceOf(ResourceNotFoundException.class);
+		then(lectureRepository).should(never()).save(any());
+	}
+
+	@Test
+	void scheduleRejectsProfessorWhoDoesNotTeachTheCourse() {
+		Professor outsider = new Professor("E-9", "Linus", "CS");
+		given(courseService.getByCode("CS101")).willReturn(course);
+		given(professorService.getByEmployeeId("E-9")).willReturn(outsider);
+
+		assertThatThrownBy(() -> lectureService.schedule("CS101", "E-9", DATE, TIME, "Variables", "A-101"))
+			.isInstanceOf(IllegalArgumentException.class);
 		then(lectureRepository).should(never()).save(any());
 	}
 
@@ -130,6 +143,7 @@ class LectureServiceTest {
 	void assignProfessorMovesLectureToNewProfessor() {
 		Lecture lecture = stubLecture(1L);
 		Professor replacement = new Professor("E-2", "Grace", "CS");
+		course.assignTeacher(replacement);
 		given(professorService.getByEmployeeId("E-2")).willReturn(replacement);
 
 		lectureService.assignProfessor(1L, "E-2");
@@ -148,6 +162,17 @@ class LectureServiceTest {
 
 		assertThat(lecture.hasAttendee(student)).isTrue();
 		assertThat(student.getAttendedLectures()).containsExactly(lecture);
+	}
+
+	@Test
+	void recordAttendanceRejectsStudentNotEnrolledInTheCourse() {
+		Lecture lecture = stubLecture(1L);
+		Student outsider = new Student("S-9", "Grace", 2024);
+		given(studentService.getByStudentId("S-9")).willReturn(outsider);
+
+		assertThatThrownBy(() -> lectureService.recordAttendance(1L, "S-9"))
+			.isInstanceOf(IllegalArgumentException.class);
+		assertThat(lecture.getAttendees()).isEmpty();
 	}
 
 	@Test

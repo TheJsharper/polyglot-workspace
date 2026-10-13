@@ -45,11 +45,25 @@ class ProfessorTest {
 	@Test
 	void deliveredLecturesAreTrackedAndReadOnly() {
 		Professor professor = new Professor("E-1", "Ada", "CS");
-		Lecture lecture = new Lecture(new Course("CS101", "Programming", 6), professor, LocalDate.of(2026, 10, 14),
-				LocalTime.of(9, 0), "Variables", "A-101");
+		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
+		Lecture lecture = new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables",
+				"A-101");
 
 		assertThat(professor.getLectures()).containsExactly(lecture);
 		assertThatThrownBy(() -> professor.getLectures().clear()).isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	@Test
+	void taughtCoursesAreTrackedAndReadOnly() {
+		Professor professor = new Professor("E-1", "Ada", "CS");
+		Course course = new Course("CS101", "Programming", 6);
+
+		course.assignTeacher(professor);
+
+		assertThat(professor.getTaughtCourses()).containsExactly(course);
+		assertThatThrownBy(() -> professor.getTaughtCourses().clear())
+			.isInstanceOf(UnsupportedOperationException.class);
 	}
 
 }

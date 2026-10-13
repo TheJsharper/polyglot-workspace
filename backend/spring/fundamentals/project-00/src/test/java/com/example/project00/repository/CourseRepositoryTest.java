@@ -64,6 +64,7 @@ class CourseRepositoryTest {
 	void savingCourseCascadesToLectures() {
 		Professor professor = entityManager.persist(new Professor("E-1", "Ada", "CS"));
 		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
 		new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables", "A-101");
 
 		courseRepository.save(course);
@@ -78,6 +79,7 @@ class CourseRepositoryTest {
 	void removingLectureFromCourseDeletesIt() {
 		Professor professor = entityManager.persist(new Professor("E-1", "Ada", "CS"));
 		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
 		Lecture lecture = new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables",
 				"A-101");
 		courseRepository.saveAndFlush(course);
@@ -93,6 +95,7 @@ class CourseRepositoryTest {
 	void deletingCourseDeletesItsLectures() {
 		Professor professor = entityManager.persist(new Professor("E-1", "Ada", "CS"));
 		Course course = new Course("CS101", "Programming", 6);
+		course.assignTeacher(professor);
 		Lecture lecture = new Lecture(course, professor, LocalDate.of(2026, 10, 14), LocalTime.of(9, 0), "Variables",
 				"A-101");
 		courseRepository.saveAndFlush(course);

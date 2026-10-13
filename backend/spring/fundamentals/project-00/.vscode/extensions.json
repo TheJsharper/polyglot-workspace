@@ -2,6 +2,7 @@
   "recommendations": [
     "johnpapa.vscode-peacock",
     "vscjava.vscode-java-pack",
-    "pkief.material-icon-theme"
+    "pkief.material-icon-theme",
+    "pkief.material-product-icons"
   ]
 }
