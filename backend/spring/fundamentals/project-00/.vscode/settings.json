@@ -1,0 +1,12 @@
+{
+  "peacock.color": "#6DB33F",
+  "workbench.iconTheme": "material-icon-theme",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-25",
+      "path": "C:\\Users\\devloop\\.jdks\\openjdk-25.0.1",
+      "default": true
+    }
+  ]
+}
