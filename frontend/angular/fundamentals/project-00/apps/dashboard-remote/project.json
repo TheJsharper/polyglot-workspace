@@ -1,0 +1,130 @@
+{
+  "name": "dashboard_remote",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/dashboard-remote/src",
+  "tags": [
+    "type:remote"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:webpack-browser",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/dashboard-remote",
+        "index": "apps/dashboard-remote/src/index.html",
+        "main": "apps/dashboard-remote/src/main.ts",
+        "tsConfig": "apps/dashboard-remote/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/dashboard-remote/public"
+          }
+        ],
+        "styles": [
+          "apps/dashboard-remote/src/styles.scss"
+        ],
+        "customWebpackConfig": {
+          "path": "apps/dashboard-remote/webpack.config.ts"
+        },
+        "indexHtmlTransformer": "tools/mf-index-html.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all",
+          "customWebpackConfig": {
+            "path": "apps/dashboard-remote/webpack.prod.config.ts"
+          }
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "dependsOn": [
+        "lint",
+        "^build"
+      ]
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4201,
+        "publicHost": "http://localhost:4201",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "dashboard_remote:build:production"
+        },
+        "development": {
+          "buildTarget": "dashboard_remote:build:development"
+        }
+      },
+      "dependsOn": [
+        "web-app:serve"
+      ]
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "dashboard_remote:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "coverage/apps/dashboard-remote"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "defaultConfiguration": "production",
+      "options": {
+        "buildTarget": "dashboard_remote:build",
+        "port": 4201,
+        "watch": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "dashboard_remote:build:development"
+        },
+        "production": {
+          "buildTarget": "dashboard_remote:build:production"
+        }
+      }
+    }
+  }
+}

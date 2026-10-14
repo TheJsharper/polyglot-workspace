@@ -1,0 +1,35 @@
+@use '@angular/material' as mat;
+
+// Material 3 theme shared by the host and remotes. `color-scheme` makes Material emit
+// light-dark() tokens, so toggling the `dark-theme` class on <html> switches the palette.
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+        theme-type: color-scheme,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  &.dark-theme {
+    color-scheme: dark;
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+}

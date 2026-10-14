@@ -1,0 +1,24 @@
+{
+  "name": "layouts-main-layout",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/layouts/main-layout/src",
+  "prefix": "app",
+  "projectType": "library",
+  "tags": [
+    "type:layout"
+  ],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "coverage/libs/layouts/main-layout"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -1,47 +1,90 @@
-# VS Code
+﻿# =============================================================================
+# polyglot-workspace: single, central .gitignore for every project in the repo
+# =============================================================================
+
+# --- Operating system --------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# --- Editors / IDEs ----------------------------------------------------------
+# VS Code: only the root workspace settings/extensions are shared
 .vscode/
 !/.vscode/
 /.vscode/*
+!/.vscode/extensions.json
 VSCode*/
 VSCode*.zip
-!/.vscode/extensions.json
+/VSCode-golang1.140.0/
 
-# Go build and test artifacts
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse / Spring Tool Suite
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+**/nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# --- Local environment -------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Go ----------------------------------------------------------------------
 *.exe
 *.test
 *.out
 *.cover
 coverage.out
 
-# Node dependencies and logs
+# --- Java / Maven / Gradle ---------------------------------------------------
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+.gradle/
+HELP.md
+
+# --- Node --------------------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Frontend build output and caches
+# --- Build output (all stacks) -----------------------------------------------
 dist/
 build/
-.next/
+!**/src/main/**/build/
+!**/src/test/**/build/
 out/
-.angular/cache/
+coverage/
+*.tsbuildinfo
+
+# --- Frontend tooling caches -------------------------------------------------
+.angular/
+.next/
 .vite/
+.vitest/
+vitest.config.*.timestamp*
+vite.config.*.timestamp*
 .parcel-cache/
 .turbo/
 .cache/
-coverage/
-*.tsbuildinfo
 .eslintcache
 
-# Local environment files
-.env
-.env.*
-!.env.example
-
-# Operating system files
-.DS_Store
-Thumbs.db
-
-# Bundled VS Code installation at workspace root
-/VSCode-golang1.140.0/
+# --- Nx (machine-local; .nx/installation stays trackable) --------------------
+**/.nx/cache/
+**/.nx/workspace-data/
