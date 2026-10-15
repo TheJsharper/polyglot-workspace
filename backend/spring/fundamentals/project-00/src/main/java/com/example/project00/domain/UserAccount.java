@@ -79,4 +79,15 @@ public class UserAccount extends BaseEntity {
 		return account;
 	}
 
+	/**
+	 * Creates an additional admin account that is not linked to a student or professor.
+	 * @param username the login name
+	 * @param passwordHash the encoded password
+	 * @return a new, unsaved account
+	 * @throws NullPointerException if an argument is {@code null}
+	 */
+	public static UserAccount forAdmin(String username, String passwordHash) {
+		return new UserAccount(Objects.requireNonNull(username, "username"), passwordHash, Role.ADMIN);
+	}
+
 }

@@ -12,7 +12,8 @@ import com.example.project00.repository.ProfessorRepository;
 import com.example.project00.repository.StudentRepository;
 import com.example.project00.repository.UserAccountRepository;
 import com.example.project00.web.dto.AuthDtos.LoginRequest;
-import com.example.project00.web.dto.AuthDtos.RegisterStudentRequest;
+import com.example.project00.web.dto.AuthDtos.RegisterRequest;
+import com.example.project00.web.dto.AuthDtos.RegisterResponse;
 import com.example.project00.web.dto.AuthDtos.TokenResponse;
 import com.example.project00.web.dto.CourseDtos.CourseResponse;
 import com.example.project00.web.dto.CourseDtos.CreateCourseRequest;
@@ -136,8 +137,16 @@ abstract class EndToEndTestSupport {
 
 	/** Self-registers a student account with {@link #PASSWORD}. */
 	protected StudentResponse enrollStudent(String studentId) {
-		return post(anonymous, "/api/auth/register",
-				new RegisterStudentRequest(studentId, "Student " + studentId, 2025, PASSWORD), StudentResponse.class);
+		post(anonymous, "/api/auth/register", RegisterRequest.student(studentId, "Student " + studentId, 2025, PASSWORD),
+				RegisterResponse.class);
+		return client.get()
+			.uri("/api/students/{id}", studentId)
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(StudentResponse.class)
+			.returnResult()
+			.getResponseBody();
 	}
 
 	/** Admin assigns a professor to teach a course. */

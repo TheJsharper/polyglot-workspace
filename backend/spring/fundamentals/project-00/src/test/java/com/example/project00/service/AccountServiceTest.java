@@ -61,6 +61,19 @@ class AccountServiceTest {
 	}
 
 	@Test
+	void registerAdminStoresHashedAdminAccount() {
+		given(passwordEncoder.encode("secret-pass")).willReturn("{bcrypt}hash");
+		given(userAccountRepository.save(org.mockito.ArgumentMatchers.any(UserAccount.class)))
+			.willAnswer(invocation -> invocation.getArgument(0));
+
+		UserAccount admin = accountService.registerAdmin("A-2", "secret-pass");
+
+		assertThat(admin.getUsername()).isEqualTo("A-2");
+		assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
+		assertThat(admin.getPasswordHash()).isEqualTo("{bcrypt}hash");
+	}
+
+	@Test
 	void registerProfessorHiresProfessorAndStoresHashedPassword() {
 		Professor professor = new Professor("E-1", "Ada", "CS");
 		given(professorService.hire("E-1", "Ada", "CS")).willReturn(professor);

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.project00.web.dto.AuthDtos.LoginRequest;
 import com.example.project00.web.dto.AuthDtos.MeResponse;
-import com.example.project00.web.dto.AuthDtos.RegisterStudentRequest;
+import com.example.project00.web.dto.AuthDtos.RegisterRequest;
 import com.example.project00.web.dto.AuthDtos.TokenResponse;
 import com.example.project00.web.dto.CourseDtos.CourseResponse;
 import com.example.project00.web.dto.CourseDtos.CreateCourseRequest;
@@ -20,13 +20,14 @@ class AuthE2ETest extends EndToEndTestSupport {
 
 	@Test
 	void studentRegistersThemselvesAndLogsIn() {
-		postJson(anonymous, "/api/auth/register", new RegisterStudentRequest("S-1", "Alan", 2025, PASSWORD))
+		postJson(anonymous, "/api/auth/register", RegisterRequest.student("S-1", "Alan", 2025, PASSWORD))
 			.expectStatus()
 			.isCreated()
 			.expectHeader()
 			.location("/api/students/S-1")
 			.expectBody()
-			.jsonPath("$.studentId").isEqualTo("S-1")
+			.jsonPath("$.username").isEqualTo("S-1")
+			.jsonPath("$.role").isEqualTo("STUDENT")
 			.jsonPath("$.password").doesNotExist();
 
 		TokenResponse token = postJson(anonymous, "/api/auth/login", new LoginRequest("S-1", PASSWORD))
@@ -60,19 +61,58 @@ class AuthE2ETest extends EndToEndTestSupport {
 	void registeringTakenIdOrAdminNameReturnsConflict() {
 		enrollStudent("S-1");
 
-		postJson(anonymous, "/api/auth/register", new RegisterStudentRequest("S-1", "Other", 2025, PASSWORD))
+		postJson(anonymous, "/api/auth/register", RegisterRequest.student("S-1", "Other", 2025, PASSWORD))
 			.expectStatus()
 			.isEqualTo(409);
-		postJson(anonymous, "/api/auth/register", new RegisterStudentRequest(adminUsername, "Eve", 2025, PASSWORD))
+		postJson(anonymous, "/api/auth/register", RegisterRequest.student(adminUsername, "Eve", 2025, PASSWORD))
 			.expectStatus()
 			.isEqualTo(409);
 	}
 
 	@Test
 	void registrationValidatesPassword() {
-		postJson(anonymous, "/api/auth/register", new RegisterStudentRequest("S-1", "Alan", 2025, "short"))
+		postJson(anonymous, "/api/auth/register", RegisterRequest.student("S-1", "Alan", 2025, "short"))
 			.expectStatus()
 			.isBadRequest();
+	}
+
+	@Test
+	void registrationValidatesRoleSpecificFields() {
+		postJson(anonymous, "/api/auth/register", RegisterRequest.professor("E-9", "Grace", " ", PASSWORD))
+			.expectStatus()
+			.isBadRequest();
+		postJson(anonymous, "/api/auth/register", new RegisterRequest(null, "S-9", "Alan", null, null, PASSWORD))
+			.expectStatus()
+			.isBadRequest();
+	}
+
+	@Test
+	void professorRegistersPubliclyAndLogsIn() {
+		postJson(anonymous, "/api/auth/register", RegisterRequest.professor("E-9", "Grace", "Math", PASSWORD))
+			.expectStatus()
+			.isCreated()
+			.expectHeader()
+			.location("/api/professors/E-9")
+			.expectBody()
+			.jsonPath("$.role").isEqualTo("PROFESSOR");
+
+		as("E-9").get().uri("/api/auth/me").exchange().expectBody().jsonPath("$.role").isEqualTo("PROFESSOR");
+	}
+
+	@Test
+	void onlyAdminRegistersAdmins() {
+		enrollStudent("S-1");
+		RegisterRequest request = RegisterRequest.admin("A-2", PASSWORD);
+
+		postJson(anonymous, "/api/auth/register", request).expectStatus().isUnauthorized();
+		postJson(as("S-1"), "/api/auth/register", request).expectStatus().isForbidden();
+		postJson(client, "/api/auth/register", request).expectStatus()
+			.isCreated()
+			.expectBody()
+			.jsonPath("$.role").isEqualTo("ADMIN");
+		postJson(client, "/api/auth/register", request).expectStatus().isEqualTo(409);
+
+		as("A-2").get().uri("/api/auth/me").exchange().expectBody().jsonPath("$.role").isEqualTo("ADMIN");
 	}
 
 	@Test

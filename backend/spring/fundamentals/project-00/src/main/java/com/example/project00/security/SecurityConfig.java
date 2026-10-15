@@ -36,7 +36,8 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 /**
  * Stateless JWT security.
  * <ul>
- * <li>Public: {@code POST /api/auth/register}, {@code POST /api/auth/login}, {@code /hello} and the OpenAPI /
+ * <li>Public: {@code POST /api/auth/register} (student or professor; registering an admin needs an admin token),
+ * {@code POST /api/auth/login}, {@code /hello} and the OpenAPI /
  * Swagger UI resources.</li>
  * <li>Everything else requires a valid {@code Authorization: Bearer <token>} header.</li>
  * <li>Role and ownership rules are declared with {@code @PreAuthorize} on the controllers, using

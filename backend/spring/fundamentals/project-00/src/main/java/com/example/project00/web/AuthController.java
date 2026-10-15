@@ -2,22 +2,30 @@ package com.example.project00.web;
 
 import java.net.URI;
 
+import com.example.project00.domain.Professor;
+import com.example.project00.domain.Role;
+import com.example.project00.domain.Student;
+import com.example.project00.domain.UserAccount;
 import com.example.project00.security.TokenService;
 import com.example.project00.security.TokenService.IssuedToken;
 import com.example.project00.service.AccountService;
 import com.example.project00.web.dto.AuthDtos.LoginRequest;
 import com.example.project00.web.dto.AuthDtos.MeResponse;
-import com.example.project00.web.dto.AuthDtos.RegisterStudentRequest;
+import com.example.project00.web.dto.AuthDtos.RegisterRequest;
+import com.example.project00.web.dto.AuthDtos.RegisterResponse;
 import com.example.project00.web.dto.AuthDtos.TokenResponse;
-import com.example.project00.web.dto.StudentDtos.StudentResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -43,17 +51,48 @@ class AuthController {
 
 	private final TokenService tokenService;
 
-	@Operation(summary = "Register as a student",
-			description = "Public. Creates the student and a login account whose username is the student id.")
-	@ApiResponse(responseCode = "201", description = "Student registered; the Location header points to them")
+	@Operation(summary = "Register an account",
+			description = "Public for role STUDENT (default) and PROFESSOR. Role ADMIN requires an admin access token. "
+					+ "The id becomes the login username.")
+	@ApiResponse(responseCode = "201", description = "Account registered")
 	@ApiErrors.BadRequest
+	@ApiErrors.Unauthorized
+	@ApiErrors.Forbidden
 	@ApiErrors.Conflict
 	@SecurityRequirements
 	@PostMapping("/register")
-	ResponseEntity<StudentResponse> register(@Valid @RequestBody RegisterStudentRequest request) {
-		StudentResponse registered = StudentResponse.from(accountService.registerStudent(request.studentId(),
-				request.name(), request.enrollmentYear(), request.password()));
-		return ResponseEntity.created(URI.create("/api/students/" + registered.studentId())).body(registered);
+	ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request,
+			Authentication caller) {
+		Role role = request.effectiveRole();
+		return switch (role) {
+			case STUDENT -> {
+				Student student = accountService.registerStudent(request.id(), request.name(),
+						request.enrollmentYear(), request.password());
+				yield ResponseEntity.created(URI.create("/api/students/" + student.getStudentId()))
+					.body(new RegisterResponse(student.getStudentId(), role.name(), student.getName()));
+			}
+			case PROFESSOR -> {
+				Professor professor = accountService.registerProfessor(request.id(), request.name(),
+						request.department(), request.password());
+				yield ResponseEntity.created(URI.create("/api/professors/" + professor.getEmployeeId()))
+					.body(new RegisterResponse(professor.getEmployeeId(), role.name(), professor.getName()));
+			}
+			case ADMIN -> {
+				requireAdmin(caller);
+				UserAccount admin = accountService.registerAdmin(request.id(), request.password());
+				yield ResponseEntity.status(HttpStatus.CREATED)
+					.body(new RegisterResponse(admin.getUsername(), role.name(), null));
+			}
+		};
+	}
+
+	private static void requireAdmin(Authentication caller) {
+		if (caller == null || caller instanceof AnonymousAuthenticationToken || !caller.isAuthenticated()) {
+			throw new InsufficientAuthenticationException("An admin token is required to register an admin");
+		}
+		if (caller.getAuthorities().stream().noneMatch(a -> Role.ADMIN.authority().equals(a.getAuthority()))) {
+			throw new AccessDeniedException("Only an admin can register an admin");
+		}
 	}
 
 	@Operation(summary = "Log in and obtain an access token",

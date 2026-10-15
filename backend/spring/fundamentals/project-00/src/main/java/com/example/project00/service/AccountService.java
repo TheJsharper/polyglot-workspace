@@ -64,6 +64,15 @@ public class AccountService {
 		return professor;
 	}
 
+	/**
+	 * Creates an additional admin login (no person attached).
+	 * @throws DuplicateResourceException if the username is already taken
+	 */
+	public UserAccount registerAdmin(String username, String rawPassword) {
+		requireFreeUsername(username);
+		return userAccountRepository.save(UserAccount.forAdmin(username, passwordEncoder.encode(rawPassword)));
+	}
+
 	private void requireFreeUsername(String username) {
 		if (username.equalsIgnoreCase(adminUsername) || userAccountRepository.existsByUsername(username)) {
 			throw new DuplicateResourceException("Account", username);

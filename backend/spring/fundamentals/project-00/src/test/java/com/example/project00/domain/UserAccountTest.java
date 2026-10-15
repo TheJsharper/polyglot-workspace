@@ -33,6 +33,16 @@ class UserAccountTest {
 	}
 
 	@Test
+	void adminAccountHasNoPerson() {
+		UserAccount account = UserAccount.forAdmin("A-2", "hash");
+
+		assertThat(account.getUsername()).isEqualTo("A-2");
+		assertThat(account.getRole()).isEqualTo(Role.ADMIN);
+		assertThat(account.getStudent()).isNull();
+		assertThat(account.getProfessor()).isNull();
+	}
+
+	@Test
 	void factoriesRejectMissingArguments() {
 		assertThatThrownBy(() -> UserAccount.forStudent(null, "hash")).isInstanceOf(NullPointerException.class);
 		assertThatThrownBy(() -> UserAccount.forProfessor(null, "hash")).isInstanceOf(NullPointerException.class);

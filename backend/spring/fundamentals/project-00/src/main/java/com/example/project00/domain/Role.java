@@ -1,8 +1,8 @@
 package com.example.project00.domain;
 
 /**
- * Roles a caller can have. The admin ("superior") is not stored in the database; students and professors own a
- * {@link UserAccount}.
+ * Roles a caller can have. The configured admin is not stored in the database; students and professors own a
+ * {@link UserAccount}, and additional admins can be registered by an admin as accounts without a person.
  */
 public enum Role {
 
