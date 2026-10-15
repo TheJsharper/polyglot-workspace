@@ -16,6 +16,8 @@ nx run app:run-ios
 
 `start` runs Expo/Metro; scan its QR code with Expo Go or use a simulator. Tests run in Node against a fake native host and do not require a device. `run-android` requires a configured Android SDK/emulator; `run-ios` requires macOS and an iOS simulator. The test and typecheck targets have been verified in this workspace. Device and simulator behavior has not been verified here.
 
+The University API screens (login, register, role-aware CRUD and relationships) and the `EXPO_PUBLIC_API_URL` setting are documented in [the app README](app/README.md).
+
 The app root is [`src/main.ts`](app/src/main.ts); the native shell combines a left drawer, main content outlet and native Home/Dashboard bottom tabs. Shared menu entries and Home/Dashboard stats come from `libs/services/core`; native screens render those values with ng-native components. The web `MainLayoutComponent` depends on Material/CDK, and the web dashboard is loaded by Module Federation, so neither can be imported into the native runtime. The app's own [`AGENTS.md`](app/AGENTS.md) documents native component, event, styling, routing and testing conventions.
 
 ## Native boundary
