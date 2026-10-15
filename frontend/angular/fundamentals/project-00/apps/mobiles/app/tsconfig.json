@@ -1,0 +1,29 @@
+{
+  "extends": [
+    "expo/tsconfig.base",
+    "../../../tsconfig.base.json"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
+    "target": "ESNext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "customConditions": [
+      "react-native"
+    ],
+    "composite": false,
+    "declaration": false,
+    "emitDeclarationOnly": false
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "typeCheckHostBindings": false,
+    "strictDomEventTypes": false
+  }
+}

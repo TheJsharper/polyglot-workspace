@@ -1,0 +1,65 @@
+{
+  "name": "app",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/mobiles/app",
+  "projectType": "application",
+  "tags": ["type:app"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ],
+      "outputs": [
+        "{projectRoot}/.angular-native"
+      ],
+      "options": {
+        "cwd": "apps/mobiles/app",
+        "command": "node metro.config.js && ngc -p tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ],
+      "options": {
+        "cwd": "apps/mobiles/app",
+        "command": "vitest run"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "cwd": "apps/mobiles/app",
+        "command": "expo start"
+      },
+      "syncGenerators": [
+        "@ng-native/nx:sync-native-modules"
+      ]
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "cwd": "apps/mobiles/app",
+        "command": "expo start"
+      }
+    },
+    "export": {
+      "syncGenerators": [
+        "@ng-native/nx:sync-native-modules"
+      ]
+    },
+    "prebuild": {
+      "syncGenerators": [
+        "@ng-native/nx:sync-native-modules"
+      ]
+    }
+  }
+}

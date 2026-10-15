@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { HOME_STATS } from '@project-00/services-core';
 import { PageHeaderComponent } from '@project-00/shared-ui';
 import { StatCardComponent } from '@project-00/widgets-ui';
 
@@ -9,8 +10,9 @@ import { StatCardComponent } from '@project-00/widgets-ui';
   template: `
     <app-page-header title="Home" subtitle="Lazy-loaded from the views-home library" />
     <section class="grid">
-      <app-stat-card label="Libraries" value="9" icon="folder" />
-      <app-stat-card label="Remotes" value="1" icon="hub" />
+      @for (stat of stats; track stat.label) {
+        <app-stat-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon" />
+      }
     </section>
   `,
   styles: `
@@ -21,4 +23,6 @@ import { StatCardComponent } from '@project-00/widgets-ui';
     }
   `,
 })
-export class HomeComponent {}
+export class HomeComponent {
+  protected readonly stats = HOME_STATS;
+}

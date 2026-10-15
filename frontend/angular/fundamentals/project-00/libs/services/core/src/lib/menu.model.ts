@@ -4,3 +4,8 @@ export interface MenuItem {
   icon: string;
   route: string;
 }
+
+export const MAIN_MENU: MenuItem[] = [
+  { id: 'home', label: 'Home', icon: 'home', route: '/' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
+];

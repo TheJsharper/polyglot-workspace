@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "app",
+    "slug": "app",
+    "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.polyglotworkspace.app"
+    },
+    "android": {
+      "package": "com.polyglotworkspace.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "scheme": "app",
+    "extra": {
+      "router": {
+        "root": "src/app"
+      }
+    },
+    "plugins": [
+      "@ng-native/metro"
+    ]
+  }
+}

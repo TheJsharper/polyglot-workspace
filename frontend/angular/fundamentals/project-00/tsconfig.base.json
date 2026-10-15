@@ -43,7 +43,7 @@
         "./libs/services/core/src/index.ts"
       ],
       "dashboard_remote/Routes": [
-        "./apps/dashboard-remote/src/app/remote-entry/entry.routes.ts"
+        "./libs/remotes/dashboard-remote/src/app/remote-entry/entry.routes.ts"
       ]
     }
   },

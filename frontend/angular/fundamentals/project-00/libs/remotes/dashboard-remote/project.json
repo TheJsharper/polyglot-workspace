@@ -1,9 +1,9 @@
 {
   "name": "dashboard_remote",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "app",
-  "sourceRoot": "apps/dashboard-remote/src",
+  "sourceRoot": "libs/remotes/dashboard-remote/src",
   "tags": [
     "type:remote"
   ],
@@ -15,22 +15,22 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/dashboard-remote",
-        "index": "apps/dashboard-remote/src/index.html",
-        "main": "apps/dashboard-remote/src/main.ts",
-        "tsConfig": "apps/dashboard-remote/tsconfig.app.json",
+        "outputPath": "dist/libs/remotes/dashboard-remote",
+        "index": "libs/remotes/dashboard-remote/src/index.html",
+        "main": "libs/remotes/dashboard-remote/src/main.ts",
+        "tsConfig": "libs/remotes/dashboard-remote/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/dashboard-remote/public"
+            "input": "libs/remotes/dashboard-remote/public"
           }
         ],
         "styles": [
-          "apps/dashboard-remote/src/styles.scss"
+          "libs/remotes/dashboard-remote/src/styles.scss"
         ],
         "customWebpackConfig": {
-          "path": "apps/dashboard-remote/webpack.config.ts"
+          "path": "libs/remotes/dashboard-remote/webpack.config.ts"
         },
         "indexHtmlTransformer": "tools/mf-index-html.ts"
       },
@@ -50,7 +50,7 @@
           ],
           "outputHashing": "all",
           "customWebpackConfig": {
-            "path": "apps/dashboard-remote/webpack.prod.config.ts"
+            "path": "libs/remotes/dashboard-remote/webpack.prod.config.ts"
           }
         },
         "development": {
@@ -105,7 +105,7 @@
         "{options.reportsDirectory}"
       ],
       "options": {
-        "reportsDirectory": "coverage/apps/dashboard-remote"
+        "reportsDirectory": "coverage/libs/remotes/dashboard-remote"
       }
     },
     "serve-static": {

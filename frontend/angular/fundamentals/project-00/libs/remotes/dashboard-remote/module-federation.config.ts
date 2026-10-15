@@ -3,7 +3,7 @@ import type { ModuleFederationConfig } from '@nx/module-federation';
 const config: ModuleFederationConfig = {
   name: 'dashboard_remote',
   exposes: {
-    './Routes': 'apps/dashboard-remote/src/app/remote-entry/entry.routes.ts',
+    './Routes': 'libs/remotes/dashboard-remote/src/app/remote-entry/entry.routes.ts',
   },
 };
 

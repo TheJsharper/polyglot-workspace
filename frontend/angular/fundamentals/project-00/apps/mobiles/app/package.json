@@ -1,0 +1,24 @@
+{
+  "name": "app",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/main.ts",
+  "dependencies": {
+    "@ng-native/components": "0.13.0",
+    "@ng-native/device": "0.13.0",
+    "@ng-native/fabric": "0.13.0",
+    "@ng-native/metro": "0.13.0",
+    "@ng-native/platform": "0.13.0",
+    "@ng-native/router": "0.13.0",
+    "@angular/common": "~22.1.0",
+    "@angular/core": "~22.1.0",
+    "@angular/router": "~22.1.0",
+    "expo": "~57.0.26",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0"
+  }
+}

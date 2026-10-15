@@ -1,12 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { PageHeaderComponent } from '@project-00/shared-ui';
+import { DASHBOARD_STATS } from '@project-00/services-core';
 import { StatCardComponent } from '@project-00/widgets-ui';
-
-interface DashboardStat {
-  label: string;
-  value: string;
-  icon: string;
-}
 
 @Component({
   selector: 'app-dashboard',
@@ -29,10 +24,5 @@ interface DashboardStat {
   `,
 })
 export class DashboardComponent {
-  protected readonly stats: DashboardStat[] = [
-    { label: 'Active users', value: '1,284', icon: 'group' },
-    { label: 'Revenue', value: '$48.2k', icon: 'payments' },
-    { label: 'Orders', value: '326', icon: 'shopping_cart' },
-    { label: 'Uptime', value: '99.98%', icon: 'monitor_heart' },
-  ];
+  protected readonly stats = DASHBOARD_STATS;
 }
