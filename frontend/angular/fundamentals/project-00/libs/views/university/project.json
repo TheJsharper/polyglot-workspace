@@ -1,0 +1,15 @@
+{
+  "name": "views-university",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/views/university/src",
+  "projectType": "library",
+  "tags": ["type:view"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

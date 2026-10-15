@@ -6,7 +6,7 @@ vi.mock('dashboard_remote/Routes', () => ({ remoteRoutes }));
 describe('shellRoutes', () => {
   it('lazy-loads every feature route', () => {
     const featureRoutes = shellRoutes.filter((r) => r.path !== '**');
-    expect(featureRoutes.every((r) => typeof r.loadChildren === 'function')).toBe(true);
+    expect(featureRoutes.every((r) => typeof r.loadChildren === 'function' || typeof r.loadComponent === 'function')).toBe(true);
   });
 
   it('loads the dashboard from the federated remote', async () => {

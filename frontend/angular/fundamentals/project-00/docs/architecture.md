@@ -44,6 +44,14 @@ Module Federation is a Webpack runtime boundary: the host requests an exposed mo
 
 Projects carry `type:*` tags; [`eslint.config.mjs`](../eslint.config.mjs) enforces allowed imports with `@nx/enforce-module-boundaries`. Notably, the shell may depend on `type:remote`, but the remote consumes dashboard/shared/service libraries instead of the shell. Add new projects with an appropriate tag and a matching constraint rather than introducing back-edges.
 
+## University API
+
+The Spring service in `backend/spring/fundamentals/project-00` serves the University API at `http://localhost:8080`; its live contract is `/v3/api-docs` and interactive reference is `/swagger-ui/index.html`. Web and native keep the original Home/Dashboard examples and add University screens for students, professors, courses, lectures and notes. Login and registration are available without a session; resource screens require one. Public registration creates a student or professor account; admin registration needs an existing admin token. The server enforces roles and resource ownership even when a UI action is offered.
+
+`libs/services/api` holds typed, platform-neutral contracts and requests. `libs/services/session` holds a per-app, in-memory bearer session: logout, expiry or an unauthorized API response clears it; there is no token persistence or refresh endpoint. `libs/views/university` owns the browser screens. The native app uses native views and the same API/session libraries but not web UI, Material, browser-only NgRx effects or federation.
+
+For local web development, [`proxy.conf.json`](../apps/web-app/proxy.conf.json) forwards `/api` from the web host to `http://localhost:8080`, avoiding browser CORS configuration. Production must serve `/api` on the web origin via reverse proxy; the development proxy is not baked into the production bundle. The native app needs a configurable host-reachable API origin (see the [mobile guide](../apps/mobiles/README.md)); `localhost` on a physical phone is not the development machine.
+
 ## State, UI and checks
 
 [`provideAppState()`](../libs/services/state/src/lib/provide-app-state.ts) registers NgRx Store (`layout`, `navigation`, router reducer), functional Effects, Router-Store and DevTools in dev mode. The layout feature owns sidenav/theme; the navigation feature loads the shell's injected menu config. Effects restore the theme from `localStorage`, apply the `dark-theme` class on `<html>` and persist toggles. [`_theme.scss`](../libs/shared/ui/src/styles/_theme.scss) defines Material 3 light/dark tokens, used by the host and remote. The layout uses Angular Material toolbar, sidenav, list, icons and buttons; CDK breakpoints switch the sidenav to an overlay on handsets.

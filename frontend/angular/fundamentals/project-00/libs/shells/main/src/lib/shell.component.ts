@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MainLayoutComponent } from '@project-00/layouts-main-layout';
 import { LayoutActions, selectMenuItems, selectSidenavOpened, selectTheme } from '@project-00/services-state';
+import { UniversitySession } from '@project-00/services-session';
 
 @Component({
   selector: 'app-shell',
@@ -14,8 +15,10 @@ import { LayoutActions, selectMenuItems, selectSidenavOpened, selectTheme } from
       [menuItems]="menuItems()"
       [sidenavOpened]="sidenavOpened()"
       [theme]="theme()"
+      [username]="session.user()?.username ?? null"
       (menuToggle)="toggleSidenav()"
       (themeToggle)="toggleTheme()"
+      (authAction)="authAction()"
       (sidenavOpenedChange)="setSidenav($event)"
     >
       <router-outlet />
@@ -24,6 +27,16 @@ import { LayoutActions, selectMenuItems, selectSidenavOpened, selectTheme } from
 })
 export class ShellComponent {
   private readonly store = inject(Store);
+  private readonly router = inject(Router);
+  protected readonly session = inject(UniversitySession);
+
+  constructor() {
+    effect(() => {
+      if (!this.session.authenticated() && this.router.url.startsWith('/university')) {
+        void this.router.navigateByUrl('/login');
+      }
+    });
+  }
 
   readonly appTitle = input('Web App');
 
@@ -43,5 +56,12 @@ export class ShellComponent {
     if (opened !== this.sidenavOpened()) {
       this.store.dispatch(LayoutActions.setSidenav({ opened }));
     }
+  }
+
+  protected authAction(): void {
+    if (this.session.authenticated()) {
+      this.session.logout();
+    }
+    void this.router.navigateByUrl('/login');
   }
 }

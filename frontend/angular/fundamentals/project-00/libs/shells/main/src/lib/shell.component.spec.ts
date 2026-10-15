@@ -17,7 +17,7 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const labels = Array.from(el.querySelectorAll('[matListItemTitle]')).map((n) => n.textContent);
-    expect(labels).toEqual(['Home', 'Dashboard']);
+    expect(labels).toEqual(['Home', 'Dashboard', 'University']);
     expect(el.querySelector('router-outlet')).not.toBeNull();
   });
 

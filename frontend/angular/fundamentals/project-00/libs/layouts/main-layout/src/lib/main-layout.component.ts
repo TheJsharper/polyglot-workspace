@@ -32,9 +32,11 @@ export class MainLayoutComponent {
   readonly menuItems = input<MenuItem[]>([]);
   readonly sidenavOpened = input(true);
   readonly theme = input<Theme>('light');
+  readonly username = input<string | null>(null);
 
   readonly menuToggle = output<void>();
   readonly themeToggle = output<void>();
+  readonly authAction = output<void>();
   readonly sidenavOpenedChange = output<boolean>();
 
   readonly isHandset = toSignal(
