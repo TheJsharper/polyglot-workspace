@@ -1,0 +1,11 @@
+{
+  "name": "services-session",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/services/session/src",
+  "projectType": "library",
+  "tags": ["type:service"],
+  "targets": {
+    "test": { "executor": "@nx/vitest:test" },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

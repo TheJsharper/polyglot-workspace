@@ -1,0 +1,20 @@
+{
+  "name": "services-api",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/services/api/src",
+  "projectType": "library",
+  "tags": [
+    "type:service"
+  ],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "coverage/libs/services/api"
+      }
+    }
+  }
+}

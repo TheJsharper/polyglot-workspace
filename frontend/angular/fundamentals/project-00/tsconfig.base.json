@@ -39,6 +39,15 @@
       "@project-00/services-state": [
         "./libs/services/state/src/index.ts"
       ],
+      "@project-00/services-session": [
+        "./libs/services/session/src/index.ts"
+      ],
+      "@project-00/views-university": [
+        "./libs/views/university/src/index.ts"
+      ],
+      "@project-00/services-api": [
+        "./libs/services/api/src/index.ts"
+      ],
       "@project-00/services-core": [
         "./libs/services/core/src/index.ts"
       ],
