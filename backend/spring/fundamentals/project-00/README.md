@@ -15,8 +15,11 @@ $env:JAVA_HOME = 'C:\Users\devloop\.jdks\openjdk-25.0.1'
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI document (JSON) | http://localhost:8080/v3/api-docs |
 | OpenAPI document (YAML) | http://localhost:8080/v3/api-docs.yaml |
+| H2 console | http://localhost:8080/h2-console |
 
-The database is in memory, so data is lost on restart. DevTools restarts the app when classes change.
+For the H2 console, use JDBC URL `jdbc:h2:mem:project00`, username `sa`, and leave the password blank. The console
+is enabled for local development and is publicly accessible; do not expose it in production. The database is in
+memory, so data is lost on restart. DevTools restarts the app when classes change.
 
 ## Architecture
 

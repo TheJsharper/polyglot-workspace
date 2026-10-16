@@ -25,6 +25,18 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 	boolean existsByUsername(String username);
 
 	/**
+	 * @param email the email address (stored lower-cased)
+	 * @return the account with that email, if any
+	 */
+	Optional<UserAccount> findByEmail(String email);
+
+	/**
+	 * @param email the email address (stored lower-cased)
+	 * @return whether an account with that email exists
+	 */
+	boolean existsByEmail(String email);
+
+	/**
 	 * Deletes the account of a student, if there is one.
 	 * @param student the student
 	 */

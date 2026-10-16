@@ -1,5 +1,8 @@
 package com.example.project00.security;
 
+import java.util.Locale;
+import java.util.Optional;
+
 import com.example.project00.domain.Role;
 import com.example.project00.repository.UserAccountRepository;
 import org.springframework.security.core.userdetails.User;
@@ -37,6 +40,9 @@ class AccountUserDetailsService implements UserDetailsService {
 			return User.withUserDetails(admin).build();
 		}
 		return userAccountRepository.findByUsername(username)
+			.or(() -> username != null && username.contains("@")
+					? userAccountRepository.findByEmail(username.trim().toLowerCase(Locale.ROOT))
+					: Optional.empty())
 			.map(account -> User.withUsername(account.getUsername())
 				.password(account.getPasswordHash())
 				.roles(account.getRole().name())

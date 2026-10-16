@@ -51,6 +51,30 @@ class AuthE2ETest extends EndToEndTestSupport {
 	}
 
 	@Test
+	void studentCanLogInWithEmailAsWellAsId() {
+		postJson(anonymous, "/api/auth/register",
+				new RegisterRequest(com.example.project00.domain.Role.STUDENT, "455", "Pedro", 2025, null, PASSWORD,
+						"Pedro.Salomon@gmail.com"))
+			.expectStatus()
+			.isCreated();
+
+		for (String login : new String[] { "455", "pedro.salomon@gmail.com", "Pedro.Salomon@gmail.com" }) {
+			TokenResponse token = postJson(anonymous, "/api/auth/login", new LoginRequest(login, PASSWORD))
+				.expectStatus()
+				.isOk()
+				.expectBody(TokenResponse.class)
+				.returnResult()
+				.getResponseBody();
+			assertThat(token.accessToken()).isNotBlank();
+		}
+		postJson(anonymous, "/api/auth/register",
+				new RegisterRequest(com.example.project00.domain.Role.STUDENT, "456", "Other", 2025, null, PASSWORD,
+						"pedro.salomon@gmail.com"))
+			.expectStatus()
+			.isEqualTo(409);
+	}
+
+	@Test
 	void adminIsDefinedByConfiguration() {
 		client.get().uri("/api/auth/me").exchange().expectStatus().isOk().expectBody()
 			.jsonPath("$.username").isEqualTo(adminUsername)

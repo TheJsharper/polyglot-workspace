@@ -55,6 +55,7 @@ class SecurityConfig {
 	SecurityFilterChain apiSecurity(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter,
 			AuthenticationEntryPoint entryPoint, AccessDeniedHandler accessDeniedHandler) throws Exception {
 		http.csrf(csrf -> csrf.disable())
+			.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
 			.httpBasic(basic -> basic.disable())
 			.formLogin(form -> form.disable())
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -62,7 +63,7 @@ class SecurityConfig {
 				.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
 				.permitAll()
 				.requestMatchers("/hello", "/error", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html",
-						"/swagger-ui/**")
+						"/swagger-ui/**", "/h2-console", "/h2-console/**")
 				.permitAll()
 				.anyRequest()
 				.authenticated())

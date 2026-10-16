@@ -90,4 +90,16 @@ class OpenApiDocsE2ETest extends EndToEndTestSupport {
 			.contentTypeCompatibleWith(MediaType.TEXT_HTML);
 	}
 
+	@Test
+	void h2ConsoleIsAccessibleWithoutAuthentication() {
+		anonymous.get()
+			.uri("/h2-console/")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectHeader()
+			.valueEquals("X-Frame-Options", "SAMEORIGIN")
+			.expectBody();
+	}
+
 }

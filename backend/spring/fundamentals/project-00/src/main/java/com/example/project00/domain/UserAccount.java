@@ -30,6 +30,9 @@ public class UserAccount extends BaseEntity {
 	@Column(nullable = false, unique = true, length = 20)
 	private String username;
 
+	@Column(unique = true, length = 254)
+	private String email;
+
 	@Column(name = "password_hash", nullable = false)
 	private String passwordHash;
 
@@ -49,6 +52,16 @@ public class UserAccount extends BaseEntity {
 		this.username = username;
 		this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
 		this.role = role;
+	}
+
+	/**
+	 * Sets the optional email address that can be used instead of the username to log in.
+	 * @param email the address, or {@code null}/blank for none; stored trimmed and lower-cased
+	 * @return this account
+	 */
+	public UserAccount withEmail(String email) {
+		this.email = email == null || email.isBlank() ? null : email.trim().toLowerCase(java.util.Locale.ROOT);
+		return this;
 	}
 
 	/**

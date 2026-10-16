@@ -67,13 +67,13 @@ class AuthController {
 		return switch (role) {
 			case STUDENT -> {
 				Student student = accountService.registerStudent(request.id(), request.name(),
-						request.enrollmentYear(), request.password());
+						request.enrollmentYear(), request.email(), request.password());
 				yield ResponseEntity.created(URI.create("/api/students/" + student.getStudentId()))
 					.body(new RegisterResponse(student.getStudentId(), role.name(), student.getName()));
 			}
 			case PROFESSOR -> {
 				Professor professor = accountService.registerProfessor(request.id(), request.name(),
-						request.department(), request.password());
+						request.department(), request.email(), request.password());
 				yield ResponseEntity.created(URI.create("/api/professors/" + professor.getEmployeeId()))
 					.body(new RegisterResponse(professor.getEmployeeId(), role.name(), professor.getName()));
 			}

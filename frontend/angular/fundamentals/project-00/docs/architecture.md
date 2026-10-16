@@ -19,12 +19,12 @@ Run `nx run app:start` for Metro, `nx run app:test` for its Vitest tests, or `nx
 
 | Role | Project | How it runs |
 | --- | --- | --- |
-| Host | `apps/web-app` (`web-app`) | Entry point, port 4200; [`module-federation.config.ts`](../apps/web-app/module-federation.config.ts) registers `dashboard_remote`. |
-| Remote | `libs/remotes/dashboard-remote` (`dashboard_remote`) | An Nx `projectType: application`, independently built/served on port 4201; exports `./Routes` via a remote entry. |
+| Host | `apps/web-app` (`web-app`) | Entry point, port 4300; [`module-federation.config.ts`](../apps/web-app/module-federation.config.ts) registers `dashboard_remote`. |
+| Remote | `libs/remotes/dashboard-remote` (`dashboard_remote`) | An Nx `projectType: application`, independently built/served on port 4301; exports `./Routes` via a remote entry. |
 | Native app | `apps/mobiles/app` (`app`) | Expo/Metro app for iOS and Android; separate from browser federation. |
 | Local libraries | `libs/views`, `libs/dashboards`, etc. | Compiled into an application build, not served independently. A local lazy import splits code but does not create a federated remote. |
 
-Module Federation is a Webpack runtime boundary: the host requests an exposed module from the remote server. Its name (`dashboard_remote`) and exposed key (`./Routes`) must match the host import (`dashboard_remote/Routes`). Both servers are part of one composed web application, not two hosts. `dashboard_remote` lives under `libs/remotes` for organization; it is **not** a conventional Angular library. See [`project.json`](../libs/remotes/dashboard-remote/project.json) for its build, serve, lint and test targets. Nx 23's Angular Webpack federation executors are deprecated; replacing only the Angular dev-server builder would break this setup.
+Module Federation is a Webpack runtime boundary: the host requests an exposed module from the remote server. Its name (`dashboard_remote`) and exposed key (`./Routes`) must match the host import (`dashboard_remote/Routes`). Both servers are part of one composed web application, not two hosts. `dashboard_remote` lives under `libs/remotes` for organization; it is **not** a conventional Angular library. Its build output directory must be named `dashboard_remote` because Nx's static remote server uses the project name as the URL segment. During development, the shell registers the remote manifest at port 4301 to avoid the Webpack external-chunk loading race; keep that URL and the remote serve port in sync. Production retains the build-configured federated import. See [`project.json`](../libs/remotes/dashboard-remote/project.json) for its build, serve, lint and test targets. Nx 23's Angular Webpack federation executors are deprecated; replacing only the Angular dev-server builder would break this setup.
 
 ## Folder responsibilities
 
@@ -63,4 +63,4 @@ npx nx run-many -t lint test build -p web-app dashboard_remote
 npx nx serve web-app --devRemotes=dashboard_remote
 ```
 
-Use narrower project targets when editing a single library. Both app build targets depend on lint; Angular library tests use Vitest/Analog, and `libs/services/core` uses Vitest. The root `npm test` script is a placeholder and is not the project test runner. The host normally serves at `http://localhost:4200/`, with its remote at `http://localhost:4201/`; visit `/dashboard` through the host to verify federation. Stop old dev servers before reusing their ports.
+Use narrower project targets when editing a single library. Both app build targets depend on lint; Angular library tests use Vitest/Analog, and `libs/services/core` uses Vitest. The root `npm test` script is a placeholder and is not the project test runner. The host serves at `http://localhost:4300/`, with its remote at `http://localhost:4301/`; visit `/dashboard` through the host to verify federation. Port 4200 is occupied by Docker on this machine, so the host is pinned to 4300; the remote uses 4301. Stop old dev servers before reusing their ports.

@@ -4,6 +4,7 @@ import com.example.project00.domain.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,18 +26,25 @@ public final class AuthDtos {
 			@Schema(description = "Year of enrollment (STUDENT only)", example = "2025", minimum = "1900") @Min(1900) Integer enrollmentYear,
 			@Schema(description = "Department (PROFESSOR only)", example = "Computer Science") String department,
 			@Schema(description = "Password (8-72 characters)", example = "s3cret-pass", minLength = 8, maxLength = 72,
-					accessMode = Schema.AccessMode.WRITE_ONLY) @NotBlank @Size(min = 8, max = 72) String password) {
+					accessMode = Schema.AccessMode.WRITE_ONLY) @NotBlank @Size(min = 8, max = 72) String password,
+			@Schema(description = "Optional email (STUDENT and PROFESSOR); can be used instead of the id to log in",
+					example = "alan@example.com", maxLength = 254) @Email @Size(max = 254) String email) {
+
+		public RegisterRequest(Role role, String id, String name, Integer enrollmentYear, String department,
+				String password) {
+			this(role, id, name, enrollmentYear, department, password, null);
+		}
 
 		public static RegisterRequest student(String id, String name, int enrollmentYear, String password) {
-			return new RegisterRequest(Role.STUDENT, id, name, enrollmentYear, null, password);
+			return new RegisterRequest(Role.STUDENT, id, name, enrollmentYear, null, password, null);
 		}
 
 		public static RegisterRequest professor(String id, String name, String department, String password) {
-			return new RegisterRequest(Role.PROFESSOR, id, name, null, department, password);
+			return new RegisterRequest(Role.PROFESSOR, id, name, null, department, password, null);
 		}
 
 		public static RegisterRequest admin(String id, String password) {
-			return new RegisterRequest(Role.ADMIN, id, null, null, null, password);
+			return new RegisterRequest(Role.ADMIN, id, null, null, null, password, null);
 		}
 
 		/** @return the requested role, STUDENT when omitted */

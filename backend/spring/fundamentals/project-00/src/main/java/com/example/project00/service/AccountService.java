@@ -3,6 +3,7 @@ package com.example.project00.service;
 import com.example.project00.domain.Professor;
 import com.example.project00.domain.Student;
 import com.example.project00.domain.UserAccount;
+import java.util.Locale;
 import com.example.project00.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,9 +47,21 @@ public class AccountService {
 	 * @throws DuplicateResourceException if the student id or username is already taken
 	 */
 	public Student registerStudent(String studentId, String name, int enrollmentYear, String rawPassword) {
+		return registerStudent(studentId, name, enrollmentYear, null, rawPassword);
+	}
+
+	/**
+	 * Self-registration with an optional email that can also be used to log in.
+	 * @throws DuplicateResourceException if the student id, username or email is already taken
+	 */
+	public Student registerStudent(String studentId, String name, int enrollmentYear, String email,
+			String rawPassword) {
 		requireFreeUsername(studentId);
+		String normalizedEmail = normalizeEmail(email);
+		requireFreeEmail(normalizedEmail);
 		Student student = studentService.enroll(studentId, name, enrollmentYear);
-		userAccountRepository.save(UserAccount.forStudent(student, passwordEncoder.encode(rawPassword)));
+		userAccountRepository
+			.save(UserAccount.forStudent(student, passwordEncoder.encode(rawPassword)).withEmail(normalizedEmail));
 		return student;
 	}
 
@@ -58,9 +71,21 @@ public class AccountService {
 	 * @throws DuplicateResourceException if the employee id or username is already taken
 	 */
 	public Professor registerProfessor(String employeeId, String name, String department, String rawPassword) {
+		return registerProfessor(employeeId, name, department, null, rawPassword);
+	}
+
+	/**
+	 * Hires a professor with an optional email that can also be used to log in.
+	 * @throws DuplicateResourceException if the employee id, username or email is already taken
+	 */
+	public Professor registerProfessor(String employeeId, String name, String department, String email,
+			String rawPassword) {
 		requireFreeUsername(employeeId);
+		String normalizedEmail = normalizeEmail(email);
+		requireFreeEmail(normalizedEmail);
 		Professor professor = professorService.hire(employeeId, name, department);
-		userAccountRepository.save(UserAccount.forProfessor(professor, passwordEncoder.encode(rawPassword)));
+		userAccountRepository.save(
+				UserAccount.forProfessor(professor, passwordEncoder.encode(rawPassword)).withEmail(normalizedEmail));
 		return professor;
 	}
 
@@ -73,8 +98,20 @@ public class AccountService {
 		return userAccountRepository.save(UserAccount.forAdmin(username, passwordEncoder.encode(rawPassword)));
 	}
 
+	private static String normalizeEmail(String email) {
+		return email == null || email.isBlank() ? null : email.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private void requireFreeEmail(String email) {
+		if (email != null && (email.equalsIgnoreCase(adminUsername) || userAccountRepository.existsByEmail(email)
+				|| userAccountRepository.existsByUsername(email))) {
+			throw new DuplicateResourceException("Account", email);
+		}
+	}
+
 	private void requireFreeUsername(String username) {
-		if (username.equalsIgnoreCase(adminUsername) || userAccountRepository.existsByUsername(username)) {
+		if (username.equalsIgnoreCase(adminUsername) || userAccountRepository.existsByUsername(username)
+				|| (username.contains("@") && userAccountRepository.existsByEmail(username.toLowerCase(Locale.ROOT)))) {
 			throw new DuplicateResourceException("Account", username);
 		}
 	}

@@ -20,6 +20,7 @@ export interface RegisterRequest {
   name?: string;
   enrollmentYear?: number;
   department?: string;
+  email?: string;
   password: string;
 }
 export interface RegisterResponse {

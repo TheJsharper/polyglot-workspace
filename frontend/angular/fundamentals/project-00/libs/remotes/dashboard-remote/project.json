@@ -15,7 +15,7 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/libs/remotes/dashboard-remote",
+        "outputPath": "dist/libs/remotes/dashboard_remote",
         "index": "libs/remotes/dashboard-remote/src/index.html",
         "main": "libs/remotes/dashboard-remote/src/main.ts",
         "tsConfig": "libs/remotes/dashboard-remote/tsconfig.app.json",
@@ -72,8 +72,8 @@
       "executor": "@nx/angular:dev-server",
       "defaultConfiguration": "development",
       "options": {
-        "port": 4201,
-        "publicHost": "http://localhost:4201",
+        "port": 4301,
+        "publicHost": "http://localhost:4301",
         "headers": {
           "Access-Control-Allow-Origin": "*"
         }
@@ -85,10 +85,7 @@
         "development": {
           "buildTarget": "dashboard_remote:build:development"
         }
-      },
-      "dependsOn": [
-        "web-app:serve"
-      ]
+      }
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
@@ -114,7 +111,7 @@
       "defaultConfiguration": "production",
       "options": {
         "buildTarget": "dashboard_remote:build",
-        "port": 4201,
+        "port": 4301,
         "watch": false
       },
       "configurations": {

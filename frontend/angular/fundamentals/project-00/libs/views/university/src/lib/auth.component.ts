@@ -12,7 +12,7 @@ import type { RegisterRequest } from '@project-00/services-api';
     <section class="auth">
       <h1>Log in</h1>
       <form (ngSubmit)="submit()">
-        <label>Username <input name="username" [(ngModel)]="username" required autocomplete="username" /></label>
+        <label>Username or email <input name="username" [(ngModel)]="username" required autocomplete="username" /></label>
         <label>Password <input name="password" [(ngModel)]="password" required type="password" autocomplete="current-password" /></label>
         <button type="submit" [disabled]="busy()">Log in</button>
       </form>
@@ -66,7 +66,7 @@ export class LoginComponent {
             @if (session.user()?.role === 'ADMIN') { <option value="ADMIN">Admin</option> }
           </select>
         </label>
-        <label>Username / ID <input name="id" [(ngModel)]="id" required maxlength="20" /></label>
+        <label>Username / ID (max 20 characters, used to log in) <input name="id" [(ngModel)]="id" required maxlength="20" /></label>
         @if (role !== 'ADMIN') {
           <label>Full name <input name="name" [(ngModel)]="name" required /></label>
         }
@@ -75,6 +75,9 @@ export class LoginComponent {
         }
         @if (role === 'PROFESSOR') {
           <label>Department <input name="department" [(ngModel)]="department" required /></label>
+        }
+        @if (role !== 'ADMIN') {
+          <label>Email (optional, can be used to log in) <input name="email" [(ngModel)]="email" type="email" maxlength="254" autocomplete="email" /></label>
         }
         <label>Password <input name="password" [(ngModel)]="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
         <button type="submit" [disabled]="busy()">Register</button>
@@ -97,6 +100,7 @@ export class RegisterComponent {
   protected id = '';
   protected name = '';
   protected department = '';
+  protected email = '';
   protected enrollmentYear: number | undefined;
   protected password = '';
 
@@ -112,10 +116,11 @@ export class RegisterComponent {
         name: this.role === 'ADMIN' ? undefined : this.name,
         enrollmentYear: this.role === 'STUDENT' ? this.enrollmentYear : undefined,
         department: this.role === 'PROFESSOR' ? this.department : undefined,
+        email: this.role !== 'ADMIN' && this.email.trim() ? this.email.trim() : undefined,
         password: this.password,
       });
       this.password = '';
-      this.success.set(`${result.username} registered. ${this.session.authenticated() ? '' : 'Log in to continue.'}`);
+      this.success.set(`${result.username} registered. ${this.session.authenticated() ? '' : `Log in with username "${result.username}" and your password.`}`);
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : String(error));
     } finally {
