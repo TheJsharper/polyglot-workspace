@@ -4,8 +4,6 @@ import { selectSidenavOpened, selectTheme } from '@project-00/services-state';
 import { provideShell } from './provide-shell';
 import { ShellComponent } from './shell.component';
 
-vi.mock('dashboard_remote/Routes', () => ({ remoteRoutes: [] }));
-
 describe('ShellComponent', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -17,7 +15,7 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const labels = Array.from(el.querySelectorAll('[matListItemTitle]')).map((n) => n.textContent);
-    expect(labels).toEqual(['Home', 'Dashboard', 'University']);
+    expect(labels).toEqual(['University']);
     expect(el.querySelector('router-outlet')).not.toBeNull();
   });
 

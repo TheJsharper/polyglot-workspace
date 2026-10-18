@@ -38,7 +38,7 @@ export class ShellComponent {
     });
   }
 
-  readonly appTitle = input('Web App');
+  readonly appTitle = input('University');
 
   protected readonly menuItems = this.store.selectSignal(selectMenuItems);
   protected readonly sidenavOpened = this.store.selectSignal(selectSidenavOpened);

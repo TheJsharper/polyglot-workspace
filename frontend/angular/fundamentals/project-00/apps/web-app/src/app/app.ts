@@ -5,6 +5,6 @@ import { ShellComponent } from '@project-00/shells-main';
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ShellComponent],
-  template: '<app-shell appTitle="Web App" />',
+  template: '<app-shell appTitle="University" />',
 })
 export class App {}

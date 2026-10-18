@@ -32,11 +32,7 @@
         ],
         "styles": [
           "apps/web-app/src/styles.scss"
-        ],
-        "customWebpackConfig": {
-          "path": "apps/web-app/webpack.config.ts"
-        },
-        "indexHtmlTransformer": "tools/mf-index-html.ts"
+        ]
       },
       "configurations": {
         "production": {
@@ -52,10 +48,7 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all",
-          "customWebpackConfig": {
-            "path": "apps/web-app/webpack.prod.config.ts"
-          }
+          "outputHashing": "all"
         },
         "development": {
           "buildOptimizer": false,
@@ -69,7 +62,7 @@
     },
     "serve": {
       "continuous": true,
-      "executor": "@nx/angular:module-federation-dev-server",
+      "executor": "@nx/angular:dev-server",
       "defaultConfiguration": "development",
       "options": {
         "port": 4300,

@@ -18,14 +18,14 @@ nx run app:run-ios
 
 The University API screens (login, register, role-aware CRUD and relationships) and the `EXPO_PUBLIC_API_URL` setting are documented in [the app README](app/README.md).
 
-The app root is [`src/main.ts`](app/src/main.ts); the native shell combines a left drawer, main content outlet and native Home/Dashboard bottom tabs. Shared menu entries and Home/Dashboard stats come from `libs/services/core`; native screens render those values with ng-native components. The web `MainLayoutComponent` depends on Material/CDK, and the web dashboard is loaded by Module Federation, so neither can be imported into the native runtime. The app's own [`AGENTS.md`](app/AGENTS.md) documents native component, event, styling, routing and testing conventions.
+The app root is [`src/main.ts`](app/src/main.ts); the native shell combines a left drawer, main content outlet and native Home/Dashboard bottom tabs. Shared menu entries and Home/Dashboard stats come from `libs/services/core`; native screens render those values with ng-native components. The browser shell filters the shared menu to University and uses Material/CDK, so browser UI components are not imported into the native runtime. The app's own [`AGENTS.md`](app/AGENTS.md) documents native component, event, styling, routing and testing conventions.
 
 ## Native boundary
 
 ng-native renders Angular components as native views through its renderer and React Native Fabric, not HTML in a WebView. Import each native component from `@ng-native/components` and use lowercase tags such as `<view>` and `<text>`. Expo/Metro handles native development and bundling; the browser host's Angular/Webpack build does not.
 
 - Do not use browser `document`/`window`, Angular Material, DOM-dependent effects from `libs/services/state`, or browser-only image and animation APIs. Reuse code only after checking that its imports are platform-neutral.
-- The web host's Webpack Module Federation is **not** native navigation. Do not import `dashboard_remote/Routes` into this app; follow the ng-native router guidance if adding native navigation.
+- Browser routes are **not** native navigation. Keep native navigation in `@ng-native/router`; follow its [router guide](https://ng-native.com/packages/router) when adding native navigation.
 - Expo Go does not include every possible native module. Use a development build or release build when a feature requires modules that Expo Go does not contain.
 
 ## Official references
@@ -39,6 +39,6 @@ ng-native renders Angular components as native views through its renderer and Re
 | Renderer and native navigation | [Architecture](https://ng-native.com/guide/architecture) |
 | DOM and feature limitations | [Known limitations](https://ng-native.com/guide/limitations) |
 
-The app uses `@ng-native/router` with `react-native-screens` for native route stacks and bottom tabs. The left drawer and routed feature pages are native UI; the same `MAIN_MENU`, Home stats and Dashboard stats are shared with the web application from `libs/services/core`.
+The app uses `@ng-native/router` with `react-native-screens` for native route stacks and bottom tabs. The left drawer and routed feature pages are native UI. `libs/services/core` retains platform-neutral `MAIN_MENU`, Home stats and Dashboard stats for the native app; the browser shell independently filters its menu to University.
 
 For project-specific mobile work, load the [ng-native mobile skill](../../.github/skills/ng-native-mobile/SKILL.md).

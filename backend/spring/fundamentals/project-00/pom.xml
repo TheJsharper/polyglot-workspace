@@ -104,6 +104,17 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<environmentVariables>
+						<ADMIN_USERNAME>admin</ADMIN_USERNAME>
+						<ADMIN_PASSWORD>test-admin-password</ADMIN_PASSWORD>
+						<JWT_SECRET>test-only-secret-0123456789-abcdefghijklmnopqrstuvwxyz</JWT_SECRET>
+					</environmentVariables>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<executions>
 					<execution>

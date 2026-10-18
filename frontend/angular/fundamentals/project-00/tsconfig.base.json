@@ -24,15 +24,6 @@
       "@project-00/layouts-main-layout": [
         "./libs/layouts/main-layout/src/index.ts"
       ],
-      "@project-00/views-home": [
-        "./libs/views/home/src/index.ts"
-      ],
-      "@project-00/dashboards-main": [
-        "./libs/dashboards/main/src/index.ts"
-      ],
-      "@project-00/widgets-ui": [
-        "./libs/widgets/ui/src/index.ts"
-      ],
       "@project-00/shared-ui": [
         "./libs/shared/ui/src/index.ts"
       ],
@@ -50,9 +41,6 @@
       ],
       "@project-00/services-core": [
         "./libs/services/core/src/index.ts"
-      ],
-      "dashboard_remote/Routes": [
-        "./libs/remotes/dashboard-remote/src/app/remote-entry/entry.routes.ts"
       ]
     }
   },

@@ -37,10 +37,7 @@
       ],
       "inputs": [
         "default",
-        "^default",
-        {
-          "env": "NX_MF_DEV_REMOTES"
-        }
+        "^default"
       ]
     }
   },

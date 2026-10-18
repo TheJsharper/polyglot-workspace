@@ -6,10 +6,9 @@ describe('MainLayoutComponent', () => {
   async function setup() {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(MainLayoutComponent);
-    fixture.componentRef.setInput('appTitle', 'Web App');
+    fixture.componentRef.setInput('appTitle', 'University');
     fixture.componentRef.setInput('menuItems', [
-      { id: 'home', label: 'Home', icon: 'home', route: '/' },
-      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
+      { id: 'university', label: 'University', icon: 'school', route: '/university' },
     ]);
     await fixture.whenStable();
     return fixture;
@@ -18,10 +17,10 @@ describe('MainLayoutComponent', () => {
   it('renders the header title and menu items', async () => {
     const fixture = await setup();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.title')?.textContent).toBe('Web App');
+    expect(el.querySelector('.title')?.textContent).toBe('University');
     const links = Array.from(el.querySelectorAll('a[mat-list-item]'));
-    expect(links.map((a) => a.textContent?.trim())).toEqual(['homeHome', 'dashboardDashboard']);
-    expect(links[1].getAttribute('href')).toBe('/dashboard');
+    expect(links.map((a) => a.textContent?.trim())).toEqual(['schoolUniversity']);
+    expect(links[0].getAttribute('href')).toBe('/university');
   });
 
   it('emits menu and theme toggles', async () => {

@@ -3,6 +3,13 @@
 A layered Spring Boot 4 application (Java 25, Spring Data JPA, in-memory H2, Spring Security with JWT) that manages courses, lectures,
 professors, students and lecture notes.
 
+## Configuration
+
+Secrets and database settings are not stored in the repository. Copy [.env.example](.env.example) to `.env`
+(git-ignored) and fill in the values; the app loads it from the working directory, and real environment variables
+override it. `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `JWT_SECRET` (at least 32 bytes) are required, with no defaults.
+Tests use their own throwaway values from the Surefire configuration in `pom.xml`.
+
 ## Run
 
 ```powershell
@@ -74,24 +81,23 @@ name as `sub` and the role in a `roles` claim; they expire after `app.security.j
 
 | Role | How the account is created | May |
 |---|---|---|
-| ADMIN ("superior") | Hard-defined in `application.properties` (`app.security.admin.*`, default `admin` / `admin-change-me`) | Manage courses and professors, register professors, assign teachers, delete students |
+| ADMIN ("superior") | Hard-defined by `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` | Manage courses and professors, register professors, assign teachers, delete students |
 | PROFESSOR | Registered by the admin: `POST /api/professors` with a `password` | Schedule, reschedule, cancel lectures and take attendance for courses they teach; review notes of those courses |
 | STUDENT | Registers themselves: `POST /api/auth/register` | Enroll in / leave courses (`PUT/DELETE /api/courses/{code}/students/{ownId}`), write and manage their own notes |
 
 Usernames are the student id, the employee id or the admin name. Private notes are visible only to their author
 and the professors teaching the course.
 
-Try it in Swagger UI: call `POST /api/auth/login` with `{"username":"admin","password":"admin-change-me"}`, copy
+Try it in Swagger UI: call `POST /api/auth/login` with the admin credentials from your `.env`, copy
 `accessToken`, click **Authorize** and paste it. Or with curl:
 
 ```powershell
 $token = (curl.exe -s -X POST localhost:8080/api/auth/login -H "Content-Type: application/json" `
-  -d '{\"username\":\"admin\",\"password\":\"admin-change-me\"}' | ConvertFrom-Json).accessToken
+  -d "{\"username\":\"admin\",\"password\":\"$env:ADMIN_PASSWORD\"}" | ConvertFrom-Json).accessToken
 curl.exe localhost:8080/api/courses -H "Authorization: Bearer $token"
 ```
 
-> The admin password and `app.security.jwt.secret` (at least 32 bytes) are development defaults; override them,
-> e.g. with `APP_SECURITY_ADMIN_PASSWORD` and `APP_SECURITY_JWT_SECRET` environment variables, outside local use.
+> Set `ADMIN_PASSWORD` in your shell (or paste it) for the snippet above; never commit real values.
 
 ## Tests
 
