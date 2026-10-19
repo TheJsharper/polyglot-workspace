@@ -60,9 +60,18 @@ export async function loadResource(resource: Resource, ctx: LoadContext): Promis
   await ctx.session.run(async () => {
     switch (resource) {
       case 'students':
-        result.data.students = ctx.role === 'STUDENT' && ctx.username
-          ? [await ctx.api.getStudent(ctx.username)]
-          : await ctx.api.listStudents();
+        if (ctx.role === 'STUDENT' && ctx.username) {
+          result.data.students = [await ctx.api.getStudent(ctx.username)];
+        } else if (ctx.role === 'PROFESSOR') {
+          const courses = await ctx.api.listCourses();
+          result.data.courses = courses;
+          const mine = new Set(courses
+            .filter((course) => course.teacherIds?.includes(ctx.username))
+            .flatMap((course) => course.enrolledStudentIds ?? []));
+          result.data.students = (await ctx.api.listStudents()).filter((s) => s.studentId && mine.has(s.studentId));
+        } else {
+          result.data.students = await ctx.api.listStudents();
+        }
         break;
       case 'professors':
         result.data.professors = await ctx.api.listProfessors();
@@ -77,8 +86,16 @@ export async function loadResource(resource: Resource, ctx: LoadContext): Promis
       case 'notes':
         if (ctx.role === 'STUDENT') {
           result.data.notes = ctx.username ? await ctx.api.listNotesByStudent(ctx.username) : [];
-          try { await loadLectures(ctx, result); }
-          catch (reason) { result.choiceErrors.push(`Lectures: ${errorMessage(reason)}`); }
+          try {
+            await loadLectures(ctx, result);
+            const own = result.data.notes;
+            const others = await Promise.all((result.data.lectures ?? [])
+              .filter((lecture) => lecture.id != null)
+              .map((lecture) => ctx.api.listNotesByLecture(lecture.id as number)));
+            const seen = new Set(own.map((note) => note.id));
+            const publicNotes = others.flat().filter((note) => !note.privateNote && !seen.has(note.id));
+            result.data.notes = [...own, ...publicNotes];
+          } catch (reason) { result.choiceErrors.push(`Lectures: ${errorMessage(reason)}`); }
         } else if (ctx.role === 'PROFESSOR') {
           result.data.courses = await ctx.api.listCourses();
           result.data.notes = await ctx.api.listPendingReviewNotes();

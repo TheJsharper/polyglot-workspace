@@ -8,3 +8,21 @@ export const SHELL_MENU: MenuItem[] = [
   { id: 'lectures', label: 'Lectures', icon: 'event', route: '/university/lectures' },
   { id: 'notes', label: 'Notes & reviews', icon: 'rate_review', route: '/university/notes' },
 ];
+
+const ALLOWED: Record<string, readonly string[]> = {
+  STUDENT: ['courses', 'lectures', 'notes'],
+  PROFESSOR: ['students', 'courses', 'lectures', 'notes'],
+  ADMIN: ['students', 'professors', 'courses', 'lectures', 'notes'],
+};
+
+export function allowedResources(role: string | null | undefined): readonly string[] {
+  return (role && ALLOWED[role]) || [];
+}
+
+/** Menu for a role; professors see "My Students" (only students of the courses they teach). */
+export function menuForRole(items: readonly MenuItem[], role: string | null | undefined): MenuItem[] {
+  const allowed = allowedResources(role);
+  return items
+    .filter((item) => allowed.includes(item.id))
+    .map((item) => (role === 'PROFESSOR' && item.id === 'students' ? { ...item, label: 'My Students' } : item));
+}

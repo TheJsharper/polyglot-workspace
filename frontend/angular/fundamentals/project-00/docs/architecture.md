@@ -53,6 +53,16 @@ Run `nx run app:start` for Metro, `nx run app:test` for its Vitest tests, or `nx
 
 Projects carry `type:*` tags; [`eslint.config.mjs`](../eslint.config.mjs) enforces allowed imports with `@nx/enforce-module-boundaries`. Add new projects with an appropriate tag and a matching constraint rather than introducing back-edges.
 
+## Role-based access
+
+`libs/shells/main/src/lib/shell.menu.ts` filters the sidebar by role and `roleGuard` in `shell.routes.ts` redirects forbidden routes to the first allowed item.
+
+| Role | Sidebar items |
+| --- | --- |
+| Student | Courses, Lectures, Notes (own notes plus other students' public notes) |
+| Professor | My Students (only students enrolled in courses they teach), Courses, Lectures, Notes (review) |
+| Admin | All items |
+
 ## University API
 
 The Spring service in `backend/spring/fundamentals/project-00` serves the University API at `http://localhost:8080`; its live contract is `/v3/api-docs` and interactive reference is `/swagger-ui/index.html`. The browser app provides University screens for students, professors, courses, lectures and notes; native Home and Dashboard screens remain separate. Login and registration are available without a session; resource screens require one. Public registration creates a student or professor account; admin registration needs an existing admin token. The server enforces roles and resource ownership even when a UI action is offered.

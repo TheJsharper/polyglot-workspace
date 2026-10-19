@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MainLayoutComponent } from '@project-00/layouts-main-layout';
 import { LayoutActions, selectMenuItems, selectSidenavOpened, selectTheme } from '@project-00/services-state';
 import { UniversitySession } from '@project-00/services-session';
+import { menuForRole } from './shell.menu';
 import { selectUsername } from '@project-00/services-university-state';
 
 @Component({
@@ -41,7 +42,8 @@ export class ShellComponent {
 
   readonly appTitle = input('University');
 
-  protected readonly menuItems = this.store.selectSignal(selectMenuItems);
+  protected readonly menuItems = computed(() => menuForRole(this.allItems(), this.session.user()?.role));
+  private readonly allItems = this.store.selectSignal(selectMenuItems);
   protected readonly username = this.store.selectSignal(selectUsername);
   protected readonly sidenavOpened = this.store.selectSignal(selectSidenavOpened);
   protected readonly theme = this.store.selectSignal(selectTheme);
