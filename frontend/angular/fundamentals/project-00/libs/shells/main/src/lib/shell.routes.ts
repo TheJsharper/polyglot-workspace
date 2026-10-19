@@ -1,11 +1,31 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Route, Router } from '@angular/router';
+import { CanActivateFn, Route, Router, Routes } from '@angular/router';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 import { UniversitySession } from '@project-00/services-session';
+import { RESOURCES, type Resource } from '@project-00/services-university-state';
+import { RemoteUnavailableComponent } from './remote-unavailable.component';
 
 const universityGuard: CanActivateFn = (_route, state) =>
   inject(UniversitySession).authenticated()
     ? true
     : inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+
+/**
+ * Lazily loads a University remote (Native Federation). Remote names match the keys in
+ * `federation.manifest.json`; each remote exposes `./Routes` exporting `routes`.
+ */
+export function remoteRoute(remote: Resource): Route {
+  return {
+    path: remote,
+    loadChildren: () =>
+      loadRemoteModule<{ routes: Routes }>(remote, './Routes')
+        .then((m) => m.routes)
+        .catch((error: unknown): Routes => {
+          console.error(`Failed to load the "${remote}" remote`, error);
+          return [{ path: '**', component: RemoteUnavailableComponent, data: { remote } }];
+        }),
+  };
+}
 
 export const shellRoutes: Route[] = [
   {
@@ -21,8 +41,11 @@ export const shellRoutes: Route[] = [
   {
     path: 'university',
     canActivate: [universityGuard],
-    loadChildren: () =>
-      import('@project-00/views-university').then((m) => m.universityRoutes),
+    children: [
+      ...RESOURCES.map(remoteRoute),
+      { path: '', pathMatch: 'full', redirectTo: 'students' },
+      { path: '**', redirectTo: 'students' },
+    ],
   },
   {
     path: '',

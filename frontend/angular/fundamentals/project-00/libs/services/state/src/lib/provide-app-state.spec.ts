@@ -1,11 +1,11 @@
-import { TestBed } from '@angular/core/testing';
+﻿import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { firstValueFrom } from 'rxjs';
 import { LayoutActions, selectTheme } from './layout/layout.feature';
 import { MENU_CONFIG } from './navigation/menu-config.token';
 import { selectMenuItems } from './navigation/navigation.feature';
-import { provideAppState } from './provide-app-state';
+import { provideAppState, redactPasswords } from './provide-app-state';
 
 describe('provideAppState', () => {
   const menuItems = [{ id: 'home', label: 'Home', icon: 'home', route: '/' }];
@@ -39,5 +39,14 @@ describe('provideAppState', () => {
     store.dispatch(LayoutActions.toggleTheme());
     expect(document.documentElement.classList.contains('dark-theme')).toBe(true);
     expect(localStorage.getItem('app.theme')).toBe('dark');
+  });
+
+  it('redacts passwords from actions sent to the devtools', () => {
+    const action = { type: 'run', operation: { type: 'createProfessor', request: { username: 'p1', password: 'secret' } } };
+    expect(redactPasswords(action)).toEqual({
+      type: 'run',
+      operation: { type: 'createProfessor', request: { username: 'p1', password: '[redacted]' } },
+    });
+    expect(action.operation.request.password).toBe('secret');
   });
 });

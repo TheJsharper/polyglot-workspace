@@ -1,0 +1,7 @@
+{
+  "students": "http://localhost:4301/remoteEntry.json",
+  "professors": "http://localhost:4302/remoteEntry.json",
+  "courses": "http://localhost:4303/remoteEntry.json",
+  "lectures": "http://localhost:4304/remoteEntry.json",
+  "notes": "http://localhost:4305/remoteEntry.json"
+}

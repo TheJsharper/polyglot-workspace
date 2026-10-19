@@ -9,73 +9,32 @@
   ],
   "targets": {
     "build": {
-      "executor": "@nx/angular:webpack-browser",
-      "dependsOn": [
-        "lint",
-        "^build"
-      ],
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "defaultConfiguration": "production",
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "outputPath": "dist/apps/web-app",
-        "index": "apps/web-app/src/index.html",
-        "main": "apps/web-app/src/main.ts",
-        "tsConfig": "apps/web-app/tsconfig.app.json",
-        "inlineStyleLanguage": "scss",
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "apps/web-app/public"
-          }
-        ],
-        "styles": [
-          "apps/web-app/src/styles.scss"
-        ]
+        "cacheExternalArtifacts": true,
+        "tsConfig": "apps/web-app/tsconfig.federation.json"
       },
       "configurations": {
         "production": {
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
-              "maximumError": "8kb"
-            }
-          ],
-          "outputHashing": "all"
+          "target": "web-app:esbuild:production"
         },
         "development": {
-          "buildOptimizer": false,
-          "optimization": false,
-          "vendorChunk": true,
-          "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
+          "target": "web-app:esbuild:development",
+          "dev": true
         }
-      }
+      },
+      "defaultConfiguration": "production"
     },
     "serve": {
-      "continuous": true,
-      "executor": "@nx/angular:dev-server",
-      "defaultConfiguration": "development",
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "port": 4300,
-        "publicHost": "http://localhost:4300",
-        "proxyConfig": "apps/web-app/proxy.conf.json"
-      },
-      "configurations": {
-        "production": {
-          "buildTarget": "web-app:build:production"
-        },
-        "development": {
-          "buildTarget": "web-app:build:development"
-        }
+        "target": "web-app:serve-original:development",
+        "tsConfig": "apps/web-app/tsconfig.federation.json",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 0
       }
     },
     "extract-i18n": {
@@ -103,6 +62,79 @@
         "buildTarget": "web-app:build",
         "port": 4300,
         "spa": true
+      }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
+      "dependsOn": [
+        "lint",
+        "^build"
+      ],
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/web-app",
+        "index": "apps/web-app/src/index.html",
+        "tsConfig": "apps/web-app/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/web-app/public"
+          },
+          {
+            "glob": "es-module-shims.js",
+            "input": "node_modules/es-module-shims/dist",
+            "output": "."
+          }
+        ],
+        "styles": [
+          "apps/web-app/src/styles.scss"
+        ],
+        "browser": "apps/web-app/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "6kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      }
+    },
+    "serve-original": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4300,
+        "publicHost": "http://localhost:4300",
+        "proxyConfig": "apps/web-app/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "web-app:esbuild:production"
+        },
+        "development": {
+          "buildTarget": "web-app:esbuild:development"
+        }
       }
     }
   }

@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { MainLayoutComponent } from '@project-00/layouts-main-layout';
 import { LayoutActions, selectMenuItems, selectSidenavOpened, selectTheme } from '@project-00/services-state';
 import { UniversitySession } from '@project-00/services-session';
+import { selectUsername } from '@project-00/services-university-state';
 
 @Component({
   selector: 'app-shell',
@@ -15,7 +16,7 @@ import { UniversitySession } from '@project-00/services-session';
       [menuItems]="menuItems()"
       [sidenavOpened]="sidenavOpened()"
       [theme]="theme()"
-      [username]="session.user()?.username ?? null"
+      [username]="username() || null"
       (menuToggle)="toggleSidenav()"
       (themeToggle)="toggleTheme()"
       (authAction)="authAction()"
@@ -41,6 +42,7 @@ export class ShellComponent {
   readonly appTitle = input('University');
 
   protected readonly menuItems = this.store.selectSignal(selectMenuItems);
+  protected readonly username = this.store.selectSignal(selectUsername);
   protected readonly sidenavOpened = this.store.selectSignal(selectSidenavOpened);
   protected readonly theme = this.store.selectSignal(selectTheme);
 

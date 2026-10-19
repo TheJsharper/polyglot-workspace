@@ -1,0 +1,24 @@
+{
+  "name": "services-university-state",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/services/university-state/src",
+  "prefix": "app",
+  "projectType": "library",
+  "tags": [
+    "type:service"
+  ],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "coverage/libs/services/university-state"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -30,6 +30,9 @@
       "@project-00/services-state": [
         "./libs/services/state/src/index.ts"
       ],
+      "@project-00/services-university-state": [
+        "./libs/services/university-state/src/index.ts"
+      ],
       "@project-00/services-session": [
         "./libs/services/session/src/index.ts"
       ],

@@ -1,0 +1,127 @@
+{
+  "name": "remote-lectures",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/remotes/lectures/src",
+  "tags": [
+    "type:remote"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "cacheExternalArtifacts": true,
+        "tsConfig": "apps/remotes/lectures/tsconfig.federation.json"
+      },
+      "configurations": {
+        "production": {
+          "target": "remote-lectures:esbuild:production"
+        },
+        "development": {
+          "target": "remote-lectures:esbuild:development",
+          "dev": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-architects/native-federation:build",
+      "continuous": true,
+      "options": {
+        "target": "remote-lectures:serve-original:development",
+        "tsConfig": "apps/remotes/lectures/tsconfig.federation.json",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 0
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "coverage/apps/remotes/lectures"
+      }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
+      "dependsOn": [
+        "lint",
+        "^build"
+      ],
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/remotes/lectures",
+        "index": "apps/remotes/lectures/src/index.html",
+        "tsConfig": "apps/remotes/lectures/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/remotes/lectures/public"
+          },
+          {
+            "glob": "es-module-shims.js",
+            "input": "node_modules/es-module-shims/dist",
+            "output": "."
+          }
+        ],
+        "styles": [
+          "apps/remotes/lectures/src/styles.scss"
+        ],
+        "browser": "apps/remotes/lectures/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "6kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      }
+    },
+    "serve-original": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4304,
+        "publicHost": "http://localhost:4304",
+        "proxyConfig": "apps/web-app/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "remote-lectures:esbuild:production"
+        },
+        "development": {
+          "buildTarget": "remote-lectures:esbuild:development"
+        }
+      }
+    }
+  }
+}

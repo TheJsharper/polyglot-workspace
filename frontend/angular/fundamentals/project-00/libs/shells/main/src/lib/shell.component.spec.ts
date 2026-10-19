@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+﻿import { TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { selectSidenavOpened, selectTheme } from '@project-00/services-state';
 import { provideShell } from './provide-shell';
@@ -15,7 +15,7 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const labels = Array.from(el.querySelectorAll('[matListItemTitle]')).map((n) => n.textContent);
-    expect(labels).toEqual(['University']);
+    expect(labels).toEqual(['Students', 'Professors', 'Courses', 'Lectures', 'Notes & reviews']);
     expect(el.querySelector('router-outlet')).not.toBeNull();
   });
 
