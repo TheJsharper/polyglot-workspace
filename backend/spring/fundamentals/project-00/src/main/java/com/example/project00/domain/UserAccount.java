@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserAccount extends BaseEntity {
 
-	@Column(nullable = false, unique = true, length = 20)
+	@Column(nullable = false, unique = true, length = 254)
 	private String username;
 
 	@Column(unique = true, length = 254)

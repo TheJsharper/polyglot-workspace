@@ -28,7 +28,7 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Professor extends BaseEntity {
 
-	@Column(name = "employee_id", nullable = false, unique = true, length = 20)
+	@Column(name = "employee_id", nullable = false, unique = true, length = 254)
 	private String employeeId;
 
 	@Setter

@@ -66,7 +66,7 @@ export class LoginComponent {
             @if (session.user()?.role === 'ADMIN') { <option value="ADMIN">Admin</option> }
           </select>
         </label>
-        <label>Username / ID (max 20 characters, used to log in) <input name="id" [(ngModel)]="id" required maxlength="20" /></label>
+        <label>Username / ID (max 254 characters, used to log in) <input name="id" [(ngModel)]="id" required maxlength="254" /></label>
         @if (role !== 'ADMIN') {
           <label>Full name <input name="name" [(ngModel)]="name" required /></label>
         }

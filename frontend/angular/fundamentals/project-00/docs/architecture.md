@@ -10,7 +10,7 @@ This workspace uses Nx 23 and Angular 22 for a browser application, reusable lib
 
 ## Micro-frontends (Native Federation)
 
-`web-app` is a dynamic Native Federation host. [`main.ts`](../apps/web-app/src/main.ts) calls `initFederation('federation.manifest.json')` before bootstrapping; [`public/federation.manifest.json`](../apps/web-app/public/federation.manifest.json) maps remote names to their `remoteEntry.json` URLs, so deployments can point at other origins without rebuilding the host. The `es-module-shims` polyfill is copied from `node_modules` as an asset and loaded by a `<script type="module">` in each `index.html` (not via `polyfills`), which keeps the Vite dev server from re-analysing its intentional dynamic `import()` calls.
+`web-app` is a dynamic Native Federation host. [`main.ts`](../apps/web-app/src/main.ts) calls `initFederation('federation.manifest.json')` before bootstrapping; [`public/federation.manifest.json`](../apps/web-app/public/federation.manifest.json) maps remote names to their `remoteEntry.json` URLs, so deployments can point at other origins without rebuilding the host. The `es-module-shims` polyfill is copied from `node_modules` as an asset and loaded by a deferred classic `<script>` (preceded by `<script type="esms-options">{"shimMode":true}</script>`) in each `index.html`, not via `polyfills`, which keeps the Vite dev server from re-analysing its intentional dynamic `import()` calls.
 
 | Sidebar item | Remote project | Folder | Dev port |
 | --- | --- | --- | --- |
@@ -70,7 +70,7 @@ From the workspace directory, use Node >= 22.22.3 and run:
 ```text
 npx nx run-many -t lint test -p web-app shells-main layouts-main views-university
 npx nx run web-app:build
-npx nx serve web-app
+npm start
 ```
 
-Use narrower project targets when editing a single library. The browser build depends on lint; Angular library tests use Vitest/Analog, and `libs/services/core` uses Vitest. The root `npm test` script is a placeholder and is not the project test runner. The browser app serves at `http://localhost:4300/`; port 4200 is occupied by Docker on this machine, so the browser app is pinned to 4300 and the remotes use 4301-4305. A remote that is not running shows an "unavailable" notice in the content area. Stop old dev servers before reusing the port.
+Use narrower project targets when editing a single library. The browser build depends on lint; Angular library tests use Vitest/Analog, and `libs/services/core` uses Vitest. The root `npm test` script is a placeholder and is not the project test runner. The browser app serves at `http://localhost:4300/`; port 4200 is occupied by Docker on this machine, so the browser app is pinned to 4300 and the remotes use 4301-4305. A remote that is not running shows an "unavailable" notice in the content area. Stop old dev servers before reusing the port. Start the host with `serve` (or `npm start`, which serves the host and all five remotes), never `serve-original`: only `serve` wraps the dev server with the Native Federation builder that publishes the host `remoteEntry.json` and its shared Angular chunks; with `serve-original` the remotes load a second Angular copy and show "unavailable".

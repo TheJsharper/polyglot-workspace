@@ -16,7 +16,7 @@ public final class StudentDtos {
 
 	@Schema(description = "Data needed to enroll a student")
 	public record CreateStudentRequest(
-			@Schema(description = "Unique student id", example = "S-1", maxLength = 20) @NotBlank @Size(max = 20) String studentId,
+			@Schema(description = "Unique student id", example = "S-1", maxLength = 254) @NotBlank @Size(max = 254) String studentId,
 			@Schema(description = "Full name", example = "Alan Turing") @NotBlank String name,
 			@Schema(description = "Year of enrollment", example = "2025", minimum = "1900") @Min(1900) int enrollmentYear) {
 	}

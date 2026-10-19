@@ -21,7 +21,7 @@ public final class AuthDtos {
 			+ "The id becomes the login username.")
 	public record RegisterRequest(
 			@Schema(description = "Role to register; defaults to STUDENT", example = "STUDENT") Role role,
-			@Schema(description = "Student id, employee id or admin username", example = "S-1", maxLength = 20) @NotBlank @Size(max = 20) String id,
+			@Schema(description = "Student id, employee id or admin username", example = "S-1", maxLength = 254) @NotBlank @Size(max = 254) String id,
 			@Schema(description = "Full name (required for STUDENT and PROFESSOR)", example = "Alan Turing") String name,
 			@Schema(description = "Year of enrollment (STUDENT only)", example = "2025", minimum = "1900") @Min(1900) Integer enrollmentYear,
 			@Schema(description = "Department (PROFESSOR only)", example = "Computer Science") String department,

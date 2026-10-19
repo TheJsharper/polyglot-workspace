@@ -15,7 +15,7 @@ public final class ProfessorDtos {
 
 	@Schema(description = "Data needed to hire a professor and create their login account (username = employee id)")
 	public record CreateProfessorRequest(
-			@Schema(description = "Unique employee id", example = "E-1", maxLength = 20) @NotBlank @Size(max = 20) String employeeId,
+			@Schema(description = "Unique employee id", example = "E-1", maxLength = 254) @NotBlank @Size(max = 254) String employeeId,
 			@Schema(description = "Full name", example = "Ada Lovelace") @NotBlank String name,
 			@Schema(description = "Department", example = "Computer Science") @NotBlank String department,
 			@Schema(description = "Initial password (8-72 characters)", example = "s3cret-pass", minLength = 8, maxLength = 72,

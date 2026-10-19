@@ -4,6 +4,7 @@
   "description": "demo project",
   "main": "index.js",
   "scripts": {
+    "start": "nx run-many -t serve -p web-app remote-students remote-professors remote-courses remote-lectures remote-notes --parallel=6",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Pedro Salomon",
