@@ -28,6 +28,15 @@ For the H2 console, use JDBC URL `jdbc:h2:mem:project00`, username `sa`, and lea
 is enabled for local development and is publicly accessible; do not expose it in production. The database is in
 memory, so data is lost on restart. DevTools restarts the app when classes change.
 
+## Profiles and demo data
+
+| Profile | Activation | Behaviour |
+| --- | --- | --- |
+| `dev` (default) | no `SPRING_PROFILES_ACTIVE` | H2 console and Swagger UI on; seeds demo data on an empty database |
+| `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no demo data |
+
+The `dev` seed (`config/DemoDataInitializer`) creates professors `prof-ada`, `prof-alan`, `prof-marie`, students `stud-anna`, `stud-ben`, `stud-carla`, `stud-david` and courses `CS101`, `CS201`, `MA101`, `PH101` with teachers and enrollments. All demo accounts use the password `Password-123`. Tests run with the `test` profile, so nothing is seeded.
+
 ## Architecture
 
 Dependencies only point downwards.
