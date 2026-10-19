@@ -1,11 +1,11 @@
 {
   "extends": "./tsconfig.app.json",
   "files": [
-    "../../libs/services/state/src/index.ts",
     "../../libs/services/session/src/index.ts",
+    "../../libs/services/api/src/index.ts",
+    "../../libs/services/state/src/index.ts",
     "../../libs/services/university-state/src/index.ts",
     "../../libs/services/core/src/index.ts",
-    "../../libs/services/api/src/index.ts",
     "../../libs/views/university/src/index.ts"
   ],
   "include": [

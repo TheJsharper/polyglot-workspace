@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Route, Router, Routes } from '@angular/router';
 import { loadRemoteModule } from '@angular-architects/native-federation';
-import { UniversitySession } from '@project-00/services-session';
+import { DEMO_ENABLED, UniversitySession } from '@project-00/services-session';
 import { RESOURCES, type Resource } from '@project-00/services-university-state';
 import { RemoteUnavailableComponent } from './remote-unavailable.component';
 import { allowedResources } from './shell.menu';
@@ -10,6 +10,9 @@ const universityGuard: CanActivateFn = (_route, state) =>
   inject(UniversitySession).authenticated()
     ? true
     : inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+
+const demoGuard: CanActivateFn = () =>
+  inject(DEMO_ENABLED) ? true : inject(Router).createUrlTree(['/login']);
 
 const roleGuard: CanActivateFn = (route) => {
   const allowed = allowedResources(inject(UniversitySession).user()?.role);
@@ -45,6 +48,12 @@ export const shellRoutes: Route[] = [
     path: 'register',
     loadComponent: () =>
       import('@project-00/views-university').then((m) => m.RegisterComponent),
+  },
+  {
+    path: 'demo',
+    canActivate: [demoGuard],
+    loadComponent: () =>
+      import('@project-00/views-university').then((m) => m.DemoComponent),
   },
   {
     path: 'university',

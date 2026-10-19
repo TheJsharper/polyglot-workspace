@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { UniversitySession } from '@project-00/services-session';
-import { LoginComponent, RegisterComponent } from './auth.component';
+import { DEMO_ENABLED, UniversitySession } from '@project-00/services-session';
+import { DemoComponent, LoginComponent, RegisterComponent } from './auth.component';
 
 @Component({ template: '' })
 class EmptyPage {}
@@ -30,6 +30,45 @@ describe('University authentication', () => {
     await fixture.whenStable();
 
     expect(login).toHaveBeenCalledWith({ username: 'S-1', password: 'test-password' });
+  });
+
+  it('starts a demo session with the chosen persona', async () => {
+    const redeemDemo = vi.fn().mockResolvedValue({ username: 'stud-anna', role: 'STUDENT' });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: 'university', component: EmptyPage }]),
+        { provide: UniversitySession, useValue: { redeemDemo } },
+      ],
+    });
+    const fixture = TestBed.createComponent(DemoComponent);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const input = root.querySelector<HTMLTextAreaElement>('textarea[name=token]')!;
+    input.value = ' DEMO-AAAAAA ';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    root.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+
+    expect(redeemDemo).toHaveBeenCalledWith({ token: 'DEMO-AAAAAA', persona: 'STUDENT' });
+  });
+
+  it('shows the recruiter demo link only when the demo environment is enabled', async () => {
+    const link = async (enabled: boolean) => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter([]),
+          { provide: UniversitySession, useValue: { login: vi.fn() } },
+          { provide: DEMO_ENABLED, useValue: enabled },
+        ],
+      });
+      const fixture = TestBed.createComponent(LoginComponent);
+      await fixture.whenStable();
+      return (fixture.nativeElement as HTMLElement).querySelector('a[href="/demo"]');
+    };
+    expect(await link(false)).toBeNull();
+    expect(await link(true)).not.toBeNull();
   });
 
   it('shows a registration error instead of reporting success', async () => {

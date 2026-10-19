@@ -20,7 +20,7 @@ import com.example.project00.service.CourseService;
  * database has no professors, students or courses yet.
  */
 @Component
-@Profile("dev")
+@Profile({ "dev", "demo" })
 public class DemoDataInitializer implements ApplicationRunner {
 
 	private static final Logger log = LoggerFactory.getLogger(DemoDataInitializer.class);

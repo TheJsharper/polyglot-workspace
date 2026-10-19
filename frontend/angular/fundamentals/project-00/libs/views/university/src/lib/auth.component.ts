@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { UniversitySession } from '@project-00/services-session';
-import type { RegisterRequest } from '@project-00/services-api';
+import { DEMO_ENABLED, UniversitySession } from '@project-00/services-session';
+import type { DemoRedeemRequest, RegisterRequest } from '@project-00/services-api';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +17,7 @@ import type { RegisterRequest } from '@project-00/services-api';
         <button type="submit" [disabled]="busy()">Log in</button>
       </form>
       @if (error()) { <p role="alert">{{ error() }}</p> }
-      <p>No account? <a routerLink="/register">Register</a></p>
+      <p>No account? <a routerLink="/register">Register</a>@if (demoEnabled) { · <a routerLink="/demo">Recruiter demo</a> }</p>
     </section>
   `,
   styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
@@ -25,6 +25,7 @@ import type { RegisterRequest } from '@project-00/services-api';
     input { padding: .7rem; } [role=alert] { color: #a52424; }`],
 })
 export class LoginComponent {
+  protected readonly demoEnabled = inject(DEMO_ENABLED);
   private readonly session = inject(UniversitySession);
   private readonly router = inject(Router);
   protected readonly busy = signal(false);
@@ -43,6 +44,56 @@ export class LoginComponent {
       const destination = typeof requested === 'string' && requested.startsWith('/university')
         ? requested : '/university';
       await this.router.navigateByUrl(destination);
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : String(error));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+}
+
+@Component({
+  selector: 'app-demo',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, RouterLink],
+  template: `
+    <section class="auth">
+      <h1>Recruiter demo</h1>
+      <p>Enter the demo token you received to explore the app in read-only mode.</p>
+      <form (ngSubmit)="submit()">
+        <label>Demo token <textarea name="token" rows="4" [(ngModel)]="token" required maxlength="2048" autocomplete="off" spellcheck="false" placeholder="Paste the demo token you received"></textarea></label>
+        <label>Explore as
+          <select name="persona" [(ngModel)]="persona">
+            <option value="STUDENT">Student</option>
+            <option value="PROFESSOR">Professor</option>
+          </select>
+        </label>
+        <button type="submit" [disabled]="busy() || !token.trim()">Start demo</button>
+      </form>
+      @if (error()) { <p role="alert">{{ error() }}</p> }
+      <a routerLink="/login">Log in</a>
+    </section>
+  `,
+  styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
+    form, label { display: grid; gap: .6rem; } form { gap: 1rem; }
+    input, select, textarea { padding: .7rem; word-break: break-all; font-family: monospace; } [role=alert] { color: #a52424; }`],
+})
+export class DemoComponent {
+  private readonly session = inject(UniversitySession);
+  private readonly router = inject(Router);
+  protected readonly busy = signal(false);
+  protected readonly error = signal('');
+  protected token = '';
+  protected persona: DemoRedeemRequest['persona'] = 'STUDENT';
+
+  protected async submit(): Promise<void> {
+    if (this.busy() || !this.token.trim()) return;
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      await this.session.redeemDemo({ token: this.token.trim(), persona: this.persona });
+      this.token = '';
+      await this.router.navigateByUrl('/university');
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : String(error));
     } finally {

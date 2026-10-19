@@ -37,6 +37,10 @@ export interface TokenResponse {
   tokenType?: string;
   expiresIn?: number;
 }
+export interface DemoRedeemRequest {
+  token: string;
+  persona: 'STUDENT' | 'PROFESSOR';
+}
 export interface MeResponse {
   username?: string;
   role?: Role;

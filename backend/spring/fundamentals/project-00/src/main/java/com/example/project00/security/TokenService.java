@@ -1,6 +1,7 @@
 package com.example.project00.security;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -62,6 +63,35 @@ public class TokenService {
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 		String value = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
 		return new IssuedToken(value, settings.ttl().toSeconds());
+	}
+
+	/** Name of the claim marking a read-only recruiter demo session. */
+	public static final String DEMO_CLAIM = "demo";
+
+	/**
+	 * Issues a read-only demo session token for an existing account.
+	 * @param username the persona's username
+	 * @param role the persona's role
+	 * @param notAfter the demo token's expiry; the access token never outlives it
+	 * @return the encoded token and its lifetime
+	 */
+	public IssuedToken issueDemo(String username, String role, Instant notAfter) {
+		Instant now = clock.instant();
+		Instant exp = now.plus(settings.ttl());
+		if (notAfter.isBefore(exp)) {
+			exp = notAfter;
+		}
+		JwtClaimsSet claims = JwtClaimsSet.builder()
+			.issuer(settings.issuer())
+			.subject(username)
+			.issuedAt(now)
+			.expiresAt(exp)
+			.claim(ROLES_CLAIM, List.of(role))
+			.claim(DEMO_CLAIM, true)
+			.build();
+		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+		String value = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+		return new IssuedToken(value, Duration.between(now, exp).toSeconds());
 	}
 
 	/**

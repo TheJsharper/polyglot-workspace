@@ -7,6 +7,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -53,7 +55,13 @@ class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain apiSecurity(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter,
-			AuthenticationEntryPoint entryPoint, AccessDeniedHandler accessDeniedHandler) throws Exception {
+			AuthenticationEntryPoint entryPoint, AccessDeniedHandler accessDeniedHandler, Clock clock,
+			@Value("${app.demo.enabled:false}") boolean demoEnabled,
+			@Value("${app.demo.max-requests-per-minute:60}") int demoRequestsPerMinute) throws Exception {
+		if (demoEnabled) {
+			http.addFilterAfter(new DemoSessionFilter(clock, demoRequestsPerMinute),
+					BearerTokenAuthenticationFilter.class);
+		}
 		http.csrf(csrf -> csrf.disable())
 			.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
 			.httpBasic(basic -> basic.disable())
@@ -61,6 +69,10 @@ class SecurityConfig {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
+				.permitAll()
+				.requestMatchers(demoEnabled ? HttpMethod.POST : HttpMethod.TRACE, "/api/demo/redeem")
+				.permitAll()
+				.requestMatchers(demoEnabled ? HttpMethod.GET : HttpMethod.TRACE, "/api/demo/status")
 				.permitAll()
 				.requestMatchers("/hello", "/error", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html",
 						"/swagger-ui/**", "/h2-console", "/h2-console/**")
