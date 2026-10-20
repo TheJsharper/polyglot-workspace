@@ -3,7 +3,12 @@ package com.example.project00.service;
 import com.example.project00.domain.Professor;
 import com.example.project00.domain.Student;
 import com.example.project00.domain.UserAccount;
+import com.example.project00.domain.Role;
 import java.util.Locale;
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import com.example.project00.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class AccountService {
+
+	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final UserAccountRepository userAccountRepository;
 
@@ -96,6 +103,37 @@ public class AccountService {
 	public UserAccount registerAdmin(String username, String rawPassword) {
 		requireFreeUsername(username);
 		return userAccountRepository.save(UserAccount.forAdmin(username, passwordEncoder.encode(rawPassword)));
+	}
+
+	public UserAccount registerGoogleAccount(String googleSubject, String role, String name, String email,
+			int enrollmentYear, String department) {
+		var linkedAccount = userAccountRepository.findByGoogleSubject(googleSubject);
+		if (linkedAccount.isPresent()) {
+			return linkedAccount.get();
+		}
+		String normalizedEmail = normalizeEmail(email);
+		requireFreeEmail(normalizedEmail);
+		String username = googleUsername(googleSubject);
+		requireFreeUsername(username);
+		byte[] randomPassword = new byte[32];
+		RANDOM.nextBytes(randomPassword);
+		String passwordHash = passwordEncoder.encode(Base64.getUrlEncoder().withoutPadding().encodeToString(randomPassword));
+		UserAccount account = switch (Role.valueOf(role)) {
+			case STUDENT -> UserAccount.forStudent(studentService.enroll(username, name, enrollmentYear), passwordHash);
+			case PROFESSOR -> UserAccount.forProfessor(professorService.hire(username, name, department), passwordHash);
+			case ADMIN -> throw new IllegalArgumentException("Google self-registration cannot create administrators");
+		};
+		return userAccountRepository.save(account.withEmail(normalizedEmail).withGoogleSubject(googleSubject));
+	}
+
+	private static String googleUsername(String googleSubject) {
+		try {
+			byte[] digest = MessageDigest.getInstance("SHA-256").digest(googleSubject.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			return "g-" + HexFormat.of().formatHex(digest);
+		}
+		catch (java.security.NoSuchAlgorithmException ex) {
+			throw new IllegalStateException("SHA-256 is unavailable", ex);
+		}
 	}
 
 	private static String normalizeEmail(String email) {

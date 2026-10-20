@@ -1,6 +1,7 @@
 package com.example.project00.web;
 
 import com.example.project00.service.DuplicateResourceException;
+import com.example.project00.service.CreationLimitExceededException;
 import com.example.project00.service.ResourceNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -43,6 +44,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(DuplicateResourceException.class)
 	ProblemDetail handleDuplicate(DuplicateResourceException ex) {
 		return problem(HttpStatus.CONFLICT, "Duplicate resource", ex.getMessage());
+	}
+
+	@ExceptionHandler(CreationLimitExceededException.class)
+	ProblemDetail handleCreationLimit(CreationLimitExceededException ex) {
+		return problem(HttpStatus.TOO_MANY_REQUESTS, "Creation limit reached", ex.getMessage());
 	}
 
 	@ExceptionHandler(IllegalStateException.class)

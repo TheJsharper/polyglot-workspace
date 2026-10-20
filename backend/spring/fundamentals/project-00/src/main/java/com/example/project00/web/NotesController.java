@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.example.project00.security.AuthorizationRules;
 import com.example.project00.service.NotesService;
+import com.example.project00.service.CreationQuotaService;
+import com.example.project00.domain.CreationResource;
 import com.example.project00.web.dto.NotesDtos.EditNotesRequest;
 import com.example.project00.web.dto.NotesDtos.NotesResponse;
 import com.example.project00.web.dto.NotesDtos.ReviewNotesRequest;
@@ -17,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +48,8 @@ class NotesController {
 	private final NotesService notesService;
 
 	private final AuthorizationRules authz;
+
+	private final CreationQuotaService creationQuota;
 
 	@Operation(summary = "Get notes by id", description = "Private notes: only the author and the course's teachers.")
 	@ApiResponse(responseCode = "200", description = "The notes")
@@ -95,7 +100,8 @@ class NotesController {
 	@ApiErrors.NotFound
 	@PreAuthorize("@authz.isStudent(#request.studentId())")
 	@PostMapping
-	ResponseEntity<NotesResponse> write(@Valid @RequestBody WriteNotesRequest request) {
+	ResponseEntity<NotesResponse> write(@Valid @RequestBody WriteNotesRequest request, Authentication authentication) {
+		creationQuota.consumeIfGoogleUser(authentication.getName(), CreationResource.NOTE);
 		NotesResponse written = NotesResponse.from(notesService.write(request.studentId(), request.lectureId(),
 				request.content(), request.privateNote()));
 		return ResponseEntity.created(URI.create("/api/notes/" + written.id())).body(written);

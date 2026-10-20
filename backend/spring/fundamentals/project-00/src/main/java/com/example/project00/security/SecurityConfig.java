@@ -8,6 +8,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,27 +58,43 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
  */
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties(AppSecurityProperties.class)
+@EnableConfigurationProperties({ AppSecurityProperties.class, GoogleOAuthProperties.class })
 class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain apiSecurity(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter,
 			AuthenticationEntryPoint entryPoint, AccessDeniedHandler accessDeniedHandler, Clock clock,
 			Environment environment,
+			GoogleOAuthProperties googleProperties,
+			ObjectProvider<GoogleLoginSuccessHandler> googleSuccessHandler,
 			@Value("${app.demo.enabled:false}") boolean demoEnabled,
 			@Value("${app.demo.max-requests-per-minute:60}") int demoRequestsPerMinute) throws Exception {
 		boolean devDemoEnabled = demoEnabled && environment.matchesProfiles("dev");
+		CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
+		csrfTokenRepository.setCookieCustomizer(cookie -> cookie.httpOnly(true)
+				.sameSite("Lax")
+				.secure(environment.matchesProfiles("prod")));
 		if (devDemoEnabled) {
 			http.addFilterAfter(new DemoSessionFilter(clock, demoRequestsPerMinute),
 					BearerTokenAuthenticationFilter.class);
 		}
-		http.csrf(csrf -> csrf.disable())
+		http.csrf(csrf -> csrf
+				.csrfTokenRepository(csrfTokenRepository)
+				.requireCsrfProtectionMatcher(request -> "POST".equals(request.getMethod())
+						&& ("/api/auth/refresh".equals(request.getServletPath())
+								|| "/api/auth/logout".equals(request.getServletPath()))))
 			.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
 			.httpBasic(basic -> basic.disable())
 			.formLogin(form -> form.disable())
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
+				.permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/auth/google/status", "/api/auth/google/start", "/api/auth/csrf")
+				.permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/auth/google/complete", "/api/auth/refresh", "/api/auth/logout")
+				.permitAll()
+				.requestMatchers("/oauth2/**", "/login/oauth2/**")
 				.permitAll()
 				.requestMatchers(devDemoEnabled ? HttpMethod.POST : HttpMethod.TRACE, "/api/demo/redeem")
 				.permitAll()
@@ -93,6 +111,12 @@ class SecurityConfig {
 				.accessDeniedHandler(accessDeniedHandler))
 			.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint)
 				.accessDeniedHandler(accessDeniedHandler));
+		if (googleProperties.enabled()) {
+			http.oauth2Login(oauth -> oauth
+				.successHandler(googleSuccessHandler.getObject())
+				.failureHandler((request, response, exception) -> response.sendRedirect(
+						googleProperties.frontendUrl() + "?error=google_signin_failed")));
+		}
 		return http.build();
 	}
 

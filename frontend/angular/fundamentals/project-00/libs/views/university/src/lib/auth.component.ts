@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { DEMO_ENABLED, UniversitySession } from '@project-00/services-session';
-import type { DemoRedeemRequest, RegisterRequest } from '@project-00/services-api';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
+import { DEMO_ENABLED, GOOGLE_SSO_ENABLED, UniversitySession } from '@project-00/services-session';
+import type { DemoRedeemRequest, GoogleOnboardingRequest, RegisterRequest } from '@project-00/services-api';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,9 @@ import type { DemoRedeemRequest, RegisterRequest } from '@project-00/services-ap
         <button type="submit" [disabled]="busy()">Log in</button>
       </form>
       @if (error()) { <p role="alert">{{ error() }}</p> }
+      @if (googleSsoEnabled) {
+        <p><a href="/api/auth/google/start">Continue with Google</a></p>
+      }
       <p>No account? <a routerLink="/register">Register</a>@if (demoEnabled) { · <a routerLink="/demo">Recruiter demo</a> }</p>
     </section>
   `,
@@ -26,6 +30,7 @@ import type { DemoRedeemRequest, RegisterRequest } from '@project-00/services-ap
 })
 export class LoginComponent {
   protected readonly demoEnabled = inject(DEMO_ENABLED);
+  protected readonly googleSsoEnabled = inject(GOOGLE_SSO_ENABLED);
   private readonly session = inject(UniversitySession);
   private readonly router = inject(Router);
   protected readonly busy = signal(false);
@@ -44,6 +49,108 @@ export class LoginComponent {
       const destination = typeof requested === 'string' && requested.startsWith('/university')
         ? requested : '/university';
       await this.router.navigateByUrl(destination);
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : String(error));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+}
+
+@Component({
+  selector: 'app-google-callback',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, RouterLink],
+  template: `
+    <section class="auth">
+      <h1>Google sign-in</h1>
+      @if (busy()) { <p role="status">Verifying your Google account…</p> }
+      @if (onboarding()) {
+        <p>Choose how you will use the University app.</p>
+        <form (ngSubmit)="complete()">
+          <label>Account type
+            <select name="role" [(ngModel)]="role">
+              <option value="STUDENT">Student</option>
+              <option value="PROFESSOR">Professor</option>
+            </select>
+          </label>
+          @if (role === 'STUDENT') {
+            <label>Enrollment year
+              <input name="enrollmentYear" type="number" min="1900" max="9999" [(ngModel)]="enrollmentYear" required />
+            </label>
+          } @else {
+            <label>Department
+              <input name="department" [(ngModel)]="department" maxlength="254" required />
+            </label>
+          }
+          <button type="submit" [disabled]="busy()">Continue</button>
+        </form>
+      }
+      @if (error()) { <p role="alert">{{ error() }}</p> }
+      <a routerLink="/login">Back to login</a>
+    </section>
+  `,
+  styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
+    form, label { display: grid; gap: .6rem; } form { gap: 1rem; }
+    input, select { padding: .7rem; } [role=alert] { color: #a52424; }`],
+})
+export class GoogleCallbackComponent {
+  private readonly session = inject(UniversitySession);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+  private ticket = '';
+  protected readonly busy = signal(false);
+  protected readonly onboarding = signal(false);
+  protected readonly error = signal('');
+  protected role: GoogleOnboardingRequest['role'] = 'STUDENT';
+  protected enrollmentYear = new Date().getFullYear();
+  protected department = '';
+
+  constructor() {
+    this.ticket = this.route.snapshot.queryParamMap.get('ticket') ?? '';
+    const authError = this.route.snapshot.queryParamMap.get('error');
+    this.location.replaceState('/sso/callback');
+    if (authError) {
+      this.error.set('Google sign-in could not be completed. Please try again or use password login.');
+    } else if (!this.ticket) {
+      this.error.set('The sign-in request is missing or expired. Please try again.');
+    } else {
+      void this.finishGoogleSignIn();
+    }
+  }
+
+  protected async complete(): Promise<void> {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      const result = await this.session.completeGoogle(this.ticket, {
+        role: this.role,
+        enrollmentYear: this.role === 'STUDENT' ? this.enrollmentYear : undefined,
+        department: this.role === 'PROFESSOR' ? this.department.trim() : undefined,
+      });
+      if (result.onboardingRequired) {
+        this.error.set('Please complete the required account details.');
+        return;
+      }
+      await this.router.navigateByUrl('/university');
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : String(error));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private async finishGoogleSignIn(): Promise<void> {
+    this.busy.set(true);
+    try {
+      const result = await this.session.completeGoogle(this.ticket);
+      if (result.onboardingRequired) {
+        this.onboarding.set(true);
+      } else {
+        await this.router.navigateByUrl('/university');
+      }
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : String(error));
     } finally {

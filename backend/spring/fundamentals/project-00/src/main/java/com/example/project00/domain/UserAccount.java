@@ -33,6 +33,9 @@ public class UserAccount extends BaseEntity {
 	@Column(unique = true, length = 254)
 	private String email;
 
+	@Column(name = "google_subject", unique = true, length = 255)
+	private String googleSubject;
+
 	@Column(name = "password_hash", nullable = false)
 	private String passwordHash;
 
@@ -61,6 +64,11 @@ public class UserAccount extends BaseEntity {
 	 */
 	public UserAccount withEmail(String email) {
 		this.email = email == null || email.isBlank() ? null : email.trim().toLowerCase(java.util.Locale.ROOT);
+		return this;
+	}
+
+	public UserAccount withGoogleSubject(String googleSubject) {
+		this.googleSubject = Objects.requireNonNull(googleSubject, "googleSubject");
 		return this;
 	}
 

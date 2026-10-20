@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { ApiError, UniversityApi } from '@project-00/services-api';
-import type { DemoRedeemRequest, LoginRequest, MeResponse, RegisterRequest, RegisterResponse, TokenResponse } from '@project-00/services-api';
+import type { DemoRedeemRequest, GoogleOnboardingRequest, GoogleCompleteResponse, LoginRequest, MeResponse, RegisterRequest, RegisterResponse, TokenResponse } from '@project-00/services-api';
 
 export const UNIVERSITY_API_BASE_URL = new InjectionToken<string>('University API base URL');
 
@@ -17,16 +17,37 @@ export class UniversitySession {
   readonly api = new UniversityApi(this.baseUrl, () => this.token());
 
   async login(credentials: LoginRequest): Promise<MeResponse> {
-    this.logout();
-    return this.start(await this.api.login(credentials));
+    this.clearLocal();
+    return this.start(await this.api.login(credentials), true);
   }
 
   async redeemDemo(request: DemoRedeemRequest): Promise<MeResponse> {
-    this.logout();
+    this.clearLocal();
     return this.start(await this.api.redeemDemo(request));
   }
 
-  private async start(issued: TokenResponse): Promise<MeResponse> {
+  async completeGoogle(ticket: string, onboarding?: GoogleOnboardingRequest): Promise<GoogleCompleteResponse> {
+    const result = await this.api.googleComplete(ticket, onboarding);
+    if (result.session) {
+      this.clearLocal();
+      await this.start(result.session, true);
+    }
+    return result;
+  }
+
+  async restore(): Promise<boolean> {
+    if (this.authenticated()) return true;
+    try {
+      await this.start(await this.api.refresh(), true);
+      return true;
+    } catch (error) {
+      this.clearLocal();
+      if (error instanceof ApiError && error.status === 401) return false;
+      throw error;
+    }
+  }
+
+  private async start(issued: TokenResponse, refreshable = false): Promise<MeResponse> {
     if (
       typeof issued.accessToken !== 'string' ||
       !issued.accessToken ||
@@ -39,7 +60,10 @@ export class UniversitySession {
     }
     this.accessToken.set(issued.accessToken);
     this.expiresAt = Date.now() + issued.expiresIn * 1000;
-    this.expirationTimer = setTimeout(() => this.logout(), issued.expiresIn * 1000);
+    this.expirationTimer = setTimeout(
+      () => refreshable ? void this.refreshSession() : this.clearLocal(),
+      Math.max(1000, (issued.expiresIn - 30) * 1000),
+    );
     try {
       const user = await this.api.me();
       if (!user.username || !user.role) {
@@ -48,7 +72,7 @@ export class UniversitySession {
       this.currentUser.set(user);
       return user;
     } catch (error) {
-      this.logout();
+      this.clearLocal();
       throw error;
     }
   }
@@ -62,13 +86,20 @@ export class UniversitySession {
       return await action();
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        this.logout();
+        this.clearLocal();
       }
       throw error;
     }
   }
 
   logout(): void {
+    this.clearLocal();
+    void this.api.endSession().catch((error: unknown) => {
+      console.error('Could not revoke the server session', error);
+    });
+  }
+
+  private clearLocal(): void {
     if (this.expirationTimer) {
       clearTimeout(this.expirationTimer);
       this.expirationTimer = undefined;
@@ -80,8 +111,17 @@ export class UniversitySession {
 
   private token(): string | null {
     if (this.expiresAt && Date.now() >= this.expiresAt) {
-      this.logout();
+      this.clearLocal();
     }
     return this.accessToken();
+  }
+
+  private async refreshSession(): Promise<void> {
+    try {
+      await this.start(await this.api.refresh(), true);
+    } catch (error) {
+      this.clearLocal();
+      console.error('Could not refresh the application session', error);
+    }
   }
 }

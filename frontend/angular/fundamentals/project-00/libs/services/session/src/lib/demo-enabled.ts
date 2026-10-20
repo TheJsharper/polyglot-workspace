@@ -5,3 +5,8 @@ export const DEMO_ENABLED = new InjectionToken<boolean>('DEMO_ENABLED', {
   providedIn: 'root',
   factory: () => false,
 });
+
+export const GOOGLE_SSO_ENABLED = new InjectionToken<boolean>('GOOGLE_SSO_ENABLED', {
+  providedIn: 'root',
+  factory: () => false,
+});

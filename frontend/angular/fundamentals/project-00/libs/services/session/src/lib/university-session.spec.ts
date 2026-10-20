@@ -16,12 +16,12 @@ describe('UniversitySession', () => {
 
   it('holds bearer credentials only in memory and expires them', async () => {
     vi.useFakeTimers();
-    vi.spyOn(UniversityApi.prototype, 'login').mockResolvedValue({
+    vi.spyOn(UniversityApi.prototype, 'redeemDemo').mockResolvedValue({
       accessToken: 'test-token', tokenType: 'Bearer', expiresIn: 2,
     });
     vi.spyOn(UniversityApi.prototype, 'me').mockResolvedValue({ username: 'S-1', role: 'STUDENT' });
     const session = TestBed.inject(UniversitySession);
-    await session.login({ username: 'S-1', password: 'password-123' });
+    await session.redeemDemo({ token: 'demo', persona: 'STUDENT' });
     expect(session.user()?.username).toBe('S-1');
     expect(session.authenticated()).toBe(true);
     vi.advanceTimersByTime(2000);

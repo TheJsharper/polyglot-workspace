@@ -5,6 +5,10 @@ import java.util.Optional;
 import com.example.project00.domain.Professor;
 import com.example.project00.domain.Student;
 import com.example.project00.domain.UserAccount;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -17,6 +21,12 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 	 * @return the account with that username, if any
 	 */
 	Optional<UserAccount> findByUsername(String username);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select account from UserAccount account where account.username = :username")
+	Optional<UserAccount> findByUsernameForUpdate(@Param("username") String username);
+
+	Optional<UserAccount> findByGoogleSubject(String googleSubject);
 
 	/**
 	 * @param username the login name

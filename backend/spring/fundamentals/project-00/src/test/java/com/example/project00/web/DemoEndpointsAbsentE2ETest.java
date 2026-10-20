@@ -17,7 +17,13 @@ import org.springframework.test.context.TestPropertySource;
 import com.example.project00.security.TokenService;
 
 @ActiveProfiles("prod")
-@TestPropertySource(properties = "app.demo.enabled=true")
+@TestPropertySource(properties = {
+		"app.demo.enabled=true",
+		"spring.datasource.url=jdbc:h2:mem:demo-prod-test;DB_CLOSE_DELAY=-1",
+		"spring.datasource.driver-class-name=org.h2.Driver",
+		"spring.datasource.username=sa",
+		"spring.datasource.password="
+})
 class DemoEndpointsAbsentE2ETest extends EndToEndTestSupport {
 
 	@Autowired
@@ -36,6 +42,13 @@ class DemoEndpointsAbsentE2ETest extends EndToEndTestSupport {
 			.exchange()
 			.expectStatus()
 			.isNotFound();
+	}
+
+	@Test
+	void googleSsoIsDisabledUntilProductionCredentialsAreConfigured() {
+		client.get().uri("/api/auth/google/status").exchange().expectStatus().isOk().expectBody()
+			.jsonPath("$.enabled").isEqualTo(false);
+		client.get().uri("/api/auth/google/start").exchange().expectStatus().isNotFound();
 	}
 
 	@Test

@@ -9,6 +9,7 @@ import com.example.project00.domain.UserAccount;
 import com.example.project00.security.TokenService;
 import com.example.project00.security.TokenService.IssuedToken;
 import com.example.project00.service.AccountService;
+import com.example.project00.service.RefreshSessionService;
 import com.example.project00.web.dto.AuthDtos.LoginRequest;
 import com.example.project00.web.dto.AuthDtos.MeResponse;
 import com.example.project00.web.dto.AuthDtos.RegisterRequest;
@@ -22,6 +23,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +35,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,6 +54,8 @@ class AuthController {
 	private final AuthenticationManager authenticationManager;
 
 	private final TokenService tokenService;
+
+	private final RefreshSessionService refreshSessions;
 
 	@Operation(summary = "Register an account",
 			description = "Public for role STUDENT (default) and PROFESSOR. Role ADMIN requires an admin access token. "
@@ -102,11 +108,56 @@ class AuthController {
 	@ApiErrors.Unauthorized
 	@SecurityRequirements
 	@PostMapping("/login")
-	TokenResponse login(@Valid @RequestBody LoginRequest request) {
+	ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
 		Authentication authentication = authenticationManager
 			.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(request.username(), request.password()));
 		IssuedToken token = tokenService.issue(authentication);
-		return new TokenResponse(token.value(), "Bearer", token.expiresInSeconds());
+		String refresh = refreshSessions.issue(authentication.getName());
+		return ResponseEntity.ok()
+			.header("Set-Cookie", refreshCookie(refresh).toString())
+			.body(new TokenResponse(token.value(), "Bearer", token.expiresInSeconds()));
+	}
+
+	@PostMapping("/refresh")
+	ResponseEntity<TokenResponse> refresh(@CookieValue(name = "__Host-university-refresh", required = false) String secret) {
+		if (secret == null || secret.isBlank()) {
+			throw new BadCredentialsException("The session has expired");
+		}
+		RefreshSessionService.RefreshedSession refreshed = refreshSessions.refresh(secret);
+		if (refreshed == null) {
+			throw new BadCredentialsException("The session has expired");
+		}
+		return ResponseEntity.ok()
+			.header("Set-Cookie", refreshCookie(refreshed.refreshSecret()).toString())
+			.body(refreshed.access());
+	}
+
+	@PostMapping("/logout")
+	ResponseEntity<Void> logout(@CookieValue(name = "__Host-university-refresh", required = false) String secret) {
+		if (secret != null && !secret.isBlank()) {
+			refreshSessions.revoke(secret);
+		}
+		return ResponseEntity.noContent().header("Set-Cookie", clearRefreshCookie().toString()).build();
+	}
+
+	private static ResponseCookie refreshCookie(String secret) {
+		return ResponseCookie.from("__Host-university-refresh", secret)
+			.httpOnly(true)
+			.secure(true)
+			.sameSite("Lax")
+			.path("/")
+			.maxAge(RefreshSessionService.MAX_SESSION_AGE)
+			.build();
+	}
+
+	private static ResponseCookie clearRefreshCookie() {
+		return ResponseCookie.from("__Host-university-refresh", "")
+			.httpOnly(true)
+			.secure(true)
+			.sameSite("Lax")
+			.path("/")
+			.maxAge(0)
+			.build();
 	}
 
 	@Operation(summary = "Show the authenticated caller")

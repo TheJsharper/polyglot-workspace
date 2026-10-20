@@ -27,6 +27,7 @@ public class TokenService {
 	public static final String ROLES_CLAIM = "roles";
 
 	private static final String ROLE_PREFIX = "ROLE_";
+	private static final Duration MAX_ACCESS_TOKEN_TTL = Duration.ofMinutes(15);
 
 	private final JwtEncoder jwtEncoder;
 
@@ -47,6 +48,8 @@ public class TokenService {
 	 */
 	public IssuedToken issue(Authentication authentication) {
 		Instant now = clock.instant();
+		Duration ttl = settings.ttl().compareTo(MAX_ACCESS_TOKEN_TTL) > 0
+				? MAX_ACCESS_TOKEN_TTL : settings.ttl();
 		List<String> roles = authentication.getAuthorities()
 			.stream()
 			.map(GrantedAuthority::getAuthority)
@@ -57,12 +60,12 @@ public class TokenService {
 			.issuer(settings.issuer())
 			.subject(authentication.getName())
 			.issuedAt(now)
-			.expiresAt(now.plus(settings.ttl()))
+			.expiresAt(now.plus(ttl))
 			.claim(ROLES_CLAIM, roles)
 			.build();
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 		String value = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
-		return new IssuedToken(value, settings.ttl().toSeconds());
+		return new IssuedToken(value, ttl.toSeconds());
 	}
 
 	/** Name of the claim used to enforce read-only demo sessions. */

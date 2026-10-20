@@ -1,6 +1,6 @@
 # project-00 — University API
 
-A layered Spring Boot 4 application (Java 25, Spring Data JPA, in-memory H2, Spring Security with JWT) that manages courses, lectures,
+A layered Spring Boot 4 application (Java 25, Spring Data JPA, H2 locally/PostgreSQL in production, Spring Security with JWT) that manages courses, lectures,
 professors, students and lecture notes.
 
 ## Configuration
@@ -36,6 +36,8 @@ memory, so data is lost on restart. DevTools restarts the app when classes chang
 | `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no sample data |
 
 The `dev` profile seeds local sample accounts and enables recruiter demo-token testing; never expose it publicly. Docker uses `prod` by default, which has no demo-token routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded. Local development instructions and sample credentials are kept in untracked `frontend/angular/fundamentals/project-00/docs/dev/` notes.
+
+The `prod` profile requires a persistent PostgreSQL database through `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`; it has no in-memory fallback. Google sign-in is off until `GOOGLE_SSO_ENABLED=true` and Google OAuth credentials and HTTPS callback URLs are configured. See the workspace [deployment guide](../../../../frontend/angular/fundamentals/project-00/docs/deployment.md) for Google Cloud and production proxy setup.
 
 The application does not delete existing database contents automatically. For a deployment previously used with demos, rotate `JWT_SECRET` and remove local sample accounts before exposing it publicly.
 
@@ -86,9 +88,9 @@ Errors use `application/problem+json` (RFC 9457):
 
 ## Security
 
-Every endpoint except `/api/auth/register`, `/api/auth/login`, `/hello` and the Swagger/OpenAPI pages needs an
+Every endpoint except `/api/auth/register`, `/api/auth/login`, Google sign-in setup/completion, `/hello` and the Swagger/OpenAPI pages needs an
 `Authorization: Bearer <token>` header. Tokens are HS256-signed JWTs (OAuth2 resource server) carrying the user
-name as `sub` and the role in a `roles` claim; they expire after `app.security.jwt.ttl` (1 hour).
+name as `sub` and the role in a `roles` claim; access tokens last no longer than 15 minutes. Login also issues hashed, rotating refresh credentials with an absolute ten-day maximum age. Google login validates OIDC server-side, keys accounts by Google's subject, and permits first-login Student or Professor choices but never Admin. Google-linked users have a backend-enforced limit of 10 creations per user per supported resource type.
 
 | Role | How the account is created | May |
 |---|---|---|

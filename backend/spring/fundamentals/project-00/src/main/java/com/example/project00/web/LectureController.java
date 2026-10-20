@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.List;
 
 import com.example.project00.service.LectureService;
+import com.example.project00.service.CreationQuotaService;
+import com.example.project00.domain.CreationResource;
 import com.example.project00.web.dto.LectureDtos.AssignProfessorRequest;
 import com.example.project00.web.dto.LectureDtos.LectureResponse;
 import com.example.project00.web.dto.LectureDtos.RescheduleLectureRequest;
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +44,8 @@ import org.springframework.web.bind.annotation.RestController;
 class LectureController {
 
 	private final LectureService lectureService;
+
+	private final CreationQuotaService creationQuota;
 
 	@Operation(summary = "Get a lecture by id")
 	@ApiResponse(responseCode = "200", description = "The lecture, including its attendees")
@@ -76,7 +81,9 @@ class LectureController {
 	@ApiErrors.NotFound
 	@PreAuthorize("@authz.teachesCourse(#request.courseCode())")
 	@PostMapping
-	ResponseEntity<LectureResponse> schedule(@Valid @RequestBody ScheduleLectureRequest request) {
+	ResponseEntity<LectureResponse> schedule(@Valid @RequestBody ScheduleLectureRequest request,
+			Authentication authentication) {
+		creationQuota.consumeIfGoogleUser(authentication.getName(), CreationResource.LECTURE);
 		LectureResponse scheduled = LectureResponse.from(lectureService.schedule(request.courseCode(),
 				request.employeeId(), request.date(), request.time(), request.topic(), request.room()));
 		return ResponseEntity.created(URI.create("/api/lectures/" + scheduled.id())).body(scheduled);

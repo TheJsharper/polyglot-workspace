@@ -52,11 +52,11 @@ class TokenServiceTest {
 		TokenService.IssuedToken token = tokenService.issue(authentication);
 		Jwt jwt = decoder.decode(token.value());
 
-		assertThat(token.expiresInSeconds()).isEqualTo(1800);
+		assertThat(token.expiresInSeconds()).isEqualTo(900);
 		assertThat(jwt.getSubject()).isEqualTo("S-1");
 		assertThat(jwt.getClaimAsString("iss")).isEqualTo("test-issuer");
 		assertThat(jwt.getIssuedAt()).isEqualTo(now);
-		assertThat(jwt.getExpiresAt()).isEqualTo(now.plus(Duration.ofMinutes(30)));
+		assertThat(jwt.getExpiresAt()).isEqualTo(now.plus(Duration.ofMinutes(15)));
 		assertThat(jwt.getClaimAsStringList(TokenService.ROLES_CLAIM)).containsExactly("STUDENT");
 		assertThat(jwt.getHeaders()).containsEntry("alg", MacAlgorithm.HS256.getName());
 	}

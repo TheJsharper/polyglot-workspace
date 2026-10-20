@@ -37,6 +37,15 @@ export interface TokenResponse {
   tokenType?: string;
   expiresIn?: number;
 }
+export interface GoogleOnboardingRequest {
+  role: 'STUDENT' | 'PROFESSOR';
+  enrollmentYear?: number;
+  department?: string;
+}
+export interface GoogleCompleteResponse {
+  session?: TokenResponse;
+  onboardingRequired: boolean;
+}
 export interface DemoRedeemRequest {
   token: string;
   persona: 'STUDENT' | 'PROFESSOR';

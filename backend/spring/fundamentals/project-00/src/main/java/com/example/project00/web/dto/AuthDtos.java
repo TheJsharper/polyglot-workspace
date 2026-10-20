@@ -7,6 +7,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -87,6 +88,32 @@ public final class AuthDtos {
 			@Schema(description = "The JWT", example = "eyJhbGciOiJIUzI1NiJ9...") String accessToken,
 			@Schema(description = "Token type", example = "Bearer") String tokenType,
 			@Schema(description = "Lifetime in seconds", example = "3600") long expiresIn) {
+	}
+
+	public record GoogleOnboardingRequest(
+			@Schema(allowableValues = { "STUDENT", "PROFESSOR" }) @NotNull Role role,
+			@Min(1900) Integer enrollmentYear,
+			@Size(max = 254) String department) {
+
+		@JsonIgnore
+		@AssertTrue(message = "A student enrollment year or professor department is required for the selected role")
+		public boolean isValidForRole() {
+			return role != null && switch (role) {
+				case STUDENT -> enrollmentYear != null && enrollmentYear >= 1900 && enrollmentYear <= 9999;
+				case PROFESSOR -> department != null && !department.isBlank();
+				case ADMIN -> false;
+			};
+		}
+	}
+
+	public record GoogleSessionResponse(TokenResponse session, String refreshSecret, boolean newAccount,
+			boolean onboardingRequired) {
+	}
+
+	public record GoogleCompleteResponse(TokenResponse session, boolean onboardingRequired) {
+	}
+
+	public record GoogleStatusResponse(boolean enabled) {
 	}
 
 	@Schema(description = "The authenticated caller")

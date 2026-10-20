@@ -6,10 +6,12 @@ import { RESOURCES, type Resource } from '@project-00/services-university-state'
 import { RemoteUnavailableComponent } from './remote-unavailable.component';
 import { allowedResources } from './shell.menu';
 
-const universityGuard: CanActivateFn = (_route, state) =>
-  inject(UniversitySession).authenticated()
-    ? true
-    : inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+const universityGuard: CanActivateFn = (_route, state) => {
+  const session = inject(UniversitySession);
+  const router = inject(Router);
+  const redirect = () => router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+  return session.authenticated() ? true : session.restore().then((restored) => restored || redirect());
+};
 
 const demoGuard: CanActivateFn = () =>
   inject(DEMO_ENABLED) ? true : inject(Router).createUrlTree(['/login']);
@@ -48,6 +50,11 @@ export const shellRoutes: Route[] = [
     path: 'register',
     loadComponent: () =>
       import('@project-00/views-university').then((m) => m.RegisterComponent),
+  },
+  {
+    path: 'sso/callback',
+    loadComponent: () =>
+      import('@project-00/views-university').then((m) => m.GoogleCallbackComponent),
   },
   {
     path: 'demo',

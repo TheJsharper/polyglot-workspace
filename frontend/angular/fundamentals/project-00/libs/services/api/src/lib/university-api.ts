@@ -5,6 +5,8 @@ import type {
   CreateProfessorRequest,
   CreateStudentRequest,
   DemoRedeemRequest,
+  GoogleCompleteResponse,
+  GoogleOnboardingRequest,
   EditNotesRequest,
   LectureResponse,
   LoginRequest,
@@ -39,6 +41,7 @@ const enc = (value: Param) => encodeURIComponent(String(value));
  */
 export class UniversityApi {
   private readonly base: string;
+  private csrfToken = '';
 
   constructor(
     baseUrl: string,
@@ -56,6 +59,22 @@ export class UniversityApi {
   /** POST /api/auth/login (sent without Authorization header) */
   login(request: LoginRequest): Promise<TokenResponse> {
     return this.send('POST', '/api/auth/login', { body: request, anonymous: true });
+  }
+  googleComplete(ticket: string, onboarding?: GoogleOnboardingRequest): Promise<GoogleCompleteResponse> {
+    return this.send('POST', `/api/auth/google/complete?ticket=${enc(ticket)}`, {
+      body: onboarding,
+      anonymous: true,
+    });
+  }
+  async refresh(): Promise<TokenResponse> {
+    const csrf = await this.send<{ token: string }>('GET', '/api/auth/csrf', { anonymous: true });
+    this.csrfToken = csrf.token;
+    return this.send('POST', '/api/auth/refresh', { anonymous: true, csrf: true });
+  }
+  async endSession(): Promise<void> {
+    const csrf = await this.send<{ token: string }>('GET', '/api/auth/csrf', { anonymous: true });
+    this.csrfToken = csrf.token;
+    await this.send('POST', '/api/auth/logout', { anonymous: true, csrf: true });
   }
   /** POST /api/demo/redeem (dev profile only) */
   redeemDemo(request: DemoRedeemRequest): Promise<TokenResponse> {
@@ -223,7 +242,7 @@ export class UniversityApi {
   private async send<T>(
     method: Method,
     path: string,
-    options: { body?: unknown; query?: Record<string, Param>; anonymous?: boolean } = {},
+    options: { body?: unknown; query?: Record<string, Param>; anonymous?: boolean; csrf?: boolean } = {},
   ): Promise<T> {
     let url = this.base + path;
     if (options.query) {
@@ -234,9 +253,10 @@ export class UniversityApi {
     }
 
     const headers: Record<string, string> = { Accept: 'application/json, application/problem+json' };
+    if (options.csrf && this.csrfToken) headers['X-XSRF-TOKEN'] = this.csrfToken;
     const token = options.anonymous ? null : this.getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const init: RequestInit = { method, headers };
+    const init: RequestInit = { method, headers, credentials: 'same-origin' };
     if (options.body !== undefined) {
       headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(options.body);

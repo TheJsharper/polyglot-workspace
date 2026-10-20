@@ -51,6 +51,65 @@ class AuthE2ETest extends EndToEndTestSupport {
 	}
 
 	@Test
+	void refreshAndLogoutRequireCsrfAndRotateSecureTenDayCookie() {
+		enrollStudent("S-1");
+		var login = anonymous.post()
+			.uri("/api/auth/login")
+			.contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+			.body(new LoginRequest("S-1", PASSWORD))
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(TokenResponse.class)
+			.returnResult();
+		String refreshSetCookie = login.getResponseHeaders().getFirst(HttpHeaders.SET_COOKIE);
+		assertThat(refreshSetCookie).contains("__Host-university-refresh=", "Secure", "HttpOnly", "SameSite=Lax",
+				"Path=/", "Max-Age=864000");
+		String refreshCookie = refreshSetCookie.substring(0, refreshSetCookie.indexOf(';'));
+
+		var csrf = anonymous.get()
+			.uri("/api/auth/csrf")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(CsrfResponse.class)
+			.returnResult();
+		String csrfToken = csrf.getResponseBody().token();
+		String csrfSetCookie = csrf.getResponseHeaders().getFirst(HttpHeaders.SET_COOKIE);
+		String csrfCookie = csrfSetCookie.substring(0, csrfSetCookie.indexOf(';'));
+
+		anonymous.post()
+			.uri("/api/auth/refresh")
+			.header(HttpHeaders.COOKIE, refreshCookie + "; " + csrfCookie)
+			.exchange()
+			.expectStatus()
+			.isForbidden();
+
+		var refresh = anonymous.post()
+			.uri("/api/auth/refresh")
+			.header(HttpHeaders.COOKIE, refreshCookie + "; " + csrfCookie)
+			.header("X-XSRF-TOKEN", csrfToken)
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(TokenResponse.class)
+			.returnResult();
+		String rotatedCookie = refresh.getResponseHeaders().getFirst(HttpHeaders.SET_COOKIE);
+		assertThat(rotatedCookie).contains("__Host-university-refresh=", "Max-Age=864000");
+		String rotatedRefreshCookie = rotatedCookie.substring(0, rotatedCookie.indexOf(';'));
+
+		anonymous.post()
+			.uri("/api/auth/logout")
+			.header(HttpHeaders.COOKIE, rotatedRefreshCookie + "; " + csrfCookie)
+			.header("X-XSRF-TOKEN", csrfToken)
+			.exchange()
+			.expectStatus()
+			.isNoContent()
+			.expectHeader()
+			.value(HttpHeaders.SET_COOKIE, cookie -> assertThat(cookie).contains("Max-Age=0", "Secure", "HttpOnly"));
+	}
+
+	@Test
 	void studentCanLogInWithEmailAsWellAsId() {
 		postJson(anonymous, "/api/auth/register",
 				new RegisterRequest(com.example.project00.domain.Role.STUDENT, "455", "Pedro", 2025, null, PASSWORD,
@@ -137,6 +196,9 @@ class AuthE2ETest extends EndToEndTestSupport {
 		postJson(client, "/api/auth/register", request).expectStatus().isEqualTo(409);
 
 		as("A-2").get().uri("/api/auth/me").exchange().expectBody().jsonPath("$.role").isEqualTo("ADMIN");
+	}
+
+	private record CsrfResponse(String token) {
 	}
 
 	@Test
