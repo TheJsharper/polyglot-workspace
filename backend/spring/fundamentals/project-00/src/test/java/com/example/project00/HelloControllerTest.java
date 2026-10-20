@@ -11,11 +11,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 // Loads the application's SecurityConfig so the slice applies the real rules (/hello is public).
 @WebMvcTest(controllers = HelloController.class, includeFilters = @Filter(type = FilterType.REGEX,
 		pattern = "com\\.example\\.project00\\.security\\.SecurityConfig"))
+@TestPropertySource(properties = "app.google.enabled=false")
 class HelloControllerTest {
 
 	@Autowired

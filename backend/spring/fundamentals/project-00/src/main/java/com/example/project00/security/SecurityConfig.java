@@ -16,6 +16,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,6 +43,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stateless JWT security.
@@ -60,6 +63,8 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @EnableMethodSecurity
 @EnableConfigurationProperties({ AppSecurityProperties.class, GoogleOAuthProperties.class })
 class SecurityConfig {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
 
 	@Bean
 	SecurityFilterChain apiSecurity(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter,
@@ -114,8 +119,18 @@ class SecurityConfig {
 		if (googleProperties.enabled()) {
 			http.oauth2Login(oauth -> oauth
 				.successHandler(googleSuccessHandler.getObject())
-				.failureHandler((request, response, exception) -> response.sendRedirect(
-						googleProperties.frontendUrl() + "?error=google_signin_failed")));
+				.failureHandler((request, response, exception) -> {
+					String errorCode = exception instanceof OAuth2AuthenticationException oauthException
+							? oauthException.getError().getErrorCode() : "unavailable";
+					if (!errorCode.matches("[A-Za-z0-9._-]{1,80}")) {
+						errorCode = "unavailable";
+					}
+					LOGGER.warn("Google OAuth authentication failed on {}: {} (error code: {})",
+							request.getServletPath(), exception.getClass().getSimpleName(), errorCode);
+					response.setHeader("Cache-Control", "no-store");
+					response.setHeader("Referrer-Policy", "no-referrer");
+					response.sendRedirect(googleProperties.frontendUrl() + "?error=google_signin_failed");
+				}));
 		}
 		return http.build();
 	}

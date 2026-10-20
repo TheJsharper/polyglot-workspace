@@ -1,6 +1,8 @@
 package com.example.project00.web;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,6 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 class GoogleOAuthConfigurationE2ETest extends EndToEndTestSupport {
 
+	@Autowired
+	private ClientRegistrationRepository registrations;
+
 	@Test
 	void enabledGoogleSsoStartsAuthorizationCodeFlow() {
 		var result = anonymous.get().uri("/api/auth/google/start").exchange();
@@ -26,5 +31,11 @@ class GoogleOAuthConfigurationE2ETest extends EndToEndTestSupport {
 		String location = authorization.returnResult(Void.class).getResponseHeaders().getLocation().toString();
 		assertThat(location).startsWith("https://accounts.google.com/");
 		assertThat(location).contains("client_id=test-google-client", "response_type=code", "openid");
+	}
+
+	@Test
+	void googleRegistrationConfiguresOidcSignatureVerificationKeys() {
+		assertThat(registrations.findByRegistrationId("google").getProviderDetails().getJwkSetUri())
+			.isEqualTo("https://www.googleapis.com/oauth2/v3/certs");
 	}
 }

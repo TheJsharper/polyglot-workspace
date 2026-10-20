@@ -19,6 +19,7 @@ import com.example.project00.security.TokenService;
 @ActiveProfiles("prod")
 @TestPropertySource(properties = {
 		"app.demo.enabled=true",
+		"app.google.enabled=false",
 		"spring.datasource.url=jdbc:h2:mem:demo-prod-test;DB_CLOSE_DELAY=-1",
 		"spring.datasource.driver-class-name=org.h2.Driver",
 		"spring.datasource.username=sa",
