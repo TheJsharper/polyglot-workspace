@@ -32,10 +32,12 @@ memory, so data is lost on restart. DevTools restarts the app when classes chang
 
 | Profile | Activation | Behaviour |
 | --- | --- | --- |
-| `dev` (default) | no `SPRING_PROFILES_ACTIVE` | H2 console and Swagger UI on; seeds demo data on an empty database |
-| `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no demo data |
+| `dev` (default) | no `SPRING_PROFILES_ACTIVE` | H2 console and Swagger UI on; seeds local sample data on an empty database |
+| `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no sample data |
 
-The `dev` seed (`config/DemoDataInitializer`) creates professors `prof-ada`, `prof-alan`, `prof-marie`, students `stud-anna`, `stud-ben`, `stud-carla`, `stud-david` and courses `CS101`, `CS201`, `MA101`, `PH101` with teachers and enrollments. All demo accounts use the password `Password-123`. Tests run with the `test` profile, so nothing is seeded.
+The `dev` profile seeds local sample accounts and enables recruiter demo-token testing; never expose it publicly. Docker uses `prod` by default, which has no demo-token routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded. Local development instructions and sample credentials are kept in untracked `frontend/angular/fundamentals/project-00/docs/dev/` notes.
+
+The application does not delete existing database contents automatically. For a deployment previously used with demos, rotate `JWT_SECRET` and remove local sample accounts before exposing it publicly.
 
 ## Architecture
 

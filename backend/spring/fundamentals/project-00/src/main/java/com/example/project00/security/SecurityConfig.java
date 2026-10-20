@@ -7,10 +7,16 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,6 +27,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
@@ -28,6 +35,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -53,7 +61,15 @@ class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain apiSecurity(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter,
-			AuthenticationEntryPoint entryPoint, AccessDeniedHandler accessDeniedHandler) throws Exception {
+			AuthenticationEntryPoint entryPoint, AccessDeniedHandler accessDeniedHandler, Clock clock,
+			Environment environment,
+			@Value("${app.demo.enabled:false}") boolean demoEnabled,
+			@Value("${app.demo.max-requests-per-minute:60}") int demoRequestsPerMinute) throws Exception {
+		boolean devDemoEnabled = demoEnabled && environment.matchesProfiles("dev");
+		if (devDemoEnabled) {
+			http.addFilterAfter(new DemoSessionFilter(clock, demoRequestsPerMinute),
+					BearerTokenAuthenticationFilter.class);
+		}
 		http.csrf(csrf -> csrf.disable())
 			.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
 			.httpBasic(basic -> basic.disable())
@@ -61,6 +77,10 @@ class SecurityConfig {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
+				.permitAll()
+				.requestMatchers(devDemoEnabled ? HttpMethod.POST : HttpMethod.TRACE, "/api/demo/redeem")
+				.permitAll()
+				.requestMatchers(devDemoEnabled ? HttpMethod.GET : HttpMethod.TRACE, "/api/demo/status")
 				.permitAll()
 				.requestMatchers("/hello", "/error", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html",
 						"/swagger-ui/**", "/h2-console", "/h2-console/**")
@@ -105,11 +125,18 @@ class SecurityConfig {
 	}
 
 	@Bean
-	JwtDecoder jwtDecoder(AppSecurityProperties properties) {
+	JwtDecoder jwtDecoder(AppSecurityProperties properties,
+			@Value("${app.demo.enabled:false}") boolean demoEnabled, Environment environment) {
 		NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey(properties))
 			.macAlgorithm(MacAlgorithm.HS256)
 			.build();
-		decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(properties.jwt().issuer()));
+		OAuth2TokenValidator<Jwt> rejectLegacyDemoSessions = jwt -> Boolean.TRUE.equals(jwt.getClaim("demo"))
+				&& !(demoEnabled && environment.matchesProfiles("dev"))
+				? OAuth2TokenValidatorResult.failure(
+						new OAuth2Error("invalid_token", "Demo sessions are only accepted in development mode", null))
+				: OAuth2TokenValidatorResult.success();
+		decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+				JwtValidators.createDefaultWithIssuer(properties.jwt().issuer()), rejectLegacyDemoSessions));
 		return decoder;
 	}
 

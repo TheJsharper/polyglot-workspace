@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { ApiError, UniversityApi } from '@project-00/services-api';
-import type { LoginRequest, MeResponse, RegisterRequest, RegisterResponse } from '@project-00/services-api';
+import type { DemoRedeemRequest, LoginRequest, MeResponse, RegisterRequest, RegisterResponse, TokenResponse } from '@project-00/services-api';
 
 export const UNIVERSITY_API_BASE_URL = new InjectionToken<string>('University API base URL');
 
@@ -18,7 +18,15 @@ export class UniversitySession {
 
   async login(credentials: LoginRequest): Promise<MeResponse> {
     this.logout();
-    const issued = await this.api.login(credentials);
+    return this.start(await this.api.login(credentials));
+  }
+
+  async redeemDemo(request: DemoRedeemRequest): Promise<MeResponse> {
+    this.logout();
+    return this.start(await this.api.redeemDemo(request));
+  }
+
+  private async start(issued: TokenResponse): Promise<MeResponse> {
     if (
       typeof issued.accessToken !== 'string' ||
       !issued.accessToken ||

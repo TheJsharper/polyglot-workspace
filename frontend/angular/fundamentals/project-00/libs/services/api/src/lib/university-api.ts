@@ -4,6 +4,7 @@ import type {
   CreateCourseRequest,
   CreateProfessorRequest,
   CreateStudentRequest,
+  DemoRedeemRequest,
   EditNotesRequest,
   LectureResponse,
   LoginRequest,
@@ -55,6 +56,10 @@ export class UniversityApi {
   /** POST /api/auth/login (sent without Authorization header) */
   login(request: LoginRequest): Promise<TokenResponse> {
     return this.send('POST', '/api/auth/login', { body: request, anonymous: true });
+  }
+  /** POST /api/demo/redeem (dev profile only) */
+  redeemDemo(request: DemoRedeemRequest): Promise<TokenResponse> {
+    return this.send('POST', '/api/demo/redeem', { body: request, anonymous: true });
   }
   /** GET /api/auth/me */
   me(): Promise<MeResponse> {
