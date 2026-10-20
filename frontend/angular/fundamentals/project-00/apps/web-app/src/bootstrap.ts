@@ -5,8 +5,11 @@ import { App } from './app/app';
 
 async function demoEnabled(): Promise<boolean> {
   try {
-    const response = await fetch('api/demo/status', { cache: 'no-store' });
-    return response.ok && (await response.json()).enabled === true;
+    const response = await fetch('/api/demo/status', { cache: 'no-store' });
+    if (!response.ok) return false;
+    const status: unknown = await response.json();
+    return typeof status === 'object' && status !== null
+      && 'enabled' in status && status.enabled === true;
   } catch {
     return false;
   }

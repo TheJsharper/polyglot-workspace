@@ -18,10 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * Restricts recruiter demo sessions (JWT claim {@code demo=true}) to read-only requests and rate limits them.
- * Runs after bearer authentication; other callers pass through untouched.
- */
+/** Enforces read-only access and per-persona rate limits for dev demo sessions. */
 class DemoSessionFilter extends OncePerRequestFilter {
 
 	private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS");

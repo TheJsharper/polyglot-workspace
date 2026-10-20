@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,10 +23,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
-/** Recruiter demo: public redemption of an offline-signed demo token. */
+/** Recruiter demo endpoints; active only in the loopback-bound dev profile. */
 @Tag(name = "Demo")
 @RestController
 @RequiredArgsConstructor
+@Profile("dev")
 @ConditionalOnProperty(name = "app.demo.enabled", havingValue = "true")
 class DemoController {
 
@@ -38,15 +40,14 @@ class DemoController {
 			Instant demoExpiresAt) {
 	}
 
-	@Operation(summary = "Tells the UI the demo environment is active (only exists in the demo profile)")
+	@Operation(summary = "Reports that local demo access is enabled")
 	@SecurityRequirements
 	@GetMapping("/api/demo/status")
 	Map<String, Boolean> status() {
 		return Map.of("enabled", true);
 	}
 
-	@Operation(summary = "Redeem a signed demo token for a read-only session",
-			description = "Public. Invalid or expired tokens return 401; repeated failures return 429.")
+	@Operation(summary = "Redeems a signed token for a read-only development demo session")
 	@SecurityRequirements
 	@PostMapping("/api/demo/redeem")
 	RedeemResponse redeem(@Valid @RequestBody RedeemRequest request, HttpServletRequest http) {

@@ -10,10 +10,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.nimbusds.jose.JWSAlgorithm;
@@ -21,20 +20,14 @@ import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-/**
- * Verifies recruiter demo tokens: ES256 JWTs signed offline with a private key the server never holds. The server
- * only knows the public key, so it can check tokens but cannot mint them.
- */
+/** Verifies ES256 tokens signed offline with a private key that stays on the developer's machine. */
 @Component
+@Profile("dev")
 @ConditionalOnProperty(name = "app.demo.enabled", havingValue = "true")
 public class DemoTokenVerifier {
 
-	private static final Logger log = LoggerFactory.getLogger(DemoTokenVerifier.class);
-
 	private final ECPublicKey publicKey;
-
 	private final Set<String> revokedIds;
-
 	private final Clock clock;
 
 	public DemoTokenVerifier(@Value("${app.demo.public-key:}") String publicKeyPem,
@@ -42,19 +35,16 @@ public class DemoTokenVerifier {
 		this.publicKey = parse(publicKeyPem);
 		this.revokedIds = Set.copyOf(revokedIds.stream().map(String::trim).filter(id -> !id.isEmpty()).toList());
 		this.clock = clock;
-		if (publicKey == null) {
-			log.warn("app.demo.public-key is not set: every demo token will be rejected");
-		}
 	}
 
-	/** @return the token's claims when the signature, validity window and revocation list all check out */
 	public Optional<JWTClaimsSet> verify(String token) {
 		if (publicKey == null || token == null) {
 			return Optional.empty();
 		}
 		try {
 			SignedJWT jwt = SignedJWT.parse(token.trim());
-			if (!JWSAlgorithm.ES256.equals(jwt.getHeader().getAlgorithm()) || !jwt.verify(new ECDSAVerifier(publicKey))) {
+			if (!JWSAlgorithm.ES256.equals(jwt.getHeader().getAlgorithm())
+					|| !jwt.verify(new ECDSAVerifier(publicKey))) {
 				return Optional.empty();
 			}
 			JWTClaimsSet claims = jwt.getJWTClaimsSet();
@@ -65,7 +55,7 @@ public class DemoTokenVerifier {
 			if (claims.getNotBeforeTime() != null && now.isBefore(claims.getNotBeforeTime().toInstant())) {
 				return Optional.empty();
 			}
-			if (claims.getJWTID() != null && revokedIds.contains(claims.getJWTID())) {
+			if (claims.getJWTID() == null || revokedIds.contains(claims.getJWTID())) {
 				return Optional.empty();
 			}
 			return Optional.of(claims);

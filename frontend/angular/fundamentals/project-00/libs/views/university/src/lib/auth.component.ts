@@ -58,10 +58,10 @@ export class LoginComponent {
   imports: [FormsModule, RouterLink],
   template: `
     <section class="auth">
-      <h1>Recruiter demo</h1>
-      <p>Enter the demo token you received to explore the app in read-only mode.</p>
+      <h1>Local recruiter demo</h1>
+      <p>Enter a development demo token to explore a seeded persona in read-only mode.</p>
       <form (ngSubmit)="submit()">
-        <label>Demo token <textarea name="token" rows="4" [(ngModel)]="token" required maxlength="2048" autocomplete="off" spellcheck="false" placeholder="Paste the demo token you received"></textarea></label>
+        <label>Demo token <textarea name="token" rows="4" [(ngModel)]="token" required maxlength="2048" autocomplete="off" spellcheck="false" placeholder="Paste your local demo token"></textarea></label>
         <label>Explore as
           <select name="persona" [(ngModel)]="persona">
             <option value="STUDENT">Student</option>

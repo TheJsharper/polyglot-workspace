@@ -32,7 +32,7 @@ describe('University authentication', () => {
     expect(login).toHaveBeenCalledWith({ username: 'S-1', password: 'test-password' });
   });
 
-  it('starts a demo session with the chosen persona', async () => {
+  it('redeems a local demo token for the chosen persona', async () => {
     const redeemDemo = vi.fn().mockResolvedValue({ username: 'stud-anna', role: 'STUDENT' });
     TestBed.configureTestingModule({
       providers: [
@@ -44,16 +44,16 @@ describe('University authentication', () => {
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
     const input = root.querySelector<HTMLTextAreaElement>('textarea[name=token]')!;
-    input.value = ' DEMO-AAAAAA ';
+    input.value = ' LOCAL-DEMO ';
     input.dispatchEvent(new Event('input'));
     await fixture.whenStable();
     root.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await fixture.whenStable();
 
-    expect(redeemDemo).toHaveBeenCalledWith({ token: 'DEMO-AAAAAA', persona: 'STUDENT' });
+    expect(redeemDemo).toHaveBeenCalledWith({ token: 'LOCAL-DEMO', persona: 'STUDENT' });
   });
 
-  it('shows the recruiter demo link only when the demo environment is enabled', async () => {
+  it('shows the recruiter demo link only when the dev backend enables it', async () => {
     const link = async (enabled: boolean) => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({

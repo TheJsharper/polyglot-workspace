@@ -9,6 +9,6 @@ RUN ./mvnw -q -DskipTests package
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-ENV SPRING_PROFILES_ACTIVE=demo
+ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]

@@ -6,6 +6,7 @@ import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,22 +18,16 @@ import com.example.project00.security.TokenService;
 import com.example.project00.security.TokenService.IssuedToken;
 import com.nimbusds.jwt.JWTClaimsSet;
 
-/**
- * Redeems signed recruiter demo tokens for a read-only session of a seeded persona. Failed redemptions are rate
- * limited per client address.
- */
+/** Redeems signed recruiter tokens for short-lived, read-only local development sessions. */
 @Service
+@Profile("dev")
 @ConditionalOnProperty(name = "app.demo.enabled", havingValue = "true")
 public class DemoTokenService {
 
 	private final DemoTokenVerifier verifier;
-
 	private final TokenService tokenService;
-
 	private final SlidingWindowLimiter failedAttempts;
-
 	private final String studentUsername;
-
 	private final String professorUsername;
 
 	public DemoTokenService(DemoTokenVerifier verifier, TokenService tokenService, Clock clock,
@@ -47,7 +42,6 @@ public class DemoTokenService {
 		this.failedAttempts = new SlidingWindowLimiter(maxFailedAttempts, failedWindow, clock);
 	}
 
-	/** The result of a successful redemption. */
 	public record Redeemed(IssuedToken accessToken, String username, String role, Instant expiresAt) {
 	}
 
@@ -70,7 +64,6 @@ public class DemoTokenService {
 		return new Redeemed(issued, username, persona.name(), expiresAt);
 	}
 
-	/** Forgets recorded failed attempts (used by tests that share one client address). */
 	public void clearFailedAttempts() {
 		failedAttempts.clear();
 	}

@@ -21,7 +21,6 @@ export class UniversitySession {
     return this.start(await this.api.login(credentials));
   }
 
-  /** Starts a read-only recruiter demo session from a demo token. */
   async redeemDemo(request: DemoRedeemRequest): Promise<MeResponse> {
     this.logout();
     return this.start(await this.api.redeemDemo(request));
