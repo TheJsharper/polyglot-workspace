@@ -28,6 +28,7 @@ describe('ShellComponent', () => {
     expect(ids('PROFESSOR')).toEqual(['students', 'courses', 'lectures', 'notes']);
     expect(menuForRole(SHELL_MENU, 'PROFESSOR')[0].label).toBe('My Students');
     expect(ids('ADMIN')).toHaveLength(5);
+    expect(ids('MANAGER')).toEqual(['demo-keys']);
     expect(ids('')).toEqual([]);
   });
 

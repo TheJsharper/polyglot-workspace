@@ -1,6 +1,6 @@
 /** Contracts mirroring http://localhost:8080/v3/api-docs. Dates are ISO strings. */
 
-export type Role = 'STUDENT' | 'PROFESSOR' | 'ADMIN';
+export type Role = 'STUDENT' | 'PROFESSOR' | 'ADMIN' | 'MANAGER';
 
 /** RFC 9457 problem detail returned by every error response. */
 export interface ProblemDetail {
@@ -57,6 +57,28 @@ export interface MeResponse {
   displayName?: string;
   /** HTTPS Google avatar (googleusercontent.com) or null. */
   pictureUrl?: string | null;
+}
+
+// Demo keys (MANAGER, dev profile only). The private key is never returned.
+export interface CreateDemoKeysRequest {
+  /** 1 to 10. */
+  count: number;
+  /** 1 to 30, default 10. */
+  days?: number;
+  label?: string;
+}
+export interface DemoKeyResponse {
+  id: number;
+  label: string;
+  publicKey: string;
+  token: string;
+  createdAt: string;
+  notBefore: string;
+  expiresAt: string;
+  redeemed: boolean;
+  redeemedAt?: string | null;
+  redeemCount: number;
+  createdBy: string;
 }
 
 // Students
