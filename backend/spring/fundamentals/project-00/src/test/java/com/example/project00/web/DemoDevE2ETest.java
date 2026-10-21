@@ -1,12 +1,5 @@
 package com.example.project00.web;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.ECPrivateKey;
-import java.security.spec.ECGenParameterSpec;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +16,7 @@ import com.example.project00.domain.Course;
 import com.example.project00.repository.CourseRepository;
 import com.example.project00.repository.ProfessorRepository;
 import com.example.project00.repository.StudentRepository;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
+import com.example.project00.service.DemoKeyService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,17 +26,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureRestTestClient
 class DemoDevE2ETest {
 
-	private static final KeyPair KEYS = generateKeys();
-
-	@DynamicPropertySource
-	static void publicKey(DynamicPropertyRegistry registry) {
-		registry.add("app.demo.public-key", () -> "-----BEGIN PUBLIC KEY-----\n"
-				+ Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(KEYS.getPublic().getEncoded())
-				+ "\n-----END PUBLIC KEY-----");
-	}
-
 	@Autowired
 	private RestTestClient client;
+
+	@Autowired
+	private DemoKeyService demoKeys;
 
 	@Autowired
 	private CourseRepository courses;
@@ -83,7 +64,7 @@ class DemoDevE2ETest {
 		Map<?, ?> redeemed = client.post()
 			.uri("/api/demo/redeem")
 			.contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-			.body(Map.of("token", signedToken(), "persona", "STUDENT"))
+			.body(Map.of("token", demoKeys.create(1, 1, "e2e", "manager").get(0).getToken(), "persona", "STUDENT"))
 			.exchange()
 			.expectStatus()
 			.isOk()
@@ -104,31 +85,4 @@ class DemoDevE2ETest {
 			.isForbidden();
 	}
 
-	private static KeyPair generateKeys() {
-		try {
-			KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
-			generator.initialize(new ECGenParameterSpec("secp256r1"));
-			return generator.generateKeyPair();
-		}
-		catch (Exception ex) {
-			throw new IllegalStateException(ex);
-		}
-	}
-
-	private static String signedToken() {
-		try {
-			Instant now = Instant.now();
-			JWTClaimsSet claims = new JWTClaimsSet.Builder().jwtID("local-dev-test")
-				.issueTime(Date.from(now))
-				.notBeforeTime(Date.from(now.minusSeconds(10)))
-				.expirationTime(Date.from(now.plusSeconds(600)))
-				.build();
-			SignedJWT jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claims);
-			jwt.sign(new ECDSASigner((ECPrivateKey) KEYS.getPrivate()));
-			return jwt.serialize();
-		}
-		catch (Exception ex) {
-			throw new IllegalStateException(ex);
-		}
-	}
 }

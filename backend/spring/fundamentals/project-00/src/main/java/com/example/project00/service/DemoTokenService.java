@@ -25,17 +25,20 @@ import com.nimbusds.jwt.JWTClaimsSet;
 public class DemoTokenService {
 
 	private final DemoTokenVerifier verifier;
+	private final DemoKeyService demoKeys;
 	private final TokenService tokenService;
 	private final SlidingWindowLimiter failedAttempts;
 	private final String studentUsername;
 	private final String professorUsername;
 
-	public DemoTokenService(DemoTokenVerifier verifier, TokenService tokenService, Clock clock,
+	public DemoTokenService(DemoTokenVerifier verifier, DemoKeyService demoKeys, TokenService tokenService,
+			Clock clock,
 			@Value("${app.demo.max-failed-attempts:5}") int maxFailedAttempts,
 			@Value("${app.demo.failed-attempts-window:15m}") Duration failedWindow,
 			@Value("${app.demo.student-username:stud-anna}") String studentUsername,
 			@Value("${app.demo.professor-username:prof-ada}") String professorUsername) {
 		this.verifier = verifier;
+		this.demoKeys = demoKeys;
 		this.tokenService = tokenService;
 		this.studentUsername = studentUsername;
 		this.professorUsername = professorUsername;
@@ -61,6 +64,7 @@ public class DemoTokenService {
 		Instant expiresAt = claims.getExpirationTime().toInstant();
 		String username = persona == Role.STUDENT ? studentUsername : professorUsername;
 		IssuedToken issued = tokenService.issueDemo(username, persona.name(), expiresAt);
+		demoKeys.recordRedemption(claims.getJWTID());
 		return new Redeemed(issued, username, persona.name(), expiresAt);
 	}
 
