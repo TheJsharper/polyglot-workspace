@@ -31,6 +31,9 @@ public class GoogleLoginTicket extends BaseEntity {
 	@Column(name = "picture_url", length = 2048)
 	private String pictureUrl;
 
+	@Column(name = "binding_hash", length = 64)
+	private String bindingHash;
+
 	@Column(name = "expires_at", nullable = false)
 	private Instant expiresAt;
 
@@ -38,16 +41,26 @@ public class GoogleLoginTicket extends BaseEntity {
 	private boolean consumed;
 
 	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName, Instant expiresAt) {
-		this(tokenHash, googleSubject, email, displayName, null, expiresAt);
+		this(tokenHash, googleSubject, email, displayName, null, null, expiresAt);
 	}
 
 	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName,
 			String pictureUrl, Instant expiresAt) {
+		this(tokenHash, googleSubject, email, displayName, pictureUrl, null, expiresAt);
+	}
+
+	/**
+	 * @param bindingHash hash of a secret held only by the browser that completed the Google flow; completion
+	 * requires the same secret, so a ticket obtained elsewhere cannot sign another browser in
+	 */
+	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName,
+			String pictureUrl, String bindingHash, Instant expiresAt) {
 		this.tokenHash = Objects.requireNonNull(tokenHash);
 		this.googleSubject = Objects.requireNonNull(googleSubject);
 		this.email = Objects.requireNonNull(email);
 		this.displayName = Objects.requireNonNull(displayName);
 		this.pictureUrl = pictureUrl;
+		this.bindingHash = bindingHash;
 		this.expiresAt = Objects.requireNonNull(expiresAt);
 	}
 

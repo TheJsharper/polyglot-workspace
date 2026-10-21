@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.project00.security.GoogleLoginSuccessHandler;
 import com.example.project00.security.GoogleOAuthProperties;
 import com.example.project00.service.GoogleLoginService;
 import com.example.project00.service.RefreshSessionService;
@@ -52,8 +54,9 @@ class GoogleAuthController {
 
 	@PostMapping("/google/complete")
 	ResponseEntity<GoogleCompleteResponse> completeGoogleSignIn(@RequestParam String ticket,
+			@CookieValue(name = GoogleLoginSuccessHandler.BINDING_COOKIE, required = false) String binding,
 			@Valid @RequestBody(required = false) GoogleOnboardingRequest onboarding) {
-		GoogleSessionResponse result = googleLoginService.complete(ticket, onboarding);
+		GoogleSessionResponse result = googleLoginService.complete(ticket, binding, onboarding);
 		if (result.onboardingRequired()) {
 			return ResponseEntity.ok()
 				.header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -61,6 +64,8 @@ class GoogleAuthController {
 		}
 		return ResponseEntity.ok()
 			.header(HttpHeaders.SET_COOKIE, refreshCookie(result.refreshSecret()).toString())
+			.header(HttpHeaders.SET_COOKIE,
+					GoogleLoginSuccessHandler.bindingCookie("", java.time.Duration.ZERO).toString())
 			.header(HttpHeaders.CACHE_CONTROL, "no-store")
 			.body(new GoogleCompleteResponse(result.session(), false));
 	}
