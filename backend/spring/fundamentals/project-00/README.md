@@ -35,7 +35,11 @@ memory, so data is lost on restart. DevTools restarts the app when classes chang
 | `dev` (default) | no `SPRING_PROFILES_ACTIVE` | H2 console and Swagger UI on; seeds local sample data on an empty database |
 | `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no sample data |
 
-The `dev` profile seeds local sample accounts, creates the Google-only MANAGER account (`app.manager.email`) and enables recruiter demo-key testing; never expose it publicly. Docker uses `prod` by default, which has no demo-key or manager routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded. Local development instructions and sample credentials are kept in untracked `frontend/angular/fundamentals/project-00/docs/dev/` notes.
+The `dev` profile seeds local sample accounts, creates the Google-only MANAGER account (`app.manager.email`) and enables recruiter demo-key testing; never expose it publicly. Docker uses `prod` by default, which has no demo-key or manager routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded.
+
+### Demo-keys microservice
+
+Demo keys are generated, stored and verified by the sibling service `../project-01` (port 8081, loopback only). In the `dev` profile `project-00` calls it asynchronously: `POST /api/manager/demo-keys` answers `202 Accepted` with a `Location` of `/api/manager/demo-keys/jobs/{id}` to poll until `DONE` or `FAILED`. If `project-01` is down the API answers `503`. Both services must share a secret of at least 32 characters: `DEMO_KEYS_SERVICE_SECRET` in `project-00` and `SERVICE_AUTH_SECRET` in `project-01` (see each `.env.example`). Start `project-01` first (`./mvnw spring-boot:run`), then `project-00` with the `dev` profile. `prod` never creates the client. Local development instructions and sample credentials are kept in untracked `frontend/angular/fundamentals/project-00/docs/dev/` notes.
 
 The `prod` profile requires a persistent PostgreSQL database through `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`; it has no in-memory fallback. Google sign-in is off until `GOOGLE_SSO_ENABLED=true` and Google OAuth credentials and HTTPS callback URLs are configured. See the workspace [deployment guide](../../../../frontend/angular/fundamentals/project-00/docs/deployment.md) for Google Cloud and production proxy setup.
 

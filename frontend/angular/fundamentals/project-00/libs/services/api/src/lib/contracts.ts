@@ -82,6 +82,14 @@ export interface DemoKeyResponse {
   redeemCount: number;
   createdBy: string;
 }
+/** Key creation is asynchronous: POST answers 202 with a job to poll until it is DONE or FAILED. */
+export interface DemoKeyJobResponse {
+  id: string;
+  status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
+  keys: DemoKeyResponse[];
+  error?: string | null;
+  createdAt: string;
+}
 
 // Students
 export interface CreateStudentRequest {

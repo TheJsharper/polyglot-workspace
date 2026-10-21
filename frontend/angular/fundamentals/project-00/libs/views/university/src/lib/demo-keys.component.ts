@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, InjectionToken, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UniversitySession } from '@project-00/services-session';
@@ -6,6 +6,9 @@ import type { DemoKeyResponse } from '@project-00/services-api';
 
 export const MIN_DEMO_KEYS = 1;
 export const MAX_DEMO_KEYS = 10;
+const MAX_POLLS = 60;
+/** Delay between job status polls; overridable in tests. */
+export const DEMO_KEY_POLL_MS = new InjectionToken<number>('DEMO_KEY_POLL_MS', { factory: () => 500 });
 
 /** Manager workspace: list, create (1 to 10 at a time) and delete unused recruiter demo keys. */
 @Component({
@@ -90,6 +93,7 @@ export const MAX_DEMO_KEYS = 10;
 })
 export class DemoKeysComponent implements OnInit {
   protected readonly session = inject(UniversitySession);
+  private readonly pollMs = inject(DEMO_KEY_POLL_MS);
   protected readonly min = MIN_DEMO_KEYS;
   protected readonly max = MAX_DEMO_KEYS;
   protected readonly keys = signal<DemoKeyResponse[]>([]);
@@ -117,9 +121,17 @@ export class DemoKeysComponent implements OnInit {
   protected async create(): Promise<void> {
     if (this.busy() || !this.countValid()) return;
     await this.act(async () => {
-      const created = await this.session.run(() =>
-        this.session.api.createDemoKeys({ count: this.count(), days: this.days(), label: this.label().trim() || undefined }),
-      );
+      const request = { count: this.count(), days: this.days(), label: this.label().trim() || undefined };
+      this.message.set('Generating keys…');
+      let job = await this.session.run(() => this.session.api.createDemoKeys(request));
+      for (let attempt = 0; job.status === 'PENDING' || job.status === 'RUNNING'; attempt++) {
+        if (attempt >= MAX_POLLS) throw new Error('Key generation is taking too long. Refresh the list in a moment.');
+        await new Promise((resolve) => setTimeout(resolve, this.pollMs));
+        const id = job.id;
+        job = await this.session.run(() => this.session.api.getDemoKeyJob(id));
+      }
+      if (job.status === 'FAILED') throw new Error(job.error || 'Key generation failed.');
+      const created = job.keys;
       this.message.set(`Created ${created.length} demo key${created.length === 1 ? '' : 's'}.`);
       await this.reload();
     });

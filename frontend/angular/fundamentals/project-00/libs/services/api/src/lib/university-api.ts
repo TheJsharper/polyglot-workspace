@@ -6,6 +6,7 @@ import type {
   CreateDemoKeysRequest,
   CreateProfessorRequest,
   CreateStudentRequest,
+  DemoKeyJobResponse,
   DemoKeyResponse,
   DemoRedeemRequest,
   GoogleCompleteResponse,
@@ -98,9 +99,13 @@ export class UniversityApi {
   listDemoKeys(): Promise<DemoKeyResponse[]> {
     return this.send('GET', '/api/manager/demo-keys');
   }
-  /** POST /api/manager/demo-keys (201) */
-  createDemoKeys(request: CreateDemoKeysRequest): Promise<DemoKeyResponse[]> {
+  /** POST /api/manager/demo-keys (202 Accepted with a job to poll) */
+  createDemoKeys(request: CreateDemoKeysRequest): Promise<DemoKeyJobResponse> {
     return this.send('POST', '/api/manager/demo-keys', { body: request });
+  }
+  /** GET /api/manager/demo-keys/jobs/{id} */
+  getDemoKeyJob(id: string): Promise<DemoKeyJobResponse> {
+    return this.send('GET', `/api/manager/demo-keys/jobs/${enc(id)}`);
   }
   /** DELETE /api/manager/demo-keys/{id} (204; 409 once redeemed) */
   deleteDemoKey(id: number): Promise<NoContent> {
