@@ -51,7 +51,10 @@ public class GoogleLoginService {
 	}
 
 	@Transactional
-	public String createTicket(OidcUser identity) {
+	public String createTicket(OidcUser identity, String browserBinding) {
+		if (browserBinding == null || browserBinding.isBlank()) {
+			throw new IllegalArgumentException("A browser binding is required");
+		}
 		String subject = identity.getSubject();
 		String email = identity.getEmail();
 		if (subject == null || subject.isBlank() || email == null || email.isBlank()
@@ -68,7 +71,7 @@ public class GoogleLoginService {
 			displayName = displayName.substring(0, 254);
 		}
 		tickets.save(new GoogleLoginTicket(hash(secret), subject, email.toLowerCase(Locale.ROOT), displayName,
-				safePictureUrl(identity.getPicture()), clock.instant().plus(TICKET_LIFETIME)));
+				safePictureUrl(identity.getPicture()), hash(browserBinding), clock.instant().plus(TICKET_LIFETIME)));
 		return secret;
 	}
 
@@ -100,7 +103,7 @@ public class GoogleLoginService {
 	}
 
 	@Transactional
-	public GoogleSessionResponse complete(String secret, GoogleOnboardingRequest onboarding) {
+	public GoogleSessionResponse complete(String secret, String browserBinding, GoogleOnboardingRequest onboarding) {
 		var ticketOptional = tickets.findByTokenHashForUpdate(hash(secret));
 		if (ticketOptional.isEmpty()) {
 			throw new BadCredentialsException("Google sign-in expired or was already used");
@@ -108,6 +111,11 @@ public class GoogleLoginService {
 		GoogleLoginTicket ticket = ticketOptional.get();
 		if (ticket.isConsumed() || !ticket.getExpiresAt().isAfter(clock.instant())) {
 			throw new BadCredentialsException("Google sign-in expired or was already used");
+		}
+		if (browserBinding == null || browserBinding.isBlank() || ticket.getBindingHash() == null
+				|| !MessageDigest.isEqual(ticket.getBindingHash().getBytes(StandardCharsets.UTF_8),
+						hash(browserBinding).getBytes(StandardCharsets.UTF_8))) {
+			throw new BadCredentialsException("Google sign-in was not started in this browser");
 		}
 		UserAccount account = accounts.findByGoogleSubject(ticket.getGoogleSubject()).orElse(null);
 		if (account == null) {
@@ -142,7 +150,7 @@ public class GoogleLoginService {
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
 	}
 
-	private static String hash(String value) {
+	static String hash(String value) {
 		try {
 			return java.util.HexFormat.of().formatHex(
 					MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));

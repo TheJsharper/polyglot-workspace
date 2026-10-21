@@ -34,6 +34,8 @@ class GoogleLoginServiceTest {
 
 	private static final String PICTURE = "https://lh3.googleusercontent.com/a/example-avatar=s96-c";
 
+	private static final String BINDING = "browser-binding";
+
 	@Test
 	void requiresGoogleVerifiedEmail() {
 		GoogleLoginService service = service(mock(GoogleLoginTicketRepository.class),
@@ -44,7 +46,7 @@ class GoogleLoginServiceTest {
 		when(identity.getEmail()).thenReturn("person@example.com");
 		when(identity.getEmailVerified()).thenReturn(false);
 
-		assertThatThrownBy(() -> service.createTicket(identity)).isInstanceOf(BadCredentialsException.class);
+		assertThatThrownBy(() -> service.createTicket(identity, BINDING)).isInstanceOf(BadCredentialsException.class);
 	}
 
 	@Test
@@ -56,7 +58,7 @@ class GoogleLoginServiceTest {
 		GoogleLoginService service = service(tickets, accounts, mock(AccountService.class),
 				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
 
-		assertThatThrownBy(() -> service.complete("one-time-ticket",
+		assertThatThrownBy(() -> service.complete("one-time-ticket", BINDING,
 				new GoogleOnboardingRequest(com.example.project00.domain.Role.ADMIN, null, null)))
 				.isInstanceOf(IllegalArgumentException.class);
 		verify(tickets).findByTokenHashForUpdate(anyString());
@@ -84,9 +86,10 @@ class GoogleLoginServiceTest {
 		GoogleLoginService service = service(tickets, accounts, accountService, users, mock(TokenService.class),
 				refresh);
 
-		var result = service.complete("one-time-ticket", null);
+		var result = service.complete("one-time-ticket", BINDING, null);
 
 		assertThat(result.onboardingRequired()).isFalse();
+		assertThat(result.newAccount()).isFalse();
 		assertThat(result.newAccount()).isFalse();
 		assertThat(result.session()).isEqualTo(new TokenResponse("access", "Bearer", 900));
 		assertThat(ticket.isConsumed()).isTrue();
@@ -103,7 +106,7 @@ class GoogleLoginServiceTest {
 		GoogleLoginService service = service(tickets, accounts, mock(AccountService.class),
 				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
 
-		assertThatThrownBy(() -> service.complete("one-time-ticket",
+		assertThatThrownBy(() -> service.complete("one-time-ticket", BINDING,
 				new GoogleOnboardingRequest(com.example.project00.domain.Role.MANAGER, null, null)))
 				.isInstanceOf(IllegalArgumentException.class);
 	}
@@ -130,11 +133,11 @@ class GoogleLoginServiceTest {
 		when(refresh.issue("g-student")).thenReturn("refresh-secret");
 		GoogleLoginService service = service(tickets, accounts, accountService, users, tokens, refresh);
 
-		var onboardingRequired = service.complete("one-time-ticket", null);
+		var onboardingRequired = service.complete("one-time-ticket", BINDING, null);
 		assertThat(onboardingRequired.onboardingRequired()).isTrue();
 		assertThat(ticket.isConsumed()).isFalse();
 
-		var result = service.complete("one-time-ticket",
+		var result = service.complete("one-time-ticket", BINDING,
 				new GoogleOnboardingRequest(com.example.project00.domain.Role.STUDENT, 2026, null));
 		assertThat(result.session()).isEqualTo(new TokenResponse("access", "Bearer", 900));
 		assertThat(result.refreshSecret()).isEqualTo("refresh-secret");
@@ -173,10 +176,11 @@ class GoogleLoginServiceTest {
 		when(identity.getFullName()).thenReturn("  Example Person ");
 		when(identity.getPicture()).thenReturn(PICTURE);
 
-		service.createTicket(identity);
+		service.createTicket(identity, "browser-binding");
 
 		ArgumentCaptor<GoogleLoginTicket> saved = ArgumentCaptor.forClass(GoogleLoginTicket.class);
 		verify(tickets).save(saved.capture());
+		assertThat(saved.getValue().getBindingHash()).isEqualTo(GoogleLoginService.hash("browser-binding"));
 		assertThat(saved.getValue().getDisplayName()).isEqualTo("Example Person");
 		assertThat(saved.getValue().getPictureUrl()).isEqualTo(PICTURE);
 		assertThat(saved.getValue().getEmail()).isEqualTo("person@example.com");
@@ -191,6 +195,34 @@ class GoogleLoginServiceTest {
 
 	private static GoogleLoginTicket ticket() {
 		return new GoogleLoginTicket("hashed-ticket", "google-sub", "person@example.com", "Example Person", PICTURE,
-				Instant.parse("2026-10-20T11:00:00Z"));
+				GoogleLoginService.hash(BINDING), Instant.parse("2026-10-20T11:00:00Z"));
+	}
+
+	@Test
+	void rejectsCompletionFromABrowserThatDidNotStartTheFlow() {
+		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
+		GoogleLoginTicket ticket = ticket();
+		when(tickets.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(ticket));
+		GoogleLoginService service = service(tickets, mock(UserAccountRepository.class), mock(AccountService.class),
+				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
+
+		for (String binding : new String[] { null, "", "someone-elses-binding" }) {
+			assertThatThrownBy(() -> service.complete("one-time-ticket", binding, null))
+				.isInstanceOf(BadCredentialsException.class);
+		}
+		assertThat(ticket.isConsumed()).isFalse();
+	}
+
+	@Test
+	void rejectsTicketsWithoutABinding() {
+		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
+		when(tickets.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(new GoogleLoginTicket(
+				"hashed-ticket", "google-sub", "person@example.com", "Example Person", PICTURE,
+				Instant.parse("2026-10-20T11:00:00Z"))));
+		GoogleLoginService service = service(tickets, mock(UserAccountRepository.class), mock(AccountService.class),
+				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
+
+		assertThatThrownBy(() -> service.complete("one-time-ticket", BINDING, null))
+			.isInstanceOf(BadCredentialsException.class);
 	}
 }
