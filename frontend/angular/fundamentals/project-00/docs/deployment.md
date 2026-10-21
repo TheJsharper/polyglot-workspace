@@ -37,4 +37,4 @@ This deployment does not modify database contents. Before deploying it over a da
 2. Remove any local sample accounts or reset their passwords to unique, strong values before exposing the service. Development sample passwords must not be used on a public deployment.
 3. Inspect the database and remove or reset any other demo-only records as appropriate.
 
-The application intentionally does not perform destructive cleanup automatically. Production does not read `DEMO_PUBLIC_KEY` or `DEMO_REVOKED_JTIS`.
+The application intentionally does not perform destructive cleanup automatically. Production has no demo-key or manager routes and never creates the manager account.

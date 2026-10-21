@@ -41,7 +41,6 @@ nbdist/
 .env
 .env.*
 !.env.example
-.demo-keys/
 **/docs/dev/
 *.mv.db
 *.trace.db

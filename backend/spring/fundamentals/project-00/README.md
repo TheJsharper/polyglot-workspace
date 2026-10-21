@@ -35,7 +35,7 @@ memory, so data is lost on restart. DevTools restarts the app when classes chang
 | `dev` (default) | no `SPRING_PROFILES_ACTIVE` | H2 console and Swagger UI on; seeds local sample data on an empty database |
 | `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no sample data |
 
-The `dev` profile seeds local sample accounts and enables recruiter demo-token testing; never expose it publicly. Docker uses `prod` by default, which has no demo-token routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded. Local development instructions and sample credentials are kept in untracked `frontend/angular/fundamentals/project-00/docs/dev/` notes.
+The `dev` profile seeds local sample accounts, creates the Google-only MANAGER account (`app.manager.email`) and enables recruiter demo-key testing; never expose it publicly. Docker uses `prod` by default, which has no demo-key or manager routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded. Local development instructions and sample credentials are kept in untracked `frontend/angular/fundamentals/project-00/docs/dev/` notes.
 
 The `prod` profile requires a persistent PostgreSQL database through `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`; it has no in-memory fallback. Google sign-in is off until `GOOGLE_SSO_ENABLED=true` and Google OAuth credentials and HTTPS callback URLs are configured. See the workspace [deployment guide](../../../../frontend/angular/fundamentals/project-00/docs/deployment.md) for Google Cloud and production proxy setup.
 
