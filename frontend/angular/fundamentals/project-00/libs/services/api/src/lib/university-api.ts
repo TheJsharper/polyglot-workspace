@@ -2,8 +2,10 @@ import type {
   AssignProfessorRequest,
   CourseResponse,
   CreateCourseRequest,
+  CreateDemoKeysRequest,
   CreateProfessorRequest,
   CreateStudentRequest,
+  DemoKeyResponse,
   DemoRedeemRequest,
   GoogleCompleteResponse,
   GoogleOnboardingRequest,
@@ -83,6 +85,20 @@ export class UniversityApi {
   /** GET /api/auth/me */
   me(): Promise<MeResponse> {
     return this.send('GET', '/api/auth/me');
+  }
+
+  // ---- Demo keys (MANAGER, dev profile only) ----
+  /** GET /api/manager/demo-keys */
+  listDemoKeys(): Promise<DemoKeyResponse[]> {
+    return this.send('GET', '/api/manager/demo-keys');
+  }
+  /** POST /api/manager/demo-keys (201) */
+  createDemoKeys(request: CreateDemoKeysRequest): Promise<DemoKeyResponse[]> {
+    return this.send('POST', '/api/manager/demo-keys', { body: request });
+  }
+  /** DELETE /api/manager/demo-keys/{id} (204; 409 once redeemed) */
+  deleteDemoKey(id: number): Promise<NoContent> {
+    return this.send('DELETE', `/api/manager/demo-keys/${enc(id)}`);
   }
 
   // ---- Students ----

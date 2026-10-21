@@ -66,6 +66,8 @@ export const shellRoutes: Route[] = [
     path: 'university',
     canActivate: [universityGuard],
     children: [
+      { path: 'demo-keys', canActivate: [roleGuard], loadComponent: () =>
+          import('@project-00/views-university').then((m) => m.DemoKeysComponent) },
       ...RESOURCES.map(remoteRoute),
       { path: '', pathMatch: 'full', redirectTo: 'students' },
       { path: '**', redirectTo: 'students' },

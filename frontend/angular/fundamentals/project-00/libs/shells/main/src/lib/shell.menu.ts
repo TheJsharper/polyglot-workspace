@@ -7,12 +7,14 @@ export const SHELL_MENU: MenuItem[] = [
   { id: 'courses', label: 'Courses', icon: 'menu_book', route: '/university/courses' },
   { id: 'lectures', label: 'Lectures', icon: 'event', route: '/university/lectures' },
   { id: 'notes', label: 'Notes & reviews', icon: 'rate_review', route: '/university/notes' },
+  { id: 'demo-keys', label: 'Demo keys', icon: 'vpn_key', route: '/university/demo-keys' },
 ];
 
 const ALLOWED: Record<string, readonly string[]> = {
   STUDENT: ['courses', 'lectures', 'notes'],
   PROFESSOR: ['students', 'courses', 'lectures', 'notes'],
   ADMIN: ['students', 'professors', 'courses', 'lectures', 'notes'],
+  MANAGER: ['demo-keys'],
 };
 
 export function allowedResources(role: string | null | undefined): readonly string[] {
