@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { UniversitySession } from '@project-00/services-session';
 import type { DemoKeyResponse } from '@project-00/services-api';
-import { DemoKeysComponent } from './demo-keys.component';
+import { DEMO_KEY_POLL_MS, DemoKeysComponent } from './demo-keys.component';
 
 const key = (id: number, redeemed: boolean): DemoKeyResponse => ({
   id,
@@ -20,11 +20,18 @@ const key = (id: number, redeemed: boolean): DemoKeyResponse => ({
 async function setup(initial: DemoKeyResponse[] = [key(1, false), key(2, true)]) {
   const api = {
     listDemoKeys: vi.fn().mockResolvedValue(initial),
-    createDemoKeys: vi.fn().mockResolvedValue([key(3, false)]),
+    createDemoKeys: vi.fn().mockResolvedValue({ id: 'job-1', status: 'PENDING', keys: [], createdAt: '2026-10-21T10:00:00Z' }),
+    getDemoKeyJob: vi
+      .fn()
+      .mockResolvedValueOnce({ id: 'job-1', status: 'RUNNING', keys: [], createdAt: '2026-10-21T10:00:00Z' })
+      .mockResolvedValue({ id: 'job-1', status: 'DONE', keys: [key(3, false)], createdAt: '2026-10-21T10:00:00Z' }),
     deleteDemoKey: vi.fn().mockResolvedValue(undefined),
   };
   TestBed.configureTestingModule({
-    providers: [{ provide: UniversitySession, useValue: { api, run: (fn: () => unknown) => fn(), logout: vi.fn() } }],
+    providers: [
+      { provide: DEMO_KEY_POLL_MS, useValue: 0 },
+      { provide: UniversitySession, useValue: { api, run: (fn: () => unknown) => fn(), logout: vi.fn() } },
+    ],
   });
   const fixture = TestBed.createComponent(DemoKeysComponent);
   await fixture.whenStable();
@@ -59,7 +66,23 @@ describe('DemoKeysComponent', () => {
     await fixture.whenStable();
 
     expect(api.createDemoKeys).toHaveBeenCalledWith({ count: 4, days: 10, label: 'Acme' });
-    expect(api.listDemoKeys).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => expect(api.getDemoKeyJob).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(api.listDemoKeys).toHaveBeenCalledTimes(2));
+    await fixture.whenStable();
+    expect(root.querySelector('[role=status]')?.textContent).toContain('Created 1 demo key');
+  });
+
+  it('shows a failed job and the service-unavailable error', async () => {
+    const { fixture, api, root } = await setup();
+    api.getDemoKeyJob.mockReset().mockResolvedValue({ id: 'job-1', status: 'FAILED', keys: [], error: 'Key generation failed', createdAt: 'x' });
+
+    root.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(root.querySelector('[role=alert]')?.textContent).toContain('Key generation failed'));
+    await fixture.whenStable();
+
+    api.createDemoKeys.mockRejectedValue(new Error('Demo key service unavailable'));
+    root.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(root.querySelector('[role=alert]')?.textContent).toContain('unavailable'));
   });
 
   it.each(['0', '11'])('blocks a count of %s', async (value) => {
