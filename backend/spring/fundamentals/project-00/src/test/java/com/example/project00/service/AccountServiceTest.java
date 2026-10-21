@@ -40,7 +40,7 @@ class AccountServiceTest {
 	@BeforeEach
 	void setUp() {
 		accountService = new AccountService(userAccountRepository, studentService, professorService, passwordEncoder,
-				"admin");
+				"admin", "manager@example.test");
 	}
 
 	@Test
@@ -113,6 +113,79 @@ class AccountServiceTest {
 
 		assertThatThrownBy(() -> accountService.registerStudent("S-1", "Alan", 2025, "secret-pass"))
 			.isInstanceOf(DuplicateResourceException.class);
+		then(userAccountRepository).should(never()).save(any());
+	}
+
+	@Test
+	void provisionManagerCreatesOneGoogleOnlyManagerForTheConfiguredEmail() {
+		given(userAccountRepository.existsByRole(Role.MANAGER)).willReturn(false);
+		given(passwordEncoder.encode(any())).willReturn("{bcrypt}random");
+		given(userAccountRepository.save(any(UserAccount.class))).willAnswer(call -> call.getArgument(0));
+
+		UserAccount manager = accountService.provisionManager().orElseThrow();
+
+		assertThat(manager.getRole()).isEqualTo(Role.MANAGER);
+		assertThat(manager.getEmail()).isEqualTo("manager@example.test");
+		assertThat(manager.getGoogleSubject()).isNull();
+		assertThat(manager.getPasswordHash()).isEqualTo("{bcrypt}random");
+	}
+
+	@Test
+	void provisionManagerDoesNothingWhenAManagerAlreadyExists() {
+		given(userAccountRepository.existsByRole(Role.MANAGER)).willReturn(true);
+
+		assertThat(accountService.provisionManager()).isEmpty();
+		then(userAccountRepository).should(never()).save(any());
+	}
+
+	@Test
+	void provisionManagerIsDisabledWithoutAConfiguredEmail() {
+		AccountService disabled = new AccountService(userAccountRepository, studentService, professorService,
+				passwordEncoder, "admin", "  ");
+
+		assertThat(disabled.provisionManager()).isEmpty();
+		then(userAccountRepository).should(never()).save(any());
+	}
+
+	@Test
+	void provisionManagerRejectsAnEmailAlreadyUsedByAnotherAccount() {
+		given(userAccountRepository.existsByRole(Role.MANAGER)).willReturn(false);
+		given(userAccountRepository.existsByEmail("manager@example.test")).willReturn(true);
+
+		assertThatThrownBy(() -> accountService.provisionManager()).isInstanceOf(DuplicateResourceException.class);
+		then(userAccountRepository).should(never()).save(any());
+	}
+
+	@Test
+	void linkManagerBindsTheFirstGoogleSubjectOnlyForTheConfiguredEmail() {
+		UserAccount manager = UserAccount.forManager("manager", "hash").withEmail("manager@example.test");
+		given(userAccountRepository.findByEmailAndRole("manager@example.test", Role.MANAGER))
+			.willReturn(java.util.Optional.of(manager));
+
+		assertThat(accountService.linkManagerGoogleAccount("sub-1", " Manager@Example.test ")).contains(manager);
+		assertThat(manager.getGoogleSubject()).isEqualTo("sub-1");
+		assertThat(accountService.linkManagerGoogleAccount("sub-1", "manager@example.test")).contains(manager);
+		assertThat(accountService.linkManagerGoogleAccount("sub-2", "someone@example.test")).isEmpty();
+	}
+
+	@Test
+	void linkManagerRejectsAnotherGoogleSubject() {
+		UserAccount manager = UserAccount.forManager("manager", "hash")
+			.withEmail("manager@example.test")
+			.withGoogleSubject("sub-1");
+		given(userAccountRepository.findByEmailAndRole("manager@example.test", Role.MANAGER))
+			.willReturn(java.util.Optional.of(manager));
+
+		assertThatThrownBy(() -> accountService.linkManagerGoogleAccount("sub-2", "manager@example.test"))
+			.isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+		assertThat(manager.getGoogleSubject()).isEqualTo("sub-1");
+	}
+
+	@Test
+	void googleSelfRegistrationCannotCreateAManager() {
+		assertThatThrownBy(() -> accountService.registerGoogleAccount("sub-3", "MANAGER", "Eve",
+				"eve@example.test", 2025, null))
+			.isInstanceOf(IllegalArgumentException.class);
 		then(userAccountRepository).should(never()).save(any());
 	}
 

@@ -25,6 +25,8 @@ public class AccountService {
 
 	private static final SecureRandom RANDOM = new SecureRandom();
 
+	private static final String MANAGER_USERNAME = "manager";
+
 	private final UserAccountRepository userAccountRepository;
 
 	private final StudentService studentService;
@@ -35,17 +37,22 @@ public class AccountService {
 
 	private final String adminUsername;
 
+	private final String managerEmail;
+
 	/**
 	 * @param adminUsername the configured admin login name, which nobody else may use
+	 * @param managerEmail the only email that may become the demo-key manager (dev only); blank disables it
 	 */
 	public AccountService(UserAccountRepository userAccountRepository, StudentService studentService,
 			ProfessorService professorService, PasswordEncoder passwordEncoder,
-			@Value("${app.security.admin.username}") String adminUsername) {
+			@Value("${app.security.admin.username}") String adminUsername,
+			@Value("${app.manager.email:}") String managerEmail) {
 		this.userAccountRepository = userAccountRepository;
 		this.studentService = studentService;
 		this.professorService = professorService;
 		this.passwordEncoder = passwordEncoder;
 		this.adminUsername = adminUsername;
+		this.managerEmail = normalizeEmail(managerEmail);
 	}
 
 	/**
@@ -105,6 +112,52 @@ public class AccountService {
 		return userAccountRepository.save(UserAccount.forAdmin(username, passwordEncoder.encode(rawPassword)));
 	}
 
+	/**
+	 * Creates the single demo-key manager for the configured email, unless a manager already exists. The account
+	 * has an unguessable password, so it can only be used through Google sign-in.
+	 * @return the created account, or empty when no manager email is configured or a manager already exists
+	 * @throws DuplicateResourceException if the configured email already belongs to another account
+	 */
+	public java.util.Optional<UserAccount> provisionManager() {
+		if (managerEmail == null || userAccountRepository.existsByRole(Role.MANAGER)) {
+			return java.util.Optional.empty();
+		}
+		requireFreeEmail(managerEmail);
+		requireFreeUsername(MANAGER_USERNAME);
+		return java.util.Optional.of(userAccountRepository
+			.save(UserAccount.forManager(MANAGER_USERNAME, randomPasswordHash()).withEmail(managerEmail)));
+	}
+
+	/**
+	 * Binds a verified Google identity to the manager account the first time it signs in.
+	 * @param googleSubject the Google subject
+	 * @param email the verified Google email
+	 * @return the manager account when the email is the configured manager email, otherwise empty
+	 * @throws org.springframework.security.authentication.BadCredentialsException if the manager is bound to a
+	 * different Google subject
+	 */
+	public java.util.Optional<UserAccount> linkManagerGoogleAccount(String googleSubject, String email) {
+		String normalized = normalizeEmail(email);
+		if (managerEmail == null || !managerEmail.equals(normalized)) {
+			return java.util.Optional.empty();
+		}
+		var manager = userAccountRepository.findByEmailAndRole(normalized, Role.MANAGER);
+		if (manager.isPresent() && manager.get().getGoogleSubject() == null) {
+			manager.get().withGoogleSubject(googleSubject);
+		}
+		else if (manager.isPresent() && !googleSubject.equals(manager.get().getGoogleSubject())) {
+			throw new org.springframework.security.authentication.BadCredentialsException(
+					"The manager is bound to another Google account");
+		}
+		return manager;
+	}
+
+	private String randomPasswordHash() {
+		byte[] randomPassword = new byte[32];
+		RANDOM.nextBytes(randomPassword);
+		return passwordEncoder.encode(Base64.getUrlEncoder().withoutPadding().encodeToString(randomPassword));
+	}
+
 	public UserAccount registerGoogleAccount(String googleSubject, String role, String name, String email,
 			int enrollmentYear, String department) {
 		var linkedAccount = userAccountRepository.findByGoogleSubject(googleSubject);
@@ -121,7 +174,8 @@ public class AccountService {
 		UserAccount account = switch (Role.valueOf(role)) {
 			case STUDENT -> UserAccount.forStudent(studentService.enroll(username, name, enrollmentYear), passwordHash);
 			case PROFESSOR -> UserAccount.forProfessor(professorService.hire(username, name, department), passwordHash);
-			case ADMIN -> throw new IllegalArgumentException("Google self-registration cannot create administrators");
+			case ADMIN, MANAGER -> throw new IllegalArgumentException(
+					"Google self-registration cannot create administrators or managers");
 		};
 		return userAccountRepository.save(account.withEmail(normalizedEmail).withGoogleSubject(googleSubject));
 	}

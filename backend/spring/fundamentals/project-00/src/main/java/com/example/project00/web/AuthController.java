@@ -89,6 +89,7 @@ class AuthController {
 				yield ResponseEntity.status(HttpStatus.CREATED)
 					.body(new RegisterResponse(admin.getUsername(), role.name(), null));
 			}
+			case MANAGER -> throw new IllegalArgumentException("The manager account cannot be registered");
 		};
 	}
 

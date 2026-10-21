@@ -198,6 +198,15 @@ class AuthE2ETest extends EndToEndTestSupport {
 		as("A-2").get().uri("/api/auth/me").exchange().expectBody().jsonPath("$.role").isEqualTo("ADMIN");
 	}
 
+	@Test
+	void managerRoleCannotBeRegisteredThroughTheApi() {
+		RegisterRequest manager = new RegisterRequest(com.example.project00.domain.Role.MANAGER, "M-1", "Mallory",
+				2025, "CS", PASSWORD, null);
+
+		postJson(anonymous, "/api/auth/register", manager).expectStatus().isBadRequest();
+		postJson(client, "/api/auth/register", manager).expectStatus().isBadRequest();
+	}
+
 	private record CsrfResponse(String token) {
 	}
 

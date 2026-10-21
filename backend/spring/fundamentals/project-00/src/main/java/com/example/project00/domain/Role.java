@@ -13,7 +13,10 @@ public enum Role {
 	PROFESSOR,
 
 	/** Superior role, defined in configuration: manages courses, professors and teaching assignments. */
-	ADMIN;
+	ADMIN,
+
+	/** Single development-only account (Google SSO) that manages recruiter demo keys. */
+	MANAGER;
 
 	/** @return the Spring Security authority for this role, e.g. {@code ROLE_STUDENT} */
 	public String authority() {
