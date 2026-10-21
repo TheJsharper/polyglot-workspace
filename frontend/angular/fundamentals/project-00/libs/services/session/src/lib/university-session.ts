@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { ApiError, UniversityApi } from '@project-00/services-api';
-import type { DemoRedeemRequest, GoogleOnboardingRequest, GoogleCompleteResponse, LoginRequest, MeResponse, RegisterRequest, RegisterResponse, TokenResponse } from '@project-00/services-api';
+import type { DemoRedeemRequest, GoogleOnboardingRequest, GoogleCompleteResponse, LoginRequest, MeResponse, RegisterRequest, RegisterResponse, Role, TokenResponse } from '@project-00/services-api';
 
 export const UNIVERSITY_API_BASE_URL = new InjectionToken<string>('University API base URL');
 
@@ -33,6 +33,16 @@ export class UniversitySession {
       await this.start(result.session, true);
     }
     return result;
+  }
+
+  /** Acts as another role (dev manager only). Keeps the signed-in state while the new token loads. */
+  async switchRole(role: Role): Promise<MeResponse> {
+    const issued = await this.run(() => this.api.switchRole(role));
+    if (this.expirationTimer) {
+      clearTimeout(this.expirationTimer);
+      this.expirationTimer = undefined;
+    }
+    return this.start(issued, true);
   }
 
   async restore(): Promise<boolean> {

@@ -141,7 +141,7 @@ class AuthController {
 		return ResponseEntity.noContent().header("Set-Cookie", clearRefreshCookie().toString()).build();
 	}
 
-	private static ResponseCookie refreshCookie(String secret) {
+	static ResponseCookie refreshCookie(String secret) {
 		return ResponseCookie.from("__Host-university-refresh", secret)
 			.httpOnly(true)
 			.secure(true)
@@ -173,7 +173,8 @@ class AuthController {
 			.findFirst()
 			.orElse("");
 		AccountService.AccountProfile profile = accountService.profileOf(authentication.getName());
-		return new MeResponse(authentication.getName(), role, profile.displayName(), profile.pictureUrl());
+		return new MeResponse(authentication.getName(), role, profile.displayName(), profile.pictureUrl(),
+				accountService.switchableRoles(authentication.getName()));
 	}
 
 }

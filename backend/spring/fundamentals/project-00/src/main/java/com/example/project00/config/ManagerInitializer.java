@@ -32,6 +32,9 @@ public class ManagerInitializer implements ApplicationRunner {
 	public void run(ApplicationArguments args) {
 		try {
 			accounts.provisionManager().ifPresent(manager -> log.info("Demo-key manager provisioned for Google sign-in"));
+			if (accounts.provisionManagerPersonas()) {
+				log.info("Manager personas (student, professor, admin) provisioned");
+			}
 		}
 		catch (DuplicateResourceException ex) {
 			log.warn("Demo-key manager not provisioned: the configured email or username is already in use");

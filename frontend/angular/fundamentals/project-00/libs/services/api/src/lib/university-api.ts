@@ -1,4 +1,5 @@
 import type {
+  Role,
   AssignProfessorRequest,
   CourseResponse,
   CreateCourseRequest,
@@ -85,6 +86,11 @@ export class UniversityApi {
   /** GET /api/auth/me */
   me(): Promise<MeResponse> {
     return this.send('GET', '/api/auth/me');
+  }
+
+  /** POST /api/auth/switch-role (dev manager only; rotates the refresh cookie) */
+  switchRole(role: Role): Promise<TokenResponse> {
+    return this.send('POST', '/api/auth/switch-role', { body: { role } });
   }
 
   // ---- Demo keys (MANAGER, dev profile only) ----

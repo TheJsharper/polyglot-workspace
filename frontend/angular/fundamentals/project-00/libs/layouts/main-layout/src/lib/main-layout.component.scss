@@ -17,6 +17,33 @@
   flex: 1 1 auto;
 }
 
+.role-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 8px;
+  font-size: 13px;
+
+  select {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 4px 6px;
+
+    option {
+      color: #000;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .role-label {
+    display: none;
+  }
+}
+
 .user {
   display: inline-flex;
   align-items: center;
