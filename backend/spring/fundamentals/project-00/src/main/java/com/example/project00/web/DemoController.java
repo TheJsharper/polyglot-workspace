@@ -2,6 +2,7 @@ package com.example.project00.web;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
@@ -47,13 +48,16 @@ class DemoController {
 		return Map.of("enabled", true);
 	}
 
+	RedeemResponse redeemResponse(Redeemed redeemed) {
+		return new RedeemResponse(redeemed.accessToken().value(), "Bearer", redeemed.accessToken().expiresInSeconds(),
+				redeemed.username(), redeemed.role(), redeemed.expiresAt());
+	}
+
 	@Operation(summary = "Redeems a signed token for a read-only development demo session")
 	@SecurityRequirements
 	@PostMapping("/api/demo/redeem")
-	RedeemResponse redeem(@Valid @RequestBody RedeemRequest request, HttpServletRequest http) {
-		Redeemed redeemed = service.redeem(request.token(), request.persona(), http.getRemoteAddr());
-		return new RedeemResponse(redeemed.accessToken().value(), "Bearer", redeemed.accessToken().expiresInSeconds(),
-				redeemed.username(), redeemed.role(), redeemed.expiresAt());
+	CompletableFuture<RedeemResponse> redeem(@Valid @RequestBody RedeemRequest request, HttpServletRequest http) {
+		return service.redeem(request.token(), request.persona(), http.getRemoteAddr()).thenApply(this::redeemResponse);
 	}
 
 }

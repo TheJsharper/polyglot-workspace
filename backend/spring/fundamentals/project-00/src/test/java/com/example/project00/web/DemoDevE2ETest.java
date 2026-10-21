@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,7 @@ import com.example.project00.domain.Course;
 import com.example.project00.repository.CourseRepository;
 import com.example.project00.repository.ProfessorRepository;
 import com.example.project00.repository.StudentRepository;
-import com.example.project00.service.DemoKeyService;
+import com.example.project00.support.StubDemoKeysService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,11 +28,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureRestTestClient
 class DemoDevE2ETest {
 
-	@Autowired
-	private RestTestClient client;
+	private static final StubDemoKeysService STUB = StubDemoKeysService.shared();
+
+	@DynamicPropertySource
+	static void service(DynamicPropertyRegistry registry) {
+		registry.add("app.demo-keys.base-url", STUB::baseUrl);
+	}
 
 	@Autowired
-	private DemoKeyService demoKeys;
+	private RestTestClient client;
 
 	@Autowired
 	private CourseRepository courses;
@@ -69,7 +75,7 @@ class DemoDevE2ETest {
 		Map<?, ?> redeemed = client.post()
 			.uri("/api/demo/redeem")
 			.contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-			.body(Map.of("token", demoKeys.create(1, 1, "e2e", "manager").get(0).getToken(), "persona", "STUDENT"))
+			.body(Map.of("token", StubDemoKeysService.VALID_TOKEN, "persona", "STUDENT"))
 			.exchange()
 			.expectStatus()
 			.isOk()
