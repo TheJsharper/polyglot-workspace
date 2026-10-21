@@ -63,6 +63,52 @@ class GoogleLoginServiceTest {
 	}
 
 	@Test
+	void linksTheConfiguredManagerOnFirstGoogleSignInWithoutOnboarding() {
+		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
+		UserAccountRepository accounts = mock(UserAccountRepository.class);
+		AccountService accountService = mock(AccountService.class);
+		UserDetailsService users = mock(UserDetailsService.class);
+		RefreshSessionService refresh = mock(RefreshSessionService.class);
+		GoogleLoginTicket ticket = ticket();
+		UserAccount manager = UserAccount.forManager("manager", "hash").withEmail("person@example.com");
+		when(tickets.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(ticket));
+		when(accounts.findByGoogleSubject("google-sub")).thenReturn(Optional.empty());
+		when(accountService.linkManagerGoogleAccount("google-sub", "person@example.com"))
+			.thenReturn(Optional.of(manager));
+		when(users.loadUserByUsername("manager")).thenReturn(User.withUsername("manager")
+			.password("hash")
+			.authorities(AuthorityUtils.createAuthorityList("ROLE_MANAGER"))
+			.build());
+		when(refresh.issueAccessToken(any())).thenReturn(new TokenResponse("access", "Bearer", 900));
+		when(refresh.issue("manager")).thenReturn("refresh-secret");
+		GoogleLoginService service = service(tickets, accounts, accountService, users, mock(TokenService.class),
+				refresh);
+
+		var result = service.complete("one-time-ticket", null);
+
+		assertThat(result.onboardingRequired()).isFalse();
+		assertThat(result.newAccount()).isFalse();
+		assertThat(result.session()).isEqualTo(new TokenResponse("access", "Bearer", 900));
+		assertThat(ticket.isConsumed()).isTrue();
+		verify(accountService, never()).registerGoogleAccount(anyString(), anyString(), anyString(), anyString(),
+				org.mockito.ArgumentMatchers.anyInt(), any());
+	}
+
+	@Test
+	void doesNotAllowGoogleOnboardingToCreateAManager() {
+		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
+		UserAccountRepository accounts = mock(UserAccountRepository.class);
+		when(tickets.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(ticket()));
+		when(accounts.findByGoogleSubject("google-sub")).thenReturn(Optional.empty());
+		GoogleLoginService service = service(tickets, accounts, mock(AccountService.class),
+				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
+
+		assertThatThrownBy(() -> service.complete("one-time-ticket",
+				new GoogleOnboardingRequest(com.example.project00.domain.Role.MANAGER, null, null)))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	void createsGoogleAccountOnlyAfterAllowedRoleSelection() {
 		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
 		UserAccountRepository accounts = mock(UserAccountRepository.class);

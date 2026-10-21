@@ -145,4 +145,15 @@ public class UserAccount extends BaseEntity {
 		return new UserAccount(Objects.requireNonNull(username, "username"), passwordHash, Role.ADMIN);
 	}
 
+	/**
+	 * Creates the demo-key manager account, which is not linked to a student or professor.
+	 * @param username the login name
+	 * @param passwordHash the encoded (unguessable) password; the manager signs in with Google only
+	 * @return a new, unsaved account
+	 * @throws NullPointerException if an argument is {@code null}
+	 */
+	public static UserAccount forManager(String username, String passwordHash) {
+		return new UserAccount(Objects.requireNonNull(username, "username"), passwordHash, Role.MANAGER);
+	}
+
 }

@@ -110,12 +110,16 @@ public class GoogleLoginService {
 			throw new BadCredentialsException("Google sign-in expired or was already used");
 		}
 		UserAccount account = accounts.findByGoogleSubject(ticket.getGoogleSubject()).orElse(null);
+		if (account == null) {
+			account = accountService.linkManagerGoogleAccount(ticket.getGoogleSubject(), ticket.getEmail())
+				.orElse(null);
+		}
 		boolean created = account == null;
 		if (created) {
 			if (onboarding == null) {
 				return new GoogleSessionResponse(null, null, true, true);
 			}
-			if (onboarding.role() == null || onboarding.role() == Role.ADMIN
+			if (onboarding.role() == null || onboarding.role() == Role.ADMIN || onboarding.role() == Role.MANAGER
 					|| !onboarding.isValidForRole()) {
 				throw new IllegalArgumentException("Select Student or Professor and complete the required profile fields");
 			}

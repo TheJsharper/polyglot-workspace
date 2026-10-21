@@ -47,6 +47,19 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 	boolean existsByEmail(String email);
 
 	/**
+	 * @param role the role
+	 * @return whether any account has that role
+	 */
+	boolean existsByRole(com.example.project00.domain.Role role);
+
+	/**
+	 * @param email the email address (stored lower-cased)
+	 * @param role the role
+	 * @return the account with that email and role, if any
+	 */
+	Optional<UserAccount> findByEmailAndRole(String email, com.example.project00.domain.Role role);
+
+	/**
 	 * Deletes the account of a student, if there is one.
 	 * @param student the student
 	 */
