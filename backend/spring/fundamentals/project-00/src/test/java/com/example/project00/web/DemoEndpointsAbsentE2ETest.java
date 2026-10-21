@@ -46,6 +46,11 @@ class DemoEndpointsAbsentE2ETest extends EndToEndTestSupport {
 	}
 
 	@Test
+	void managerDemoKeyApiIsNotExposed() {
+		client.get().uri("/api/manager/demo-keys").exchange().expectStatus().isNotFound();
+	}
+
+	@Test
 	void googleSsoIsDisabledUntilProductionCredentialsAreConfigured() {
 		client.get().uri("/api/auth/google/status").exchange().expectStatus().isOk().expectBody()
 			.jsonPath("$.enabled").isEqualTo(false);
