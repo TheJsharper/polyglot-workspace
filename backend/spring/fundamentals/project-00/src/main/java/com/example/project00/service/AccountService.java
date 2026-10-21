@@ -27,6 +27,17 @@ public class AccountService {
 
 	private static final String MANAGER_USERNAME = "manager";
 
+	private static final String PERSONA_STUDENT = "manager-student";
+
+	private static final String PERSONA_PROFESSOR = "manager-professor";
+
+	private static final String PERSONA_ADMIN = "manager-admin";
+
+	private static final int PERSONA_ENROLLMENT_YEAR = 2024;
+
+	private static final java.util.Map<Role, String> PERSONAS = java.util.Map.of(Role.STUDENT, PERSONA_STUDENT,
+			Role.PROFESSOR, PERSONA_PROFESSOR, Role.ADMIN, PERSONA_ADMIN);
+
 	private final UserAccountRepository userAccountRepository;
 
 	private final StudentService studentService;
@@ -123,7 +134,9 @@ public class AccountService {
 			return java.util.Optional.empty();
 		}
 		requireFreeEmail(managerEmail);
-		requireFreeUsername(MANAGER_USERNAME);
+		if (userAccountRepository.existsByUsername(MANAGER_USERNAME)) {
+			throw new DuplicateResourceException("Account", MANAGER_USERNAME);
+		}
 		return java.util.Optional.of(userAccountRepository
 			.save(UserAccount.forManager(MANAGER_USERNAME, randomPasswordHash()).withEmail(managerEmail)));
 	}
@@ -150,6 +163,64 @@ public class AccountService {
 					"The manager is bound to another Google account");
 		}
 		return manager;
+	}
+
+	/**
+	 * Creates the dev-only personas (student, professor, admin) the manager can switch to, each with its own
+	 * data and an unguessable password. Does nothing unless the manager account exists.
+	 * @return {@code true} when at least one persona was created
+	 */
+	public boolean provisionManagerPersonas() {
+		if (!userAccountRepository.existsByRole(Role.MANAGER)) {
+			return false;
+		}
+		boolean created = false;
+		if (!userAccountRepository.existsByUsername(PERSONA_STUDENT)) {
+			Student student = studentService.enroll(PERSONA_STUDENT, "Pedro (Student)", PERSONA_ENROLLMENT_YEAR);
+			userAccountRepository.save(UserAccount.forStudent(student, randomPasswordHash()));
+			created = true;
+		}
+		if (!userAccountRepository.existsByUsername(PERSONA_PROFESSOR)) {
+			Professor professor = professorService.hire(PERSONA_PROFESSOR, "Pedro (Professor)", "Computer Science");
+			userAccountRepository.save(UserAccount.forProfessor(professor, randomPasswordHash()));
+			created = true;
+		}
+		if (!userAccountRepository.existsByUsername(PERSONA_ADMIN)) {
+			userAccountRepository.save(UserAccount.forAdmin(PERSONA_ADMIN, randomPasswordHash()));
+			created = true;
+		}
+		return created;
+	}
+
+	/**
+	 * The roles the caller may act as: all four for the manager and its personas, none for anyone else.
+	 * @param username the authenticated username
+	 */
+	@Transactional(readOnly = true)
+	public java.util.List<String> switchableRoles(String username) {
+		if (!MANAGER_USERNAME.equals(username) && !PERSONAS.containsValue(username)) {
+			return java.util.List.of();
+		}
+		if (!userAccountRepository.existsByRole(Role.MANAGER)) {
+			return java.util.List.of();
+		}
+		return java.util.List.of(Role.MANAGER.name(), Role.STUDENT.name(), Role.PROFESSOR.name(),
+				Role.ADMIN.name());
+	}
+
+	/**
+	 * Resolves the account the caller switches to.
+	 * @param caller the authenticated username, which must be the manager or one of its personas
+	 * @param target the role to act as
+	 * @return the username of the target account
+	 * @throws org.springframework.security.access.AccessDeniedException if the caller may not switch roles
+	 */
+	@Transactional(readOnly = true)
+	public String switchTarget(String caller, Role target) {
+		if (switchableRoles(caller).isEmpty()) {
+			throw new org.springframework.security.access.AccessDeniedException("Role switching is not allowed");
+		}
+		return target == Role.MANAGER ? MANAGER_USERNAME : PERSONAS.get(target);
 	}
 
 	private String randomPasswordHash() {
@@ -223,6 +294,9 @@ public class AccountService {
 	}
 
 	private void requireFreeUsername(String username) {
+		if (MANAGER_USERNAME.equalsIgnoreCase(username) || PERSONAS.values().stream().anyMatch(username::equalsIgnoreCase)) {
+			throw new DuplicateResourceException("Account", username);
+		}
 		if (username.equalsIgnoreCase(adminUsername) || userAccountRepository.existsByUsername(username)
 				|| (username.contains("@") && userAccountRepository.existsByEmail(username.toLowerCase(Locale.ROOT)))) {
 			throw new DuplicateResourceException("Account", username);

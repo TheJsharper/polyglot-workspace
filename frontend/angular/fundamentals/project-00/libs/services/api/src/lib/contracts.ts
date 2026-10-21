@@ -57,6 +57,8 @@ export interface MeResponse {
   displayName?: string;
   /** HTTPS Google avatar (googleusercontent.com) or null. */
   pictureUrl?: string | null;
+  /** Roles the caller can switch to (dev manager only); empty otherwise. */
+  availableRoles?: Role[];
 }
 
 // Demo keys (MANAGER, dev profile only). The private key is never returned.

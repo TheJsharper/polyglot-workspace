@@ -44,16 +44,21 @@ class DemoDevE2ETest {
 	@Test
 	@Transactional
 	void devSeedHasTenOfEachAndCompleteRelationships() {
-		assertThat(students.count()).isEqualTo(10);
-		assertThat(professors.count()).isEqualTo(10);
+		// The manager's own student and professor personas are extra, with no courses of their own.
+		List<com.example.project00.domain.Student> seededStudents = students.findAll().stream()
+			.filter(student -> !student.getStudentId().startsWith("manager-")).toList();
+		List<com.example.project00.domain.Professor> seededProfessors = professors.findAll().stream()
+			.filter(professor -> !professor.getEmployeeId().startsWith("manager-")).toList();
+		assertThat(seededStudents).hasSize(10);
+		assertThat(seededProfessors).hasSize(10);
 		assertThat(courses.count()).isEqualTo(10);
 		List<Course> allCourses = courses.findAll();
 		assertThat(allCourses).allSatisfy(course -> {
 			assertThat(course.getTeachers()).hasSize(1);
 			assertThat(course.getEnrolledStudents()).hasSize(2);
 		});
-		assertThat(professors.findAll()).allSatisfy(professor -> assertThat(professor.getTaughtCourses()).hasSize(1));
-		assertThat(students.findAll()).allSatisfy(student -> assertThat(student.getEnrolledCourses()).hasSize(2));
+		assertThat(seededProfessors).allSatisfy(professor -> assertThat(professor.getTaughtCourses()).hasSize(1));
+		assertThat(seededStudents).allSatisfy(student -> assertThat(student.getEnrolledCourses()).hasSize(2));
 	}
 
 	@Test

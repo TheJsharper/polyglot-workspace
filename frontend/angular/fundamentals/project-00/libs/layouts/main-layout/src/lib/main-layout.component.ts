@@ -36,6 +36,10 @@ export class MainLayoutComponent {
   readonly username = input<string | null>(null);
   /** Optional avatar URL; falls back to initials when missing or when it fails to load. */
   readonly pictureUrl = input<string | null>(null);
+  /** Roles the user can act as; the switcher is hidden when empty. */
+  readonly roles = input<string[]>([]);
+  readonly activeRole = input<string | null>(null);
+  readonly roleChange = output<string>();
 
   protected readonly failedPicture = signal<string | null>(null);
   protected readonly initials = computed(() =>

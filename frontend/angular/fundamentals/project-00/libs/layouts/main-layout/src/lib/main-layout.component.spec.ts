@@ -53,6 +53,25 @@ describe('MainLayoutComponent', () => {
     expect(el.querySelector('[data-testid="user-initials"]')?.textContent).toBe('AL');
   });
 
+  it('shows the role switcher only when roles are available and emits the chosen role', async () => {
+    const fixture = await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="role-switcher"]')).toBeNull();
+
+    fixture.componentRef.setInput('roles', ['MANAGER', 'STUDENT', 'PROFESSOR', 'ADMIN']);
+    fixture.componentRef.setInput('activeRole', 'MANAGER');
+    await fixture.whenStable();
+    const select = el.querySelector<HTMLSelectElement>('[data-testid="role-switcher"]');
+    expect(select?.options.length).toBe(4);
+    expect(select?.value).toBe('MANAGER');
+
+    const changed = vi.fn();
+    fixture.componentInstance.roleChange.subscribe(changed);
+    select!.value = 'STUDENT';
+    select!.dispatchEvent(new Event('change'));
+    expect(changed).toHaveBeenCalledWith('STUDENT');
+  });
+
   it('shows initials when there is no picture and nothing when signed out', async () => {
     const fixture = await setup();
     const el = fixture.nativeElement as HTMLElement;

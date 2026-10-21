@@ -124,7 +124,12 @@ public final class AuthDtos {
 			@Schema(description = "Name to show: Google name, the student/professor name, or the username",
 					example = "Ada Lovelace") String displayName,
 			@Schema(description = "HTTPS Google avatar URL (googleusercontent.com), or null", nullable = true)
-			String pictureUrl) {
+			String pictureUrl,
+			@Schema(description = "Roles the caller may switch to (dev manager only), otherwise empty")
+			java.util.List<String> availableRoles) {
+	}
+
+	public record SwitchRoleRequest(@jakarta.validation.constraints.NotBlank String role) {
 	}
 
 }
