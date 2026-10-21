@@ -33,7 +33,6 @@ class GoogleAuthController {
 
 	private final GoogleOAuthProperties googleProperties;
 	private final GoogleLoginService googleLoginService;
-	private final RefreshSessionService refreshSessions;
 
 	@GetMapping("/google/status")
 	GoogleStatusResponse status() {
