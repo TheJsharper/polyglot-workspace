@@ -92,6 +92,8 @@ Every endpoint except `/api/auth/register`, `/api/auth/login`, Google sign-in se
 `Authorization: Bearer <token>` header. Tokens are HS256-signed JWTs (OAuth2 resource server) carrying the user
 name as `sub` and the role in a `roles` claim; access tokens last no longer than 15 minutes. Login also issues hashed, rotating refresh credentials with an absolute ten-day maximum age. Google login validates OIDC server-side, keys accounts by Google's subject, and permits first-login Student or Professor choices but never Admin. Google-linked users have a backend-enforced limit of 10 creations per user per supported resource type.
 
+`GET /api/auth/me` returns `username`, `role`, `displayName` and `pictureUrl`. `displayName` comes from the Google name refreshed at each Google sign-in, otherwise the student/professor name, otherwise the username. `pictureUrl` is the Google `picture` claim, kept only when it is an HTTPS URL on `googleusercontent.com`, and otherwise `null`. Browsers load it directly from Google with no referrer.
+
 | Role | How the account is created | May |
 |---|---|---|
 | ADMIN ("superior") | Hard-defined by `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` | Manage courses and professors, register professors, assign teachers, delete students |

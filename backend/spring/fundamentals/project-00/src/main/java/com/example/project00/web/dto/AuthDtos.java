@@ -119,7 +119,11 @@ public final class AuthDtos {
 	@Schema(description = "The authenticated caller")
 	public record MeResponse(
 			@Schema(description = "Username (student id, employee id or admin name)", example = "S-1") String username,
-			@Schema(description = "Role", example = "STUDENT", allowableValues = { "STUDENT", "PROFESSOR", "ADMIN" }) String role) {
+			@Schema(description = "Role", example = "STUDENT", allowableValues = { "STUDENT", "PROFESSOR", "ADMIN" }) String role,
+			@Schema(description = "Name to show: Google name, the student/professor name, or the username",
+					example = "Ada Lovelace") String displayName,
+			@Schema(description = "HTTPS Google avatar URL (googleusercontent.com), or null", nullable = true)
+			String pictureUrl) {
 	}
 
 }

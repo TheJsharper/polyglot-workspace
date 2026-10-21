@@ -3,8 +3,8 @@ import { Store } from '@ngrx/store';
 import { UniversitySession } from '@project-00/services-session';
 import {
   Resource,
+  selectDisplayName,
   selectRole,
-  selectUsername,
   UniversityActions,
   universityFeature,
 } from '@project-00/services-university-state';
@@ -28,7 +28,7 @@ import {
           <p>Manage university records and course activity.</p>
         </div>
         <div class="account">
-          <span>{{ username() }} · {{ role() }}</span>
+          <span>{{ displayName() }} · {{ role() }}</span>
           <button type="button" class="quiet" (click)="session.logout()">Log out</button>
         </div>
       </header>
@@ -54,7 +54,7 @@ export class UniversityFrameComponent implements OnInit {
 
   protected readonly session = inject(UniversitySession);
   private readonly store = inject(Store);
-  protected readonly username = this.store.selectSignal(selectUsername);
+  protected readonly displayName = this.store.selectSignal(selectDisplayName);
   protected readonly role = this.store.selectSignal(selectRole);
   private readonly views = this.store.selectSignal(universityFeature.selectViews);
   protected readonly view = computed(() => this.views()[this.resource()]);

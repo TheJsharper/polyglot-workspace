@@ -5,7 +5,7 @@ import { MainLayoutComponent } from '@project-00/layouts-main-layout';
 import { LayoutActions, selectMenuItems, selectSidenavOpened, selectTheme } from '@project-00/services-state';
 import { UniversitySession } from '@project-00/services-session';
 import { menuForRole } from './shell.menu';
-import { selectUsername } from '@project-00/services-university-state';
+import { selectDisplayName, selectPictureUrl } from '@project-00/services-university-state';
 
 @Component({
   selector: 'app-shell',
@@ -17,7 +17,8 @@ import { selectUsername } from '@project-00/services-university-state';
       [menuItems]="menuItems()"
       [sidenavOpened]="sidenavOpened()"
       [theme]="theme()"
-      [username]="username() || null"
+      [username]="displayName() || null"
+      [pictureUrl]="pictureUrl()"
       (menuToggle)="toggleSidenav()"
       (themeToggle)="toggleTheme()"
       (authAction)="authAction()"
@@ -44,7 +45,8 @@ export class ShellComponent {
 
   protected readonly menuItems = computed(() => menuForRole(this.allItems(), this.session.user()?.role));
   private readonly allItems = this.store.selectSignal(selectMenuItems);
-  protected readonly username = this.store.selectSignal(selectUsername);
+  protected readonly displayName = this.store.selectSignal(selectDisplayName);
+  protected readonly pictureUrl = this.store.selectSignal(selectPictureUrl);
   protected readonly sidenavOpened = this.store.selectSignal(selectSidenavOpened);
   protected readonly theme = this.store.selectSignal(selectTheme);
 

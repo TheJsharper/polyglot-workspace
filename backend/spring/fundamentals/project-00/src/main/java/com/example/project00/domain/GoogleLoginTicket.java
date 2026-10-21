@@ -28,6 +28,9 @@ public class GoogleLoginTicket extends BaseEntity {
 	@Column(name = "display_name", nullable = false, length = 254)
 	private String displayName;
 
+	@Column(name = "picture_url", length = 2048)
+	private String pictureUrl;
+
 	@Column(name = "expires_at", nullable = false)
 	private Instant expiresAt;
 
@@ -35,10 +38,16 @@ public class GoogleLoginTicket extends BaseEntity {
 	private boolean consumed;
 
 	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName, Instant expiresAt) {
+		this(tokenHash, googleSubject, email, displayName, null, expiresAt);
+	}
+
+	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName,
+			String pictureUrl, Instant expiresAt) {
 		this.tokenHash = Objects.requireNonNull(tokenHash);
 		this.googleSubject = Objects.requireNonNull(googleSubject);
 		this.email = Objects.requireNonNull(email);
 		this.displayName = Objects.requireNonNull(displayName);
+		this.pictureUrl = pictureUrl;
 		this.expiresAt = Objects.requireNonNull(expiresAt);
 	}
 

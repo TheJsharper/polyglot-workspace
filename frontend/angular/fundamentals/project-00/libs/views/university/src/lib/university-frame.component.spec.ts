@@ -21,7 +21,7 @@ describe('UniversityFrameComponent', () => {
         provideStore(),
         provideState(universityFeature),
         provideUniversityAuth(),
-        { provide: UniversitySession, useValue: { user: signal({ username: 'ada', role: 'ADMIN' }), logout } },
+        { provide: UniversitySession, useValue: { user: signal({ username: 'g-1a2b', role: 'ADMIN', displayName: 'Ada Lovelace' }), logout } },
       ],
     });
     const store = TestBed.inject(Store);
@@ -43,7 +43,7 @@ describe('UniversityFrameComponent', () => {
   it('renders the shared heading, account block and projected page content', async () => {
     const { root } = await render();
     expect(root.querySelector('h1')?.textContent).toBe('Resources');
-    expect(root.querySelector('.account span')?.textContent).toBe('ada · ADMIN');
+    expect(root.querySelector('.account span')?.textContent).toBe('Ada Lovelace · ADMIN');
     expect(root.querySelector('.projected')?.textContent).toBe('Page content');
     expect(dispatched).toContainEqual(UniversityActions.open({ resource: 'courses' }));
   });

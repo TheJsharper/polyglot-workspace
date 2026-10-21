@@ -35,4 +35,31 @@ describe('MainLayoutComponent', () => {
     expect(menu).toHaveBeenCalledTimes(1);
     expect(theme).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the Google avatar without a referrer and falls back to initials on error', async () => {
+    const fixture = await setup();
+    fixture.componentRef.setInput('username', 'Ada Lovelace');
+    fixture.componentRef.setInput('pictureUrl', 'https://lh3.googleusercontent.com/a/x');
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const img = el.querySelector<HTMLImageElement>('[data-testid="user-avatar"]');
+    expect(img?.getAttribute('referrerpolicy')).toBe('no-referrer');
+    expect(img?.getAttribute('alt')).toBe('');
+    expect(el.querySelector('.user-name')?.textContent).toBe('Ada Lovelace');
+
+    img?.dispatchEvent(new Event('error'));
+    await fixture.whenStable();
+    expect(el.querySelector('[data-testid="user-avatar"]')).toBeNull();
+    expect(el.querySelector('[data-testid="user-initials"]')?.textContent).toBe('AL');
+  });
+
+  it('shows initials when there is no picture and nothing when signed out', async () => {
+    const fixture = await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="current-user"]')).toBeNull();
+    fixture.componentRef.setInput('username', 'g-1a2b');
+    await fixture.whenStable();
+    expect(el.querySelector('[data-testid="user-avatar"]')).toBeNull();
+    expect(el.querySelector('[data-testid="user-initials"]')?.textContent).toBe('G');
+  });
 });

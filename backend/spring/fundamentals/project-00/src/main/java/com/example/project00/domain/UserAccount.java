@@ -36,6 +36,12 @@ public class UserAccount extends BaseEntity {
 	@Column(name = "google_subject", unique = true, length = 255)
 	private String googleSubject;
 
+	@Column(name = "display_name", length = 254)
+	private String displayName;
+
+	@Column(name = "picture_url", length = 2048)
+	private String pictureUrl;
+
 	@Column(name = "password_hash", nullable = false)
 	private String passwordHash;
 
@@ -70,6 +76,34 @@ public class UserAccount extends BaseEntity {
 	public UserAccount withGoogleSubject(String googleSubject) {
 		this.googleSubject = Objects.requireNonNull(googleSubject, "googleSubject");
 		return this;
+	}
+
+	/**
+	 * Stores the display name and avatar URL reported by Google at the latest sign-in.
+	 * @param displayName the name, or {@code null}/blank to keep none
+	 * @param pictureUrl an already validated avatar URL, or {@code null}
+	 * @return this account
+	 */
+	public UserAccount withGoogleProfile(String displayName, String pictureUrl) {
+		this.displayName = displayName == null || displayName.isBlank() ? null : displayName.strip();
+		this.pictureUrl = pictureUrl;
+		return this;
+	}
+
+	/**
+	 * @return the name to show for this account: the Google name, the linked person's name, or the username
+	 */
+	public String resolveDisplayName() {
+		if (displayName != null) {
+			return displayName;
+		}
+		if (student != null) {
+			return student.getName();
+		}
+		if (professor != null) {
+			return professor.getName();
+		}
+		return username;
 	}
 
 	/**

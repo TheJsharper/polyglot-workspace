@@ -140,6 +140,27 @@ public class AccountService {
 		return email == null || email.isBlank() ? null : email.trim().toLowerCase(Locale.ROOT);
 	}
 
+	/**
+	 * Display data for the signed-in account.
+	 * @param displayName the friendly name to show (never {@code null})
+	 * @param pictureUrl a validated Google avatar URL, or {@code null}
+	 */
+	public record AccountProfile(String displayName, String pictureUrl) {
+	}
+
+	/**
+	 * Resolves what the UI should show for a username. Falls back to the username itself for the
+	 * configured admin, which has no stored account.
+	 * @param username the authenticated username
+	 * @return the display profile
+	 */
+	@Transactional(readOnly = true)
+	public AccountProfile profileOf(String username) {
+		return userAccountRepository.findByUsername(username)
+			.map(account -> new AccountProfile(account.resolveDisplayName(), account.getPictureUrl()))
+			.orElseGet(() -> new AccountProfile(username, null));
+	}
+
 	private void requireFreeEmail(String email) {
 		if (email != null && (email.equalsIgnoreCase(adminUsername) || userAccountRepository.existsByEmail(email)
 				|| userAccountRepository.existsByUsername(email))) {

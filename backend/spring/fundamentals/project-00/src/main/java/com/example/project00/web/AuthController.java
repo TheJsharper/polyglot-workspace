@@ -161,7 +161,7 @@ class AuthController {
 	}
 
 	@Operation(summary = "Show the authenticated caller")
-	@ApiResponse(responseCode = "200", description = "The caller's username and role")
+	@ApiResponse(responseCode = "200", description = "The caller's username, role, display name and optional avatar")
 	@GetMapping("/me")
 	MeResponse me(Authentication authentication) {
 		String role = authentication.getAuthorities()
@@ -171,7 +171,8 @@ class AuthController {
 			.map(authority -> authority.substring("ROLE_".length()))
 			.findFirst()
 			.orElse("");
-		return new MeResponse(authentication.getName(), role);
+		AccountService.AccountProfile profile = accountService.profileOf(authentication.getName());
+		return new MeResponse(authentication.getName(), role, profile.displayName(), profile.pictureUrl());
 	}
 
 }

@@ -1,5 +1,7 @@
 package com.example.project00.service;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -61,9 +63,40 @@ public class GoogleLoginService {
 		if (displayName == null || displayName.isBlank()) {
 			displayName = email.substring(0, email.indexOf('@'));
 		}
+		displayName = displayName.strip();
+		if (displayName.length() > 254) {
+			displayName = displayName.substring(0, 254);
+		}
 		tickets.save(new GoogleLoginTicket(hash(secret), subject, email.toLowerCase(Locale.ROOT), displayName,
-				clock.instant().plus(TICKET_LIFETIME)));
+				safePictureUrl(identity.getPicture()), clock.instant().plus(TICKET_LIFETIME)));
 		return secret;
+	}
+
+	/**
+	 * Accepts only HTTPS avatar URLs served by Google's user-content CDN so the browser never loads
+	 * an arbitrary third-party URL from an identity claim.
+	 * @param picture the {@code picture} claim, possibly {@code null}
+	 * @return the URL when it is safe to render, otherwise {@code null}
+	 */
+	static String safePictureUrl(String picture) {
+		if (picture == null || picture.isBlank() || picture.length() > 2048) {
+			return null;
+		}
+		try {
+			URI uri = new URI(picture);
+			String host = uri.getHost();
+			if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getUserInfo() != null || host == null) {
+				return null;
+			}
+			host = host.toLowerCase(Locale.ROOT);
+			if (!host.equals("googleusercontent.com") && !host.endsWith(".googleusercontent.com")) {
+				return null;
+			}
+			return uri.toString();
+		}
+		catch (URISyntaxException ex) {
+			return null;
+		}
 	}
 
 	@Transactional
@@ -91,6 +124,7 @@ public class GoogleLoginService {
 					onboarding.enrollmentYear() == null ? 0 : onboarding.enrollmentYear(), onboarding.department());
 		}
 		ticket.consume();
+		account.withGoogleProfile(ticket.getDisplayName(), ticket.getPictureUrl());
 		UserDetails user = users.loadUserByUsername(account.getUsername());
 		var authentication = UsernamePasswordAuthenticationToken.authenticated(user, null, user.getAuthorities());
 		TokenResponse issued = refreshSessions.issueAccessToken(authentication);

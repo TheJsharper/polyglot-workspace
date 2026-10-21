@@ -23,6 +23,7 @@ import com.example.project00.security.TokenService;
 import com.example.project00.web.dto.AuthDtos.GoogleOnboardingRequest;
 import com.example.project00.web.dto.AuthDtos.TokenResponse;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
@@ -30,6 +31,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 class GoogleLoginServiceTest {
+
+	private static final String PICTURE = "https://lh3.googleusercontent.com/a/example-avatar=s96-c";
 
 	@Test
 	void requiresGoogleVerifiedEmail() {
@@ -91,8 +94,46 @@ class GoogleLoginServiceTest {
 		assertThat(result.refreshSecret()).isEqualTo("refresh-secret");
 		assertThat(result.newAccount()).isTrue();
 		assertThat(ticket.isConsumed()).isTrue();
+		assertThat(account.getDisplayName()).isEqualTo("Example Person");
+		assertThat(account.getPictureUrl()).isEqualTo(PICTURE);
+		assertThat(account.resolveDisplayName()).isEqualTo("Example Person");
 		verify(accountService).registerGoogleAccount("google-sub", "STUDENT", "Example Person", "person@example.com",
 				2026, null);
+	}
+
+	@Test
+	void capturesOnlyGoogleHostedHttpsPictures() {
+		assertThat(GoogleLoginService.safePictureUrl(PICTURE)).isEqualTo(PICTURE);
+		assertThat(GoogleLoginService.safePictureUrl("https://googleusercontent.com/a/x")).isNotNull();
+		assertThat(GoogleLoginService.safePictureUrl(null)).isNull();
+		assertThat(GoogleLoginService.safePictureUrl("http://lh3.googleusercontent.com/a/x")).isNull();
+		assertThat(GoogleLoginService.safePictureUrl("https://evil.example/a.png")).isNull();
+		assertThat(GoogleLoginService.safePictureUrl("https://googleusercontent.com.evil.example/a")).isNull();
+		assertThat(GoogleLoginService.safePictureUrl("https://user@lh3.googleusercontent.com/a")).isNull();
+		assertThat(GoogleLoginService.safePictureUrl("javascript:alert(1)")).isNull();
+		assertThat(GoogleLoginService.safePictureUrl("https://lh3.googleusercontent.com/" + "a".repeat(2048)))
+			.isNull();
+	}
+
+	@Test
+	void storesSafePictureOnLoginTicket() {
+		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
+		GoogleLoginService service = service(tickets, mock(UserAccountRepository.class), mock(AccountService.class),
+				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
+		OidcUser identity = mock(OidcUser.class);
+		when(identity.getSubject()).thenReturn("google-sub");
+		when(identity.getEmail()).thenReturn("Person@Example.com");
+		when(identity.getEmailVerified()).thenReturn(true);
+		when(identity.getFullName()).thenReturn("  Example Person ");
+		when(identity.getPicture()).thenReturn(PICTURE);
+
+		service.createTicket(identity);
+
+		ArgumentCaptor<GoogleLoginTicket> saved = ArgumentCaptor.forClass(GoogleLoginTicket.class);
+		verify(tickets).save(saved.capture());
+		assertThat(saved.getValue().getDisplayName()).isEqualTo("Example Person");
+		assertThat(saved.getValue().getPictureUrl()).isEqualTo(PICTURE);
+		assertThat(saved.getValue().getEmail()).isEqualTo("person@example.com");
 	}
 
 	private static GoogleLoginService service(GoogleLoginTicketRepository tickets, UserAccountRepository accounts,
@@ -103,7 +144,7 @@ class GoogleLoginServiceTest {
 	}
 
 	private static GoogleLoginTicket ticket() {
-		return new GoogleLoginTicket("hashed-ticket", "google-sub", "person@example.com", "Example Person",
+		return new GoogleLoginTicket("hashed-ticket", "google-sub", "person@example.com", "Example Person", PICTURE,
 				Instant.parse("2026-10-20T11:00:00Z"));
 	}
 }

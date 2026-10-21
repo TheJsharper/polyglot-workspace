@@ -1,4 +1,4 @@
-import { AuthActions, authFeature } from './auth/auth.feature';
+import { AuthActions, authFeature, toAuthUser } from './auth/auth.feature';
 import { UniversityActions } from './university.actions';
 import {
   initialUniversityState,
@@ -68,10 +68,10 @@ describe('universityFeature reducer', () => {
 
   it('discards cached data when a different user signs in', () => {
     const owned = reduce(initialUniversityState,
-      AuthActions.userChanged({ user: { username: 'S-1', role: 'STUDENT' } }),
+      AuthActions.userChanged({ user: toAuthUser({ username: 'S-1', role: 'STUDENT' }) }),
       UniversityActions.loadSuccess({ resource: 'students', data: { students: [{ studentId: 'S-1' }] }, choiceError: '' }),
     );
-    expect(reduce(owned, AuthActions.userChanged({ user: { username: 'S-1', role: 'STUDENT' } })).students).toHaveLength(1);
+    expect(reduce(owned, AuthActions.userChanged({ user: toAuthUser({ username: 'S-1', role: 'STUDENT' }) })).students).toHaveLength(1);
     const next = reduce(owned, AuthActions.userChanged({ user: null }));
     expect(next).toEqual({ ...initialUniversityState, owner: null });
   });

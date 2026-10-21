@@ -5,6 +5,8 @@ import type { MeResponse, Role } from '@project-00/services-api';
 export interface AuthUser {
   username: string;
   role: Role;
+  displayName: string;
+  pictureUrl: string | null;
 }
 
 export interface AuthState {
@@ -19,7 +21,20 @@ export const AuthActions = createActionGroup({
 });
 
 export function toAuthUser(user: MeResponse | null | undefined): AuthUser | null {
-  return user?.username && user.role ? { username: user.username, role: user.role } : null;
+  if (!user?.username || !user.role) {
+    return null;
+  }
+  return {
+    username: user.username,
+    role: user.role,
+    displayName: user.displayName?.trim() || user.username,
+    pictureUrl: user.pictureUrl || null,
+  };
+}
+
+function sameUser(a: AuthUser | null, b: AuthUser | null): boolean {
+  return a?.username === b?.username && a?.role === b?.role
+    && a?.displayName === b?.displayName && a?.pictureUrl === b?.pictureUrl;
 }
 
 const initialState: AuthState = { user: null };
@@ -28,13 +43,14 @@ export const authFeature = createFeature({
   name: 'auth',
   reducer: createReducer(
     initialState,
-    on(AuthActions.userChanged, (state, { user }): AuthState =>
-      state.user?.username === user?.username && state.user?.role === user?.role ? state : { user }),
+    on(AuthActions.userChanged, (state, { user }): AuthState => sameUser(state.user, user) ? state : { user }),
   ),
   extraSelectors: ({ selectUser }) => {
     const selectRole = createSelector(selectUser, (user) => user?.role ?? null);
     return {
       selectUsername: createSelector(selectUser, (user) => user?.username ?? ''),
+      selectDisplayName: createSelector(selectUser, (user) => user?.displayName || user?.username || ''),
+      selectPictureUrl: createSelector(selectUser, (user) => user?.pictureUrl ?? null),
       selectRole,
       selectAuthenticated: createSelector(selectUser, (user) => !!user),
       selectIsAdmin: createSelector(selectRole, (role) => role === 'ADMIN'),
@@ -47,6 +63,8 @@ export const authFeature = createFeature({
 export const {
   selectUser: selectAuthUser,
   selectUsername,
+  selectDisplayName,
+  selectPictureUrl,
   selectRole,
   selectAuthenticated,
   selectIsAdmin,

@@ -53,6 +53,10 @@ export interface DemoRedeemRequest {
 export interface MeResponse {
   username?: string;
   role?: Role;
+  /** Google name, student/professor name, or the username. */
+  displayName?: string;
+  /** HTTPS Google avatar (googleusercontent.com) or null. */
+  pictureUrl?: string | null;
 }
 
 // Students

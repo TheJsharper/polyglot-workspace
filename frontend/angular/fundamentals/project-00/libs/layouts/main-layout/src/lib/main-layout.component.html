@@ -11,7 +11,23 @@
   <span class="title">{{ appTitle() }}</span>
   <span class="spacer"></span>
   @if (username()) {
-    <span>{{ username() }}</span>
+    <span class="user" data-testid="current-user">
+      @if (pictureUrl() && failedPicture() !== pictureUrl()) {
+        <img
+          class="avatar"
+          data-testid="user-avatar"
+          [src]="pictureUrl()"
+          alt=""
+          width="32"
+          height="32"
+          referrerpolicy="no-referrer"
+          (error)="failedPicture.set(pictureUrl())"
+        />
+      } @else {
+        <span class="avatar avatar-initials" data-testid="user-initials" aria-hidden="true">{{ initials() }}</span>
+      }
+      <span class="user-name">{{ username() }}</span>
+    </span>
   }
   <button mat-button type="button" (click)="authAction.emit()">
     {{ username() ? 'Log out' : 'Log in' }}

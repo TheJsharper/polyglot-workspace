@@ -47,7 +47,7 @@ class AuthE2ETest extends EndToEndTestSupport {
 			.expectBody(MeResponse.class)
 			.returnResult()
 			.getResponseBody();
-		assertThat(me).isEqualTo(new MeResponse("S-1", "STUDENT"));
+		assertThat(me).isEqualTo(new MeResponse("S-1", "STUDENT", "Alan", null));
 	}
 
 	@Test
