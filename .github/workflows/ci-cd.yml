@@ -1,0 +1,98 @@
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FRONTEND_DIR: frontend/angular/fundamentals/project-00
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [project-00, project-01]
+    defaults:
+      run:
+        working-directory: backend/spring/fundamentals/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - run: chmod +x mvnw && ./mvnw -B -q clean test
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.FRONTEND_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+      - run: npm ci
+      - run: npx nx run-many -t lint test -p web-app shells-main layouts-main-layout views-university services-university-state services-api remote-students remote-professors remote-courses remote-lectures remote-notes
+      - run: npx nx run-many -t build -p web-app remote-students remote-professors remote-courses remote-lectures remote-notes
+      # One static site: host at the root, each remote under /remotes/<name>/.
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r dist/apps/web-app/browser/. site/
+          for r in students professors courses lectures notes; do
+            mkdir -p site/remotes/$r
+            cp -r dist/apps/remotes/$r/browser/. site/remotes/$r/
+          done
+          node -e "const fs=require('fs');const m={};for(const r of ['students','professors','courses','lectures','notes'])m[r]='/remotes/'+r+'/remoteEntry.json';fs.writeFileSync('site/federation.manifest.json',JSON.stringify(m,null,2))"
+          printf '/* /index.html 200\n' > site/_redirects
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: ${{ env.FRONTEND_DIR }}/site
+          retention-days: 7
+
+  # Releases only run for pushes to main and only after every test job passed.
+  deploy-frontend:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend-test, frontend-test]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+      # Run from deploy/cloudflare so wrangler bundles functions/ (the /api and SSO proxy to Render).
+      - name: Publish to Cloudflare Pages
+        working-directory: deploy/cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+        run: npx --yes wrangler@4 pages deploy ../../site --project-name "$PROJECT" --branch main
+
+  deploy-api:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend-test, frontend-test]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
