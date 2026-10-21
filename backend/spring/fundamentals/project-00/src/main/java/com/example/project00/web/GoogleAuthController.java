@@ -2,17 +2,8 @@ package com.example.project00.web;
 
 import java.util.Map;
 
-import com.example.project00.security.GoogleOAuthProperties;
-import com.example.project00.service.GoogleLoginService;
-import com.example.project00.service.RefreshSessionService;
-import com.example.project00.web.dto.AuthDtos.GoogleOnboardingRequest;
-import com.example.project00.web.dto.AuthDtos.GoogleSessionResponse;
-import com.example.project00.web.dto.AuthDtos.GoogleStatusResponse;
-import com.example.project00.web.dto.AuthDtos.GoogleCompleteResponse;
-import com.example.project00.web.dto.AuthDtos.TokenResponse;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -23,7 +14,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
+
+import com.example.project00.security.GoogleOAuthProperties;
+import com.example.project00.service.GoogleLoginService;
+import com.example.project00.service.RefreshSessionService;
+import com.example.project00.web.dto.AuthDtos.GoogleCompleteResponse;
+import com.example.project00.web.dto.AuthDtos.GoogleOnboardingRequest;
+import com.example.project00.web.dto.AuthDtos.GoogleSessionResponse;
+import com.example.project00.web.dto.AuthDtos.GoogleStatusResponse;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
