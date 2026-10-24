@@ -5,16 +5,18 @@ professors, students and lecture notes.
 
 ## Configuration
 
-Secrets and database settings are not stored in the repository. Copy [.env.example](.env.example) to `.env`
-(git-ignored) and fill in the values; the app loads it from the working directory, and real environment variables
-override it. `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `JWT_SECRET` (at least 32 bytes) are required, with no defaults.
-Tests use their own throwaway values from the Surefire configuration in `pom.xml`.
+Secrets and database settings are not stored in the repository. Copy [.env.example](.env.example) to `.env.dev`
+(git-ignored) in this directory and fill in local values. The `dev` Spring profile loads `.env.dev` from the
+working directory; real environment variables override it. The optional `.env` import remains available for existing
+local setups, but `.env.dev` takes precedence when running with `dev`. `ADMIN_USERNAME`, `ADMIN_PASSWORD` and
+`JWT_SECRET` (at least 32 bytes) are required, with no defaults. Tests use their own throwaway values from the
+Surefire configuration in `pom.xml`. Do not put production credentials in `.env.dev`.
 
 ## Run
 
 ```powershell
 $env:JAVA_HOME = 'C:\Users\devloop\.jdks\openjdk-25.0.1'
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -Pdev spring-boot:run
 ```
 
 | What | URL |
@@ -32,8 +34,8 @@ memory, so data is lost on restart. DevTools restarts the app when classes chang
 
 | Profile | Activation | Behaviour |
 | --- | --- | --- |
-| `dev` (default) | no `SPRING_PROFILES_ACTIVE` | H2 console and Swagger UI on; seeds local sample data on an empty database |
-| `prod` | `SPRING_PROFILES_ACTIVE=prod` | H2 console and Swagger UI off; no sample data |
+| `dev` (default) | `-Pdev` for an explicit Maven run, or no `SPRING_PROFILES_ACTIVE` | Loads `.env.dev`; H2 console and Swagger UI on; seeds local sample data on an empty database |
+| `prod` | `SPRING_PROFILES_ACTIVE=prod` | Does not load `.env.dev`; H2 console and Swagger UI off; no sample data |
 
 The `dev` profile seeds local sample accounts, creates the Google-only MANAGER account (`app.manager.email`) and enables recruiter demo-key testing; never expose it publicly. Docker uses `prod` by default, which has no demo-key or manager routes and seeds no sample accounts. Tests run with the `test` profile, so nothing is seeded.
 
@@ -100,14 +102,14 @@ name as `sub` and the role in a `roles` claim; access tokens last no longer than
 
 | Role | How the account is created | May |
 |---|---|---|
-| ADMIN ("superior") | Hard-defined by `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` | Manage courses and professors, register professors, assign teachers, delete students |
+| ADMIN ("superior") | Hard-defined by `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env.dev` | Manage courses and professors, register professors, assign teachers, delete students |
 | PROFESSOR | Registered by the admin: `POST /api/professors` with a `password` | Schedule, reschedule, cancel lectures and take attendance for courses they teach; review notes of those courses |
 | STUDENT | Registers themselves: `POST /api/auth/register` | Enroll in / leave courses (`PUT/DELETE /api/courses/{code}/students/{ownId}`), write and manage their own notes |
 
 Usernames are the student id, the employee id or the admin name. Private notes are visible only to their author
 and the professors teaching the course.
 
-Try it in Swagger UI: call `POST /api/auth/login` with the admin credentials from your `.env`, copy
+Try it in Swagger UI: call `POST /api/auth/login` with the admin credentials from your `.env.dev`, copy
 `accessToken`, click **Authorize** and paste it. Or with curl:
 
 ```powershell

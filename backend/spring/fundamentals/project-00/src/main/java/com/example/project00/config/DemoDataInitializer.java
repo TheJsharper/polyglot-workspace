@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.example.project00.repository.CourseRepository;
@@ -22,6 +24,7 @@ import com.example.project00.service.CourseService;
  */
 @Component
 @Profile("dev")
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class DemoDataInitializer implements ApplicationRunner {
 
 	private static final Logger log = LoggerFactory.getLogger(DemoDataInitializer.class);
