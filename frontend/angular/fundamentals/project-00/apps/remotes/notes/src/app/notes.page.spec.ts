@@ -23,23 +23,20 @@ describe('NotesPage (notes remote)', () => {
     expect(root.textContent).toContain('Detailed notes');
   });
 
-  it('offers only attended lectures when a student writes notes', async () => {
-    const listLecturesByCourse = vi.fn().mockResolvedValue([
-      { id: 1, courseCode: 'CS101', topic: 'Attended topic', date: '2026-01-01', attendeeIds: ['S-1'] },
-      { id: 2, courseCode: 'CS101', topic: 'Missed topic', date: '2026-01-02', attendeeIds: [] },
-    ]);
+  it('lets a student read notes but not write them', async () => {
+    const note = { id: 3, studentId: 'S-1', lectureId: 1, content: 'Read me', privateNote: false, grade: 90 };
     const fixture = await renderPage(NotesPage, { username: 'S-1', role: 'STUDENT' }, {
-      listNotesByStudent: vi.fn().mockResolvedValue([]),
-      listCourses: vi.fn().mockResolvedValue([{ courseCode: 'CS101', title: 'Course', enrolledStudentIds: ['S-1'] }]),
-      listLecturesByCourse,
+      listNotesByStudent: vi.fn().mockResolvedValue([note]),
+      getNote: vi.fn().mockResolvedValue(note),
+      listCourses: vi.fn().mockResolvedValue([]),
     });
     const root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('My notes');
-    root.querySelector<HTMLButtonElement>('.panel-heading button')?.click();
+    expect(root.textContent).not.toContain('Write notes');
+    root.querySelector<HTMLButtonElement>('.record')?.click();
     await settle(fixture);
 
-    expect(listLecturesByCourse).toHaveBeenCalledWith('CS101');
-    expect(root.textContent).toContain('Attended topic');
-    expect(root.textContent).not.toContain('Missed topic');
+    expect(root.textContent).toContain('Read me');
+    expect(root.querySelector('textarea')).toBeNull();
   });
 });

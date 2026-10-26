@@ -6,13 +6,13 @@ import {
   lectureKey,
   NoteLookupMode,
   noteKey,
-  selectAttendedLectures,
   selectIsAdmin,
   selectIsProfessor,
   selectIsStudent,
   selectNotesEmptyMessage,
   selectNotesHeading,
   selectResourceView,
+  selectSchedulableCourses,
   selectUsername,
   UniversityActions,
   universityFeature,
@@ -29,7 +29,7 @@ import { UniversityFrameComponent } from '@project-00/views-university';
       <section class="workspace-grid">
         <div class="panel">
           <div class="panel-heading"><h2>{{ heading() }} <span class="count">{{ filtered().length }}</span></h2>
-            @if (isStudent()) { <button type="button" (click)="beginCreate()">Write notes</button> }
+            @if (!isStudent() && writableLectures().length) { <button type="button" (click)="beginCreate()">Write notes</button> }
           </div>
           @if ((isAdmin() || isProfessor()) && !isStudent()) {
             <form class="form note-lookup" (ngSubmit)="findNotes()">
@@ -54,13 +54,16 @@ import { UniversityFrameComponent } from '@project-00/views-university';
               </button></li>
             }
           </ul>
-          @if (view().createMode && isStudent()) {
+          @if (view().createMode && !isStudent()) {
             <form class="form" (ngSubmit)="write()">
-              <h3>Write notes</h3>
+              <h3>Write notes for a student</h3>
               <label>Lecture <select name="noteLecture" [(ngModel)]="newLectureId" required><option [ngValue]="null">Choose a lecture</option>
-                @for (lecture of attendedLectures(); track lectureKey(lecture)) { <option [ngValue]="lecture.id">{{ lecture.courseCode }} · {{ lecture.topic }} · {{ lecture.date }}</option> }
+                @for (lecture of writableLectures(); track lectureKey(lecture)) { <option [ngValue]="lecture.id">{{ lecture.courseCode }} · {{ lecture.topic }} · {{ lecture.date }}</option> }
               </select></label>
-              @if (!attendedLectures().length) { <p class="empty">Notes can only be written for lectures where your attendance was recorded.</p> }
+              <label>Student <select name="noteStudent" [(ngModel)]="newStudentId" required><option value="">Choose a student</option>
+                @for (studentId of attendeesOfChosenLecture(); track studentId) { <option [value]="studentId">{{ studentId }}</option> }
+              </select></label>
+              @if (newLectureId() !== null && !attendeesOfChosenLecture().length) { <p class="empty">Notes can only be written for students whose attendance was recorded.</p> }
               <label>Notes <textarea name="noteContent" [(ngModel)]="newContent" rows="6" required></textarea></label>
               <label class="check"><input name="privateNote" [(ngModel)]="newPrivate" type="checkbox" /> Keep these notes private</label>
               <div class="actions"><button type="submit" [disabled]="view().loading">Save notes</button><button type="button" class="quiet" (click)="cancelCreate()">Cancel</button></div>
@@ -71,7 +74,8 @@ import { UniversityFrameComponent } from '@project-00/views-university';
           @if (current(); as note) {
             <h2>Note details</h2>
             <dl><dt>Student</dt><dd>{{ note.studentId || '—' }}</dd><dt>Lecture</dt><dd>{{ note.lectureId ?? '—' }}</dd><dt>Written</dt><dd>{{ note.timestamp || '—' }}</dd><dt>Privacy</dt><dd>{{ note.privateNote ? 'Private' : 'Shared' }}</dd><dt>Grade</dt><dd>{{ note.grade ?? 'Pending' }}</dd><dt>Review comment</dt><dd>{{ note.reviewComment || '—' }}</dd></dl>
-            @if (isStudent() && note.studentId === username()) {
+            <p class="note-content">{{ note.content }}</p>
+            @if (canReview(note)) {
               <form class="form" (ngSubmit)="edit(note)">
                 <h3>Edit notes</h3><label>Notes <textarea name="editNoteContent" [(ngModel)]="editContent" rows="7" required></textarea></label>
                 <label class="check"><input name="editPrivateNote" [(ngModel)]="editPrivate" type="checkbox" /> Keep these notes private</label>
@@ -79,7 +83,6 @@ import { UniversityFrameComponent } from '@project-00/views-university';
               </form>
             }
             @if (isProfessor() || isAdmin()) {
-              <p class="note-content">{{ note.content }}</p>
               @if (canReview(note)) {
                 <form class="form" (ngSubmit)="review(note)">
                   <h3>Review notes</h3><label>Grade <input name="reviewGrade" [(ngModel)]="reviewGrade" type="number" min="0" max="100" required /></label>
@@ -106,7 +109,12 @@ export class NotesPage {
   private readonly selection = this.store.selectSignal(universityFeature.selectSelectedNote);
   protected readonly selectedKey = computed(() => this.selection().key);
   protected readonly lookupMode = this.store.selectSignal(universityFeature.selectNoteLookupMode);
-  protected readonly attendedLectures = this.store.selectSignal(selectAttendedLectures);
+  private readonly lectures = this.store.selectSignal(universityFeature.selectLectures);
+  protected readonly schedulableCourses = this.store.selectSignal(selectSchedulableCourses);
+  protected readonly writableLectures = computed(() => {
+    const codes = new Set(this.schedulableCourses().map((course) => course.courseCode));
+    return this.lectures().filter((lecture) => lecture.id != null && codes.has(lecture.courseCode));
+  });
   protected readonly heading = this.store.selectSignal(selectNotesHeading);
   protected readonly emptyMessage = this.store.selectSignal(selectNotesEmptyMessage);
   protected readonly isAdmin = this.store.selectSignal(selectIsAdmin);
@@ -117,6 +125,9 @@ export class NotesPage {
   protected readonly lookupStudentId = signal('');
   protected readonly lookupLectureId = signal<number | null>(null);
   protected readonly newLectureId = signal<number | null>(null);
+  protected readonly newStudentId = signal('');
+  protected readonly attendeesOfChosenLecture = computed(() =>
+    this.lectures().find((lecture) => lecture.id === this.newLectureId())?.attendeeIds || []);
   protected readonly newContent = signal('');
   protected readonly newPrivate = signal(false);
   protected readonly editContent = signal('');
@@ -138,12 +149,18 @@ export class NotesPage {
 
   protected hasGrade(note: NotesResponse): boolean { return note.grade !== null && note.grade !== undefined; }
 
-  /** Professors may review only notes for lectures of courses they teach (course code comes from the detail lookup). */
+  /** Admins, and professors teaching the note's course (course code comes from the detail lookup), manage notes. */
   protected canReview(note: NotesResponse): boolean {
     const { key, courseCode } = this.selection();
-    const username = this.username();
-    return this.isProfessor() && courseCode !== '' && key === noteKey(note) &&
-      this.courses().some((course) => course.courseCode === courseCode && course.teacherIds?.includes(username));
+    if (courseCode === '' || key !== noteKey(note)) return false;
+    return this.isAdmin() || (this.isProfessor() && this.courses().some((course) =>
+      course.courseCode === courseCode && course.teacherIds?.includes(this.username())));
+  }
+
+  private reviewerId(): string {
+    if (!this.isAdmin()) return this.username();
+    const { courseCode } = this.selection();
+    return this.courses().find((course) => course.courseCode === courseCode)?.teacherIds?.[0] || '';
   }
 
   protected setLookupMode(value: string): void {
@@ -167,6 +184,7 @@ export class NotesPage {
 
   protected beginCreate(): void {
     this.newLectureId.set(null);
+    this.newStudentId.set('');
     this.newContent.set('');
     this.newPrivate.set(false);
     this.store.dispatch(UniversityActions.beginCreate({ resource: 'notes' }));
@@ -177,7 +195,7 @@ export class NotesPage {
   }
 
   protected write(): void {
-    const studentId = this.username();
+    const studentId = this.newStudentId();
     const lectureId = this.newLectureId();
     if (!studentId || lectureId == null) return;
     this.execute('Notes saved.', {
@@ -201,7 +219,7 @@ export class NotesPage {
   }
 
   protected review(item: NotesResponse): void {
-    const employeeId = this.username();
+    const employeeId = this.reviewerId();
     const grade = this.reviewGrade();
     if (!employeeId || item.id == null || grade == null) return;
     this.execute('Note review submitted.', {

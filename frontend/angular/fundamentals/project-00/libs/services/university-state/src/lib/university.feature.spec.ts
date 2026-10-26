@@ -86,7 +86,7 @@ describe('role-aware selectors', () => {
     };
     expect(selectAttendedLectures(rootState(state, 'S-1', 'STUDENT')).map((l) => l.id)).toEqual([1]);
     expect(selectSchedulableCourses(rootState(state)).map((c) => c.courseCode)).toEqual(['A']);
-    expect(selectSchedulableCourses(rootState(state, 'admin', 'ADMIN'))).toEqual([]);
+    expect(selectSchedulableCourses(rootState(state, 'admin', 'ADMIN')).length).toBe(state.courses.length);
     expect(selectNotesHeading(rootState(state, 'admin', 'ADMIN'))).toBe('Note records');
     expect(selectNotesHeading(rootState(state))).toBe('Pending review');
   });
