@@ -130,6 +130,9 @@
 						<JWT_SECRET>test-only-secret-0123456789-abcdefghijklmnopqrstuvwxyz</JWT_SECRET>
 						<DEMO_KEYS_SERVICE_SECRET>test-only-service-secret-0123456789-abcdefghijkl</DEMO_KEYS_SERVICE_SECRET>
 						<SPRING_PROFILES_ACTIVE>test</SPRING_PROFILES_ACTIVE>
+						<DB_URL>jdbc:h2:mem:project00;DB_CLOSE_DELAY=-1</DB_URL>
+						<DB_USERNAME>sa</DB_USERNAME>
+						<DB_PASSWORD></DB_PASSWORD>
 					</environmentVariables>
 				</configuration>
 			</plugin>
