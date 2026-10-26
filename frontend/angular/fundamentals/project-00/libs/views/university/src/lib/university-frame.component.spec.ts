@@ -48,7 +48,7 @@ describe('UniversityFrameComponent', () => {
     expect(dispatched).toContainEqual(UniversityActions.open({ resource: 'courses' }));
   });
 
-  it('dispatches filter and refresh actions and logs out through the session', async () => {
+  it('dispatches filter and refresh actions and leaves logging out to the header', async () => {
     const { fixture, root } = await render();
     const input = root.querySelector<HTMLInputElement>('input[type="search"]');
     if (!input) throw new Error('missing filter input');
@@ -61,7 +61,6 @@ describe('UniversityFrameComponent', () => {
     const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('button'));
     buttons.find((b) => b.textContent?.trim() === 'Refresh')?.click();
     expect(dispatched).toContainEqual(UniversityActions.load({ resource: 'courses' }));
-    buttons.find((b) => b.textContent?.trim() === 'Log out')?.click();
-    expect(logout).toHaveBeenCalled();
+    expect(buttons.some((b) => b.textContent?.trim() === 'Log out')).toBe(false);
   });
 });

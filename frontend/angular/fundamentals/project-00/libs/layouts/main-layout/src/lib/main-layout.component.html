@@ -43,7 +43,8 @@
       </select>
     </label>
   }
-  <button mat-button type="button" (click)="authAction.emit()">
+  <button mat-button type="button" data-testid="auth-action" (click)="authAction.emit()">
+    <mat-icon>{{ username() ? 'logout' : 'login' }}</mat-icon>
     {{ username() ? 'Log out' : 'Log in' }}
   </button>
   <button

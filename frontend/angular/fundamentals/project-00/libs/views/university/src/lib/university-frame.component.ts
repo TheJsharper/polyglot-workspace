@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { UniversitySession } from '@project-00/services-session';
 import {
   Resource,
   selectDisplayName,
@@ -28,8 +27,7 @@ import {
           <p>Manage university records and course activity.</p>
         </div>
         <div class="account">
-          <span>{{ displayName() }} · {{ role() }}</span>
-          <button type="button" class="quiet" (click)="session.logout()">Log out</button>
+          <span class="account-chip">{{ displayName() }} · {{ role() }}</span>
         </div>
       </header>
 
@@ -52,7 +50,6 @@ import {
 export class UniversityFrameComponent implements OnInit {
   readonly resource = input.required<Resource>();
 
-  protected readonly session = inject(UniversitySession);
   private readonly store = inject(Store);
   protected readonly displayName = this.store.selectSignal(selectDisplayName);
   protected readonly role = this.store.selectSignal(selectRole);

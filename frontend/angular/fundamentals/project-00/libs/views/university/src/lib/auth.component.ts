@@ -24,9 +24,7 @@ import type { DemoRedeemRequest, GoogleOnboardingRequest, RegisterRequest } from
       <p>No account? <a routerLink="/register">Register</a>@if (demoEnabled) { · <a routerLink="/demo">Recruiter demo</a> }</p>
     </section>
   `,
-  styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
-    form, label { display: grid; gap: .6rem; } form { gap: 1rem; }
-    input { padding: .7rem; } [role=alert] { color: #a52424; }`],
+  styleUrl: './auth.component.scss',
 })
 export class LoginComponent {
   protected readonly demoEnabled = inject(DEMO_ENABLED);
@@ -90,9 +88,7 @@ export class LoginComponent {
       <a routerLink="/login">Back to login</a>
     </section>
   `,
-  styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
-    form, label { display: grid; gap: .6rem; } form { gap: 1rem; }
-    input, select { padding: .7rem; } [role=alert] { color: #a52424; }`],
+  styleUrl: './auth.component.scss',
 })
 export class GoogleCallbackComponent {
   private readonly session = inject(UniversitySession);
@@ -181,9 +177,7 @@ export class GoogleCallbackComponent {
       <a routerLink="/login">Log in</a>
     </section>
   `,
-  styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
-    form, label { display: grid; gap: .6rem; } form { gap: 1rem; }
-    input, select, textarea { padding: .7rem; word-break: break-all; font-family: monospace; } [role=alert] { color: #a52424; }`],
+  styleUrl: './auth.component.scss',
 })
 export class DemoComponent {
   private readonly session = inject(UniversitySession);
@@ -245,9 +239,7 @@ export class DemoComponent {
       <a routerLink="/login">Log in</a>
     </section>
   `,
-  styles: [`.auth { max-width: 30rem; margin: 2rem auto; padding: 1.5rem; }
-    form, label { display: grid; gap: .6rem; } form { gap: 1rem; }
-    input, select { padding: .7rem; } [role=alert] { color: #a52424; }`],
+  styleUrl: './auth.component.scss',
 })
 export class RegisterComponent {
   protected readonly session = inject(UniversitySession);
