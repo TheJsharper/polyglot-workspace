@@ -76,7 +76,7 @@ class CourseController {
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("@authz.managesCourse(#courseCode)")
 	@PutMapping("/{courseCode}")
 	CourseResponse update(@Parameter(description = "Unique course code", example = "CS101") @PathVariable String courseCode,
 			@Valid @RequestBody UpdateCourseRequest request) {

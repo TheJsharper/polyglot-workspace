@@ -205,7 +205,7 @@ abstract class EndToEndTestSupport {
 
 	/** Writes public notes as the student. */
 	protected NotesResponse writeNotes(String studentId, Long lectureId, String content) {
-		return post(as(studentId), "/api/notes", new WriteNotesRequest(studentId, lectureId, content, false),
+		return post(client, "/api/notes", new WriteNotesRequest(studentId, lectureId, content, false),
 				NotesResponse.class);
 	}
 

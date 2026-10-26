@@ -74,12 +74,12 @@ class LectureController {
 	}
 
 	@Operation(summary = "Schedule a lecture for a course, delivered by a professor",
-			description = "Only professors teaching the course. The delivering professor must teach it too (400 otherwise).")
+			description = "Admin, or a professor teaching the course. The delivering professor must teach it too (400 otherwise).")
 	@ApiResponse(responseCode = "201", description = "Lecture created; the Location header points to it")
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.teachesCourse(#request.courseCode())")
+	@PreAuthorize("@authz.managesCourse(#request.courseCode())")
 	@PostMapping
 	ResponseEntity<LectureResponse> schedule(@Valid @RequestBody ScheduleLectureRequest request,
 			Authentication authentication) {
@@ -94,7 +94,7 @@ class LectureController {
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.teachesLecture(#lectureId)")
+	@PreAuthorize("@authz.managesLecture(#lectureId)")
 	@PutMapping("/{lectureId}/schedule")
 	LectureResponse reschedule(@Parameter(description = "Lecture id", example = "1") @PathVariable Long lectureId,
 			@Valid @RequestBody RescheduleLectureRequest request) {
@@ -108,7 +108,7 @@ class LectureController {
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("hasRole('ADMIN') or @authz.teachesLecture(#lectureId)")
+	@PreAuthorize("@authz.managesLecture(#lectureId)")
 	@PutMapping("/{lectureId}/professor")
 	LectureResponse assignProfessor(@Parameter(description = "Lecture id", example = "1") @PathVariable Long lectureId,
 			@Valid @RequestBody AssignProfessorRequest request) {
@@ -116,12 +116,12 @@ class LectureController {
 	}
 
 	@Operation(summary = "Record that a student attended a lecture",
-			description = "Only professors teaching the course. The student must be enrolled in the course (400 otherwise). Idempotent.")
+			description = "Admin, a professor teaching the course, or the student themselves. The student must be enrolled in the course (400 otherwise). Idempotent.")
 	@ApiResponse(responseCode = "200", description = "The lecture with the updated attendee list")
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.teachesLecture(#lectureId)")
+	@PreAuthorize("@authz.managesLecture(#lectureId) or @authz.isStudent(#studentId)")
 	@PutMapping("/{lectureId}/attendees/{studentId}")
 	LectureResponse recordAttendance(@Parameter(description = "Lecture id", example = "1") @PathVariable Long lectureId,
 			@Parameter(description = "Student id", example = "S-1") @PathVariable String studentId) {
@@ -129,12 +129,12 @@ class LectureController {
 	}
 
 	@Operation(summary = "Remove a student's attendance from a lecture",
-			description = "Only professors teaching the course. Fails with 409 if the student wrote notes for this lecture.")
+			description = "Admin or a professor teaching the course; a student may remove their own. Fails with 409 if the student wrote notes for this lecture.")
 	@ApiResponse(responseCode = "200", description = "The lecture with the updated attendee list")
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
 	@ApiErrors.Conflict
-	@PreAuthorize("@authz.teachesLecture(#lectureId)")
+	@PreAuthorize("@authz.managesLecture(#lectureId) or @authz.isStudent(#studentId)")
 	@DeleteMapping("/{lectureId}/attendees/{studentId}")
 	LectureResponse removeAttendance(@Parameter(description = "Lecture id", example = "1") @PathVariable Long lectureId,
 			@Parameter(description = "Student id", example = "S-1") @PathVariable String studentId) {
@@ -142,12 +142,12 @@ class LectureController {
 	}
 
 	@Operation(summary = "Cancel a lecture",
-			description = "Only professors teaching the course. Fails with 409 if any notes were written for it.")
+			description = "Admin or a professor teaching the course. Fails with 409 if any notes were written for it.")
 	@ApiResponse(responseCode = "204", description = "Lecture cancelled")
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
 	@ApiErrors.Conflict
-	@PreAuthorize("@authz.teachesLecture(#lectureId)")
+	@PreAuthorize("@authz.managesLecture(#lectureId)")
 	@DeleteMapping("/{lectureId}")
 	ResponseEntity<Void> cancel(@Parameter(description = "Lecture id", example = "1") @PathVariable Long lectureId) {
 		lectureService.cancel(lectureId);

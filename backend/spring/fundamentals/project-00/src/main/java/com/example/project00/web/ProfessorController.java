@@ -8,6 +8,7 @@ import com.example.project00.service.ProfessorService;
 import com.example.project00.web.dto.ProfessorDtos.CreateProfessorRequest;
 import com.example.project00.web.dto.ProfessorDtos.ProfessorResponse;
 import com.example.project00.web.dto.ProfessorDtos.UpdateProfessorRequest;
+import com.example.project00.web.dto.StudentDtos.StudentResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -55,6 +56,18 @@ class ProfessorController {
 	@GetMapping("/{employeeId}")
 	ProfessorResponse get(@Parameter(description = "Unique employee id", example = "E-1") @PathVariable String employeeId) {
 		return ProfessorResponse.from(professorService.getByEmployeeId(employeeId));
+	}
+
+	@Operation(summary = "List the students enrolled in a professor's courses",
+			description = "Admin, or the professor themselves.")
+	@ApiResponse(responseCode = "200", description = "The professor's students")
+	@ApiErrors.Forbidden
+	@ApiErrors.NotFound
+	@PreAuthorize("hasRole('ADMIN') or @authz.isProfessor(#employeeId)")
+	@GetMapping("/{employeeId}/students")
+	List<StudentResponse> findStudents(
+			@Parameter(description = "Unique employee id", example = "E-1") @PathVariable String employeeId) {
+		return professorService.findStudents(employeeId).stream().map(StudentResponse::from).toList();
 	}
 
 	@Operation(summary = "Hire a professor",
