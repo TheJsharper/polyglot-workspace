@@ -23,7 +23,6 @@ export const DEMO_KEY_POLL_MS = new InjectionToken<number>('DEMO_KEY_POLL_MS', {
           <h1>Recruiter demo keys</h1>
           <p>Each key is a one-recruiter read-only demo token. Redeemed keys are kept as a record.</p>
         </div>
-        <button type="button" (click)="session.logout()">Log out</button>
       </header>
 
       <form class="create" (ngSubmit)="create()">
@@ -82,12 +81,15 @@ export const DEMO_KEY_POLL_MS = new InjectionToken<number>('DEMO_KEY_POLL_MS', {
     .eyebrow { margin: 0; text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
     .create { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; }
     label { display: grid; gap: .3rem; }
-    input { padding: .6rem; }
+    input { padding: .6rem; border: 1px solid var(--mat-sys-outline); border-radius: .5rem; background: var(--mat-sys-surface); color: inherit; font: inherit; }
+    button { padding: .55rem 1rem; border: 0; border-radius: 999px; background: var(--mat-sys-primary); color: var(--mat-sys-on-primary); font: inherit; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button.danger { background: var(--mat-sys-error); color: var(--mat-sys-on-error); }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .6rem; border-bottom: 1px solid #ddd; }
+    th, td { text-align: left; padding: .6rem; border-bottom: 1px solid var(--mat-sys-outline-variant); }
     td button + button { margin-left: .5rem; }
-    .failure, .hint { color: #a52424; }
-    .success { color: #1b6b35; }
+    .failure, .hint { color: var(--mat-sys-error); }
+    .success { color: var(--mat-sys-tertiary); }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   `],
 })
