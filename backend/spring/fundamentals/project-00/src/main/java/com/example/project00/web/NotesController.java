@@ -79,10 +79,10 @@ class NotesController {
 		return notesService.findByStudent(studentId).stream().filter(authz::canRead).map(NotesResponse::from).toList();
 	}
 
-	@Operation(summary = "List unreviewed notes of the courses the caller teaches", description = "Professors only.")
+	@Operation(summary = "List unreviewed notes of the courses the caller teaches", description = "Admins see all; professors see their courses.")
 	@ApiResponse(responseCode = "200", description = "Unreviewed notes")
 	@ApiErrors.Forbidden
-	@PreAuthorize("hasRole('PROFESSOR')")
+	@PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
 	@GetMapping("/pending-review")
 	List<NotesResponse> findPendingReview() {
 		return notesService.findPendingReview()
@@ -93,12 +93,12 @@ class NotesController {
 	}
 
 	@Operation(summary = "Write notes for a lecture",
-			description = "Students write notes as themselves only. They must have attended the lecture, otherwise the request fails with 400.")
+			description = "Admins, or professors teaching the lecture's course, write notes on behalf of a student. The student must have attended the lecture, otherwise the request fails with 400.")
 	@ApiResponse(responseCode = "201", description = "Notes created; the Location header points to them")
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.isStudent(#request.studentId())")
+	@PreAuthorize("@authz.managesLecture(#request.lectureId())")
 	@PostMapping
 	ResponseEntity<NotesResponse> write(@Valid @RequestBody WriteNotesRequest request, Authentication authentication) {
 		creationQuota.consumeIfGoogleUser(authentication.getName(), CreationResource.NOTE);
@@ -107,12 +107,12 @@ class NotesController {
 		return ResponseEntity.created(URI.create("/api/notes/" + written.id())).body(written);
 	}
 
-	@Operation(summary = "Edit the content and visibility of notes", description = "Author only.")
+	@Operation(summary = "Edit the content and visibility of notes", description = "Admins or professors teaching the lecture's course.")
 	@ApiResponse(responseCode = "200", description = "The edited notes")
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.ownsNotes(#notesId)")
+	@PreAuthorize("@authz.managesNotes(#notesId)")
 	@PutMapping("/{notesId}")
 	NotesResponse edit(@Parameter(description = "Notes id", example = "1") @PathVariable Long notesId,
 			@Valid @RequestBody EditNotesRequest request) {
@@ -120,12 +120,12 @@ class NotesController {
 	}
 
 	@Operation(summary = "Review and grade notes",
-			description = "Professors teaching the lecture's course, reviewing as themselves. Grade must be between 0 and 100. A new review replaces the previous one, including its comment.")
+			description = "Admins, or professors teaching the lecture's course reviewing as themselves. Grade must be between 0 and 100. A new review replaces the previous one, including its comment.")
 	@ApiResponse(responseCode = "200", description = "The reviewed notes")
 	@ApiErrors.BadRequest
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.isProfessor(#request.employeeId()) and @authz.reviewsNotes(#notesId)")
+	@PreAuthorize("hasRole('ADMIN') or @authz.isProfessor(#request.employeeId()) and @authz.reviewsNotes(#notesId)")
 	@PutMapping("/{notesId}/review")
 	NotesResponse review(@Parameter(description = "Notes id", example = "1") @PathVariable Long notesId,
 			@Valid @RequestBody ReviewNotesRequest request) {
@@ -133,11 +133,11 @@ class NotesController {
 			.from(notesService.review(notesId, request.employeeId(), request.grade(), request.comment()));
 	}
 
-	@Operation(summary = "Delete notes", description = "Author only.")
+	@Operation(summary = "Delete notes", description = "Admins or professors teaching the lecture's course.")
 	@ApiResponse(responseCode = "204", description = "Notes deleted")
 	@ApiErrors.Forbidden
 	@ApiErrors.NotFound
-	@PreAuthorize("@authz.ownsNotes(#notesId)")
+	@PreAuthorize("@authz.managesNotes(#notesId)")
 	@DeleteMapping("/{notesId}")
 	ResponseEntity<Void> delete(@Parameter(description = "Notes id", example = "1") @PathVariable Long notesId) {
 		notesService.delete(notesId);

@@ -122,7 +122,7 @@ class AuthorizationRulesTest {
 		login("E-2", "PROFESSOR");
 		assertThat(authz.canRead(notes)).isFalse();
 		login("admin", "ADMIN");
-		assertThat(authz.canRead(notes)).isFalse();
+		assertThat(authz.canRead(notes)).isTrue();
 	}
 
 	@Test
@@ -135,21 +135,46 @@ class AuthorizationRulesTest {
 	}
 
 	@Test
-	void notesOwnershipAndReviewRules() {
+	void notesManagementAndReviewRules() {
 		Notes notes = new Notes(author, lecture, "Shared", false);
 		given(notesRepository.findById(5L)).willReturn(Optional.of(notes));
 
 		login("S-1", "STUDENT");
-		assertThat(authz.ownsNotes(5L)).isTrue();
+		assertThat(authz.managesNotes(5L)).isFalse();
 		assertThat(authz.reviewsNotes(5L)).isFalse();
 
-		login("S-2", "STUDENT");
-		assertThat(authz.ownsNotes(5L)).isFalse();
+		login("E-2", "PROFESSOR");
+		assertThat(authz.managesNotes(5L)).isFalse();
 
 		login("E-1", "PROFESSOR");
-		assertThat(authz.ownsNotes(5L)).isFalse();
+		assertThat(authz.managesNotes(5L)).isTrue();
 		assertThat(authz.reviewsNotes(5L)).isTrue();
 		assertThat(authz.callerTeaches(notes)).isTrue();
+
+		login("admin", "ADMIN");
+		assertThat(authz.managesNotes(5L)).isTrue();
+	}
+
+	@Test
+	void adminsAndTeachersManageCoursesAndLectures() {
+		given(courseRepository.findByCourseCode("CS101")).willReturn(Optional.of(course));
+		given(lectureRepository.findById(1L)).willReturn(Optional.of(lecture));
+
+		login("admin", "ADMIN");
+		assertThat(authz.managesCourse("CS101")).isTrue();
+		assertThat(authz.managesLecture(1L)).isTrue();
+
+		login("E-1", "PROFESSOR");
+		assertThat(authz.managesCourse("CS101")).isTrue();
+		assertThat(authz.managesLecture(1L)).isTrue();
+
+		login("E-2", "PROFESSOR");
+		assertThat(authz.managesCourse("CS101")).isFalse();
+		assertThat(authz.managesLecture(1L)).isFalse();
+
+		login("S-1", "STUDENT");
+		assertThat(authz.managesCourse("CS101")).isFalse();
+		assertThat(authz.managesLecture(1L)).isFalse();
 	}
 
 	private static void login(String username, String role) {

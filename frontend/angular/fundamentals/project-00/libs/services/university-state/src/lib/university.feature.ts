@@ -206,19 +206,22 @@ export const selectResourceView = (resource: Resource) =>
 export const selectAttendedLectures = createSelector(universityFeature.selectLectures, selectUsername, (lectures, username) =>
   lectures.filter((lecture) => lecture.id != null && (lecture.attendeeIds || []).includes(username)));
 
-/** Courses the signed-in professor teaches. */
+/** Courses the signed-in professor teaches; every course for an admin. */
 export const selectSchedulableCourses = createSelector(
   universityFeature.selectCourses,
   selectUsername,
   selectIsProfessor,
-  (courses, username, isProfessor) => isProfessor ? courses.filter((course) => course.teacherIds?.includes(username)) : [],
+  selectIsAdmin,
+  (courses, username, isProfessor, isAdmin) => isAdmin
+    ? courses
+    : isProfessor ? courses.filter((course) => course.teacherIds?.includes(username)) : [],
 );
 
 export const selectNotesHeading = createSelector(selectIsStudent, selectIsAdmin, (isStudent, isAdmin) =>
   isStudent ? 'My notes' : isAdmin ? 'Note records' : 'Pending review');
 
 export const selectNotesEmptyMessage = createSelector(selectIsStudent, selectIsAdmin, (isStudent, isAdmin) => {
-  if (isStudent) return 'You have not written any notes yet.';
+  if (isStudent) return 'No notes or reviews have been shared with you yet.';
   if (isAdmin) return 'Choose a student or lecture lookup to find notes.';
   return 'No notes are waiting for review. You can also search by student or lecture.';
 });

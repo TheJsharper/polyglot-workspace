@@ -7,6 +7,7 @@ import {
   lectureKey,
   selectIsAdmin,
   selectIsProfessor,
+  selectIsStudent,
   selectResourceView,
   selectSchedulableCourses,
   selectUsername,
@@ -26,7 +27,7 @@ import { UniversityFrameComponent } from '@project-00/views-university';
       <section class="workspace-grid">
         <div class="panel">
           <div class="panel-heading"><h2>Lectures <span class="count">{{ filtered().length }}</span></h2>
-            @if (isProfessor() && schedulableCourses().length) { <button type="button" (click)="beginCreate()">Schedule lecture</button> }
+            @if (schedulableCourses().length) { <button type="button" (click)="beginCreate()">Schedule lecture</button> }
           </div>
           @if (!lectures().length && !view().loading) { <p class="empty">No lectures are available for your courses.</p> }
           <ul class="record-list">
@@ -43,6 +44,11 @@ import { UniversityFrameComponent } from '@project-00/views-university';
               <label>Course <select name="lectureCourse" [(ngModel)]="newCourseCode" required><option value="">Choose course</option>
                 @for (course of schedulableCourses(); track courseKey(course)) { <option [value]="course.courseCode">{{ course.courseCode }} · {{ course.title }}</option> }
               </select></label>
+              @if (isAdmin()) {
+                <label>Professor <select name="lectureProfessor" [(ngModel)]="newProfessor" required><option value="">Choose professor</option>
+                  @for (employeeId of newCourseTeachers(); track employeeId) { <option [value]="employeeId">{{ employeeId }}</option> }
+                </select></label>
+              }
               <label>Date <input name="lectureDate" [(ngModel)]="newDate" type="date" required /></label>
               <label>Time <input name="lectureTime" [(ngModel)]="newTime" type="time" required /></label>
               <label>Topic <input name="lectureTopic" [(ngModel)]="newTopic" required /></label>
@@ -59,6 +65,10 @@ import { UniversityFrameComponent } from '@project-00/views-university';
             <ul class="plain-list">@for (studentId of lecture.attendeeIds || []; track studentId) { <li>{{ studentId }}
               @if (canManage(lecture)) { <button type="button" class="text-button" (click)="removeAttendance(lecture, studentId)">Remove</button> }
             </li> } @empty { <li>No attendance recorded</li> }</ul>
+            @if (isStudent() && isEnrolled(lecture)) {
+              @if (attends(lecture)) { <button type="button" class="quiet" [disabled]="view().loading" (click)="leave(lecture)">Leave lecture</button> }
+              @else { <button type="button" [disabled]="view().loading" (click)="attend(lecture)">Attend me</button> }
+            }
             @if (canManage(lecture)) {
               <div class="inline-form"><label for="attendance-choice">Record attendance</label><select id="attendance-choice" [(ngModel)]="attendanceChoice"><option value="">Choose student</option>
                 @for (student of students(); track studentKey(student)) { <option [value]="student.studentId">{{ student.name }} ({{ student.studentId }})</option> }
@@ -71,7 +81,7 @@ import { UniversityFrameComponent } from '@project-00/views-university';
                 <button type="submit" [disabled]="view().loading">Save schedule</button>
               </form>
             }
-            @if (isAdmin() || canManage(lecture)) {
+            @if (canManage(lecture)) {
               <div class="inline-form separated"><label for="lecture-professor-choice">Assign professor</label><select id="lecture-professor-choice" [(ngModel)]="professorChoice"><option value="">Choose professor</option>
                 @for (employeeId of teachersOf(lecture); track employeeId) { <option [value]="employeeId">{{ employeeId }}</option> }
               </select><button type="button" [disabled]="!professorChoice() || view().loading" (click)="assignProfessor(lecture)">Assign</button></div>
@@ -99,9 +109,13 @@ export class LecturesPage {
   protected readonly schedulableCourses = this.store.selectSignal(selectSchedulableCourses);
   protected readonly isAdmin = this.store.selectSignal(selectIsAdmin);
   protected readonly isProfessor = this.store.selectSignal(selectIsProfessor);
+  protected readonly isStudent = this.store.selectSignal(selectIsStudent);
   private readonly username = this.store.selectSignal(selectUsername);
 
   protected readonly newCourseCode = signal('');
+  protected readonly newProfessor = signal('');
+  protected readonly newCourseTeachers = computed(() =>
+    this.courses().find((course) => course.courseCode === this.newCourseCode())?.teacherIds || []);
   protected readonly newDate = signal('');
   protected readonly newTime = signal('');
   protected readonly newTopic = signal('');
@@ -125,9 +139,30 @@ export class LecturesPage {
   }
 
   protected canManage(lecture: LectureResponse): boolean {
+    if (this.isAdmin()) return true;
     const username = this.username();
     return this.isProfessor() && this.courses().some((course) =>
       course.courseCode === lecture.courseCode && course.teacherIds?.includes(username));
+  }
+
+  protected isEnrolled(lecture: LectureResponse): boolean {
+    const username = this.username();
+    return this.courses().some((course) =>
+      course.courseCode === lecture.courseCode && course.enrolledStudentIds?.includes(username));
+  }
+
+  protected attends(lecture: LectureResponse): boolean {
+    return (lecture.attendeeIds || []).includes(this.username());
+  }
+
+  protected attend(item: LectureResponse): void {
+    if (item.id == null) return;
+    this.execute('You are attending this lecture.', { type: 'recordLectureAttendance', lectureId: item.id, studentId: this.username() });
+  }
+
+  protected leave(item: LectureResponse): void {
+    if (item.id == null) return;
+    this.execute('You left this lecture.', { type: 'removeLectureAttendance', lectureId: item.id, studentId: this.username() });
   }
 
   protected teachersOf(lecture: LectureResponse): string[] {
@@ -140,6 +175,7 @@ export class LecturesPage {
 
   protected beginCreate(): void {
     this.newCourseCode.set('');
+    this.newProfessor.set('');
     this.newDate.set('');
     this.newTime.set('');
     this.newTopic.set('');
@@ -156,7 +192,7 @@ export class LecturesPage {
       type: 'scheduleLecture',
       request: {
         courseCode: this.newCourseCode(),
-        employeeId: this.username(),
+        employeeId: this.isAdmin() ? this.newProfessor() : this.username(),
         date: this.newDate(),
         time: this.newTime(),
         topic: this.newTopic().trim(),

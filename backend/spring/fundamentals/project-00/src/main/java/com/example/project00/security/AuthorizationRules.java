@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Ownership rules used in {@code @PreAuthorize} expressions as {@code @authz}.
  * <p>
+ * Admins manage everything; professors manage the courses they teach; students act only on themselves.
+ * <p>
  * The caller's identity is the token subject: a student id for students and an employee id for professors.
  * When the referenced resource does not exist the rule passes, so the service layer can answer with 404
  * instead of a misleading 403.
@@ -59,11 +61,19 @@ public class AuthorizationRules {
 			.orElse(true);
 	}
 
-	/** @return whether the caller is the author of the notes (or the notes do not exist) */
-	public boolean ownsNotes(Long notesId) {
-		return hasRole(Role.STUDENT) && notesRepository.findById(notesId)
-			.map(notes -> notes.getStudent().getStudentId().equals(callerName()))
-			.orElse(true);
+	/** @return whether the caller is an admin or a professor teaching the course (or the course does not exist) */
+	public boolean managesCourse(String courseCode) {
+		return hasRole(Role.ADMIN) || teachesCourse(courseCode);
+	}
+
+	/** @return whether the caller is an admin or a professor teaching the lecture's course */
+	public boolean managesLecture(Long lectureId) {
+		return hasRole(Role.ADMIN) || teachesLecture(lectureId);
+	}
+
+	/** @return whether the caller may edit or delete the notes: an admin or a professor teaching their course */
+	public boolean managesNotes(Long notesId) {
+		return hasRole(Role.ADMIN) || reviewsNotes(notesId);
 	}
 
 	/** @return whether the caller may review the notes: a professor teaching the course they belong to */
@@ -83,7 +93,7 @@ public class AuthorizationRules {
 	 * @return whether the caller may read them
 	 */
 	public boolean canRead(Notes notes) {
-		if (!notes.isPrivate()) {
+		if (!notes.isPrivate() || hasRole(Role.ADMIN)) {
 			return true;
 		}
 		return (hasRole(Role.STUDENT) && notes.getStudent().getStudentId().equals(callerName()))

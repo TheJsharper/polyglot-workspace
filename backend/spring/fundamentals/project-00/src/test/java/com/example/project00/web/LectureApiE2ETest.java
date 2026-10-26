@@ -63,11 +63,11 @@ class LectureApiE2ETest extends EndToEndTestSupport {
 	}
 
 	@Test
-	void onlyTeachersOfTheCourseMaySchedule() {
+	void onlyAdminsAndTeachersOfTheCourseMaySchedule() {
 		ScheduleLectureRequest request = new ScheduleLectureRequest("CS101", "E-1", DATE, TIME, "Variables", "A-101");
 
 		postJson(as("E-1"), "/api/lectures", request).expectStatus().isForbidden();
-		postJson(client, "/api/lectures", request).expectStatus().isForbidden();
+		postJson(client, "/api/lectures", request).expectStatus().isBadRequest();
 		postJson(as("S-1"), "/api/lectures", request).expectStatus().isForbidden();
 		postJson(anonymous, "/api/lectures", request).expectStatus().isUnauthorized();
 	}
@@ -212,7 +212,7 @@ class LectureApiE2ETest extends EndToEndTestSupport {
 		Long lectureId = scheduleLecture("CS101", "E-1", DATE, TIME, "Variables").id();
 		recordAttendance(lectureId, "S-1");
 
-		client.delete().uri("/api/lectures/{id}", lectureId).exchange().expectStatus().isForbidden();
+		as("S-1").delete().uri("/api/lectures/{id}", lectureId).exchange().expectStatus().isForbidden();
 		as("E-1").delete().uri("/api/lectures/{id}", lectureId).exchange().expectStatus().isNoContent();
 
 		client.get().uri("/api/lectures/{id}", lectureId).exchange().expectStatus().isNotFound();
@@ -232,6 +232,21 @@ class LectureApiE2ETest extends EndToEndTestSupport {
 	@Test
 	void unknownLectureReturnsNotFound() {
 		client.get().uri("/api/lectures/999999").exchange().expectStatus().isNotFound();
+	}
+
+
+	@Test
+	void studentsAttendAndLeaveThemselvesAndAdminsManageAttendance() {
+		enrollStudent("S-2");
+		enrollInCourse("CS101", "S-1");
+		enrollInCourse("CS101", "S-2");
+		Long lectureId = scheduleLecture("CS101", "E-1", DATE, TIME, "Variables").id();
+
+		as("S-1").put().uri("/api/lectures/{id}/attendees/{studentId}", lectureId, "S-1").exchange().expectStatus().isOk();
+		as("S-1").put().uri("/api/lectures/{id}/attendees/{studentId}", lectureId, "S-2").exchange().expectStatus().isForbidden();
+		client.put().uri("/api/lectures/{id}/attendees/{studentId}", lectureId, "S-2").exchange().expectStatus().isOk();
+		as("S-1").delete().uri("/api/lectures/{id}/attendees/{studentId}", lectureId, "S-1").exchange().expectStatus().isOk();
+		client.delete().uri("/api/lectures/{id}", lectureId).exchange().expectStatus().isNoContent();
 	}
 
 }

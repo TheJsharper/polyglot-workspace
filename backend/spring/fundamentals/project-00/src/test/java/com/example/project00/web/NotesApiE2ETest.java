@@ -26,7 +26,7 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 
 	@Test
 	void writeReturnsCreatedNotes() {
-		NotesResponse notes = postJson(as("S-1"), "/api/notes", new WriteNotesRequest("S-1", lectureId, "Variables hold values", true))
+		NotesResponse notes = postJson(as("E-1"), "/api/notes", new WriteNotesRequest("S-1", lectureId, "Variables hold values", true))
 			.expectStatus()
 			.isCreated()
 			.expectBody(NotesResponse.class)
@@ -47,7 +47,7 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 	void writeByStudentWhoDidNotAttendReturnsBadRequest() {
 		enrollStudent("S-3");
 
-		postJson(as("S-3"), "/api/notes", new WriteNotesRequest("S-3", lectureId, "Notes", false)).expectStatus()
+		postJson(as("E-1"), "/api/notes", new WriteNotesRequest("S-3", lectureId, "Notes", false)).expectStatus()
 			.isBadRequest()
 			.expectBody()
 			.jsonPath("$.detail").isEqualTo("Student S-3 did not attend lecture 'Variables'");
@@ -55,7 +55,7 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 
 	@Test
 	void writeForUnknownLectureReturnsNotFound() {
-		postJson(as("S-1"), "/api/notes", new WriteNotesRequest("S-1", 999999L, "Notes", false)).expectStatus().isNotFound();
+		postJson(as("E-1"), "/api/notes", new WriteNotesRequest("S-1", 999999L, "Notes", false)).expectStatus().isNotFound();
 	}
 
 	@Test
@@ -82,10 +82,10 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 	void editChangesContentAndVisibility() {
 		Long notesId = writeNotes("S-1", lectureId, "Draft").id();
 
-		putJson(as("S-2"), "/api/notes/{id}", new EditNotesRequest("Hijacked", false), notesId).expectStatus()
+		putJson(as("S-1"), "/api/notes/{id}", new EditNotesRequest("Hijacked", false), notesId).expectStatus()
 			.isForbidden();
 
-		putJson(as("S-1"), "/api/notes/{id}", new EditNotesRequest("Final", true), notesId).expectStatus()
+		putJson(as("E-1"), "/api/notes/{id}", new EditNotesRequest("Final", true), notesId).expectStatus()
 			.isOk()
 			.expectBody()
 			.jsonPath("$.content").isEqualTo("Final")
@@ -105,7 +105,7 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 			.jsonPath("$.grade").isEqualTo(92)
 			.jsonPath("$.reviewComment").isEqualTo("Clear and concise");
 
-		client.get().uri("/api/notes/pending-review").exchange().expectStatus().isForbidden();
+		as("S-1").get().uri("/api/notes/pending-review").exchange().expectStatus().isForbidden();
 		as("E-1").get().uri("/api/notes/pending-review").exchange().expectStatus().isOk().expectBody()
 			.jsonPath("$.length()").isEqualTo(1)
 			.jsonPath("$[0].content").isEqualTo("Pending");
@@ -148,7 +148,7 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 
 	@Test
 	void privateNotesAreVisibleOnlyToAuthorAndTeachers() {
-		Long privateId = post(as("S-1"), "/api/notes", new WriteNotesRequest("S-1", lectureId, "Secret", true),
+		Long privateId = post(as("E-1"), "/api/notes", new WriteNotesRequest("S-1", lectureId, "Secret", true),
 				NotesResponse.class)
 			.id();
 		writeNotes("S-2", lectureId, "Shared");
@@ -156,7 +156,7 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 		as("S-1").get().uri("/api/notes/{id}", privateId).exchange().expectStatus().isOk();
 		as("E-1").get().uri("/api/notes/{id}", privateId).exchange().expectStatus().isOk();
 		as("S-2").get().uri("/api/notes/{id}", privateId).exchange().expectStatus().isForbidden();
-		client.get().uri("/api/notes/{id}", privateId).exchange().expectStatus().isForbidden();
+		client.get().uri("/api/notes/{id}", privateId).exchange().expectStatus().isOk();
 
 		as("S-2").get().uri("/api/notes?lectureId={id}", lectureId).exchange().expectStatus().isOk().expectBody()
 			.jsonPath("$.length()").isEqualTo(1)
@@ -169,8 +169,9 @@ class NotesApiE2ETest extends EndToEndTestSupport {
 	void deleteRemovesNotes() {
 		Long notesId = writeNotes("S-1", lectureId, "Notes").id();
 
-		client.delete().uri("/api/notes/{id}", notesId).exchange().expectStatus().isForbidden();
-		as("S-1").delete().uri("/api/notes/{id}", notesId).exchange().expectStatus().isNoContent();
+		as("S-2").delete().uri("/api/notes/{id}", notesId).exchange().expectStatus().isForbidden();
+		as("S-1").delete().uri("/api/notes/{id}", notesId).exchange().expectStatus().isForbidden();
+		as("E-1").delete().uri("/api/notes/{id}", notesId).exchange().expectStatus().isNoContent();
 
 		client.get().uri("/api/notes/{id}", notesId).exchange().expectStatus().isNotFound();
 	}

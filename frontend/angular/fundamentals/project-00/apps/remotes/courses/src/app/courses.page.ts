@@ -64,11 +64,11 @@ import { UniversityFrameComponent } from '@project-00/views-university';
               @if (isEnrolled(course)) { <button type="button" class="quiet" [disabled]="view().loading" (click)="unenroll(course)">Unenroll me</button> }
               @else { <button type="button" [disabled]="view().loading" (click)="enroll(course)">Enroll me</button> }
             }
-            @if (isAdmin()) {
+            @if (canEdit(course)) {
               <form class="form separated" (ngSubmit)="update(course)">
                 <h3>Edit course</h3><label>Title <input name="courseEditTitle" [(ngModel)]="editTitle" required /></label>
                 <label>Credits <input name="courseEditCredits" [(ngModel)]="editCredits" type="number" min="0" /></label>
-                <div class="actions"><button type="submit" [disabled]="view().loading">Save changes</button><button type="button" class="danger" (click)="remove(course)">Delete course</button></div>
+                <div class="actions"><button type="submit" [disabled]="view().loading">Save changes</button>@if (isAdmin()) { <button type="button" class="danger" (click)="remove(course)">Delete course</button> }</div>
               </form>
             }
           } @else { <p class="empty">Select a course to view details and enrollment.</p> }
@@ -107,6 +107,10 @@ export class CoursesPage {
         this.editCredits.set(course?.credits ?? null);
       });
     });
+  }
+
+  protected canEdit(course: CourseResponse): boolean {
+    return this.isAdmin() || (course.teacherIds || []).includes(this.username());
   }
 
   protected isEnrolled(course: CourseResponse): boolean {

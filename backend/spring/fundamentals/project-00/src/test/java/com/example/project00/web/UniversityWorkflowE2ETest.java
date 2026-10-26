@@ -56,9 +56,9 @@ class UniversityWorkflowE2ETest extends EndToEndTestSupport {
 		client.delete().uri("/api/professors/E-1").exchange().expectStatus().isEqualTo(409);
 		client.delete().uri("/api/students/S-1").exchange().expectStatus().isEqualTo(409);
 
-		// Each student removes their own notes, then the lecture and people can go.
-		as("S-1").delete().uri("/api/notes/{id}", alanNotes.id()).exchange().expectStatus().isNoContent();
-		as("S-2").delete().uri("/api/notes/{id}", graceNotes.id()).exchange().expectStatus().isNoContent();
+		// The teacher removes the notes, then the lecture and people can go.
+		as("E-1").delete().uri("/api/notes/{id}", alanNotes.id()).exchange().expectStatus().isNoContent();
+		as("E-1").delete().uri("/api/notes/{id}", graceNotes.id()).exchange().expectStatus().isNoContent();
 
 		as("E-1").delete().uri("/api/lectures/{id}", lecture.id()).exchange().expectStatus().isNoContent();
 		client.delete().uri("/api/professors/E-1").exchange().expectStatus().isNoContent();

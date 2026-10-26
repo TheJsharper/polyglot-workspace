@@ -1,8 +1,11 @@
 package com.example.project00.service;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.example.project00.domain.Professor;
+import com.example.project00.domain.Student;
+import com.example.project00.repository.CourseRepository;
 import com.example.project00.repository.ProfessorRepository;
 import com.example.project00.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,8 @@ public class ProfessorService {
 	private final ProfessorRepository professorRepository;
 
 	private final UserAccountRepository userAccountRepository;
+
+	private final CourseRepository courseRepository;
 
 	/**
 	 * Hires a professor.
@@ -42,6 +47,23 @@ public class ProfessorService {
 	public Professor getByEmployeeId(String employeeId) {
 		return professorRepository.findByEmployeeId(employeeId)
 			.orElseThrow(() -> new ResourceNotFoundException("Professor", employeeId));
+	}
+
+	/**
+	 * @param employeeId the professor's employee id
+	 * @return the distinct students enrolled in the courses the professor teaches
+	 * @throws ResourceNotFoundException if no professor has that employee id
+	 */
+	@Transactional(readOnly = true)
+	public List<Student> findStudents(String employeeId) {
+		Professor professor = getByEmployeeId(employeeId);
+		return courseRepository.findAll()
+			.stream()
+			.filter(course -> course.isTaughtBy(professor))
+			.flatMap(course -> course.getEnrolledStudents().stream())
+			.distinct()
+			.sorted(Comparator.comparing(Student::getStudentId))
+			.toList();
 	}
 
 	/** @return all professors */

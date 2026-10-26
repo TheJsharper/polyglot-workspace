@@ -82,4 +82,25 @@ class ProfessorApiE2ETest extends EndToEndTestSupport {
 			.jsonPath("$.detail").isEqualTo("Professor 'NOPE' not found");
 	}
 
+	@Test
+	void professorsSeeStudentsEnrolledInTheirCourses() {
+		createCourse("CS101");
+		createCourse("CS102");
+		hireProfessor("E-1");
+		hireProfessor("E-2");
+		assignTeacher("CS101", "E-1");
+		assignTeacher("CS102", "E-2");
+		enrollStudent("S-1");
+		enrollStudent("S-2");
+		enrollInCourse("CS101", "S-1");
+		enrollInCourse("CS102", "S-2");
+
+		as("E-1").get().uri("/api/professors/E-1/students").exchange().expectStatus().isOk().expectBody()
+			.jsonPath("$.length()").isEqualTo(1)
+			.jsonPath("$[0].studentId").isEqualTo("S-1");
+		client.get().uri("/api/professors/E-2/students").exchange().expectStatus().isOk();
+		as("E-1").get().uri("/api/professors/E-2/students").exchange().expectStatus().isForbidden();
+		as("S-1").get().uri("/api/professors/E-1/students").exchange().expectStatus().isForbidden();
+	}
+
 }
