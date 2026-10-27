@@ -32,8 +32,9 @@ app-university-frame { display: block; color: var(--mat-sys-on-surface); }
   .count { display: inline-grid; min-width: 1.5rem; height: 1.5rem; place-items: center; margin-left: .25rem; border-radius: 99px; background: var(--mat-sys-surface-container-highest); color: var(--mat-sys-on-surface-variant); font-size: .76rem; vertical-align: .1rem; }
   .record-list, .plain-list { list-style: none; margin: 0; padding: 0; }
   .record-list { display: grid; gap: .4rem; max-height: 35rem; overflow: auto; }
-  .record { display: grid; width: 100%; gap: .25rem; border: 1px solid var(--mat-sys-outline-variant); border-radius: .6rem; background: var(--mat-sys-surface); color: var(--mat-sys-on-surface); text-align: left; }
+  .record { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; gap: .25rem; border: 1px solid var(--mat-sys-outline-variant); border-radius: .6rem; background: var(--mat-sys-surface); color: var(--mat-sys-on-surface); text-align: left; }
   .record:hover, .record.selected { border-color: var(--mat-sys-primary); background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); filter: none; }
+  .record strong, .record span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .record span { color: var(--mat-sys-on-surface-variant); font-size: .84rem; font-weight: 400; }
   .record:hover span, .record.selected span { color: inherit; }
   .detail > h2 { margin-bottom: 1rem; }
