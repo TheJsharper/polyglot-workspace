@@ -28,7 +28,7 @@ import { UniversityFrameComponent } from '@project-00/views-university';
           <ul class="record-list">
             @for (student of filtered(); track studentKey(student)) {
               <li><button type="button" class="record" [class.selected]="selectedKey() === studentKey(student)" (click)="select(student)">
-                <strong>{{ student.name || 'Unnamed student' }}</strong><span>{{ student.studentId || 'No student ID' }}</span>
+                <strong>{{ student.name || 'Unnamed student' }}</strong><span [title]="student.studentId || ''">{{ student.studentId || 'No student ID' }}</span>
               </button></li>
             }
           </ul>
