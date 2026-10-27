@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  Backend: Spring Boot 4.1.1, Java 25, JPA, Postgres (Neon production) / H2 (development and tests), OAuth2 resource server and Google client.
+  Frontend: Angular 22 Nx Native Federation at frontend/angular/fundamentals/project-00.
+  Deployment: Render free single-instance Docker service behind Cloudflare Pages Functions proxy (free tier); Neon free Postgres. Free-tier cold starts may take 30–60 seconds.
+  Tests: JUnit and MockMvc via .\mvnw.cmd -q clean test with JAVA_HOME=C:\Users\devloop\.jdks\openjdk-25.0.1.
+
+rules:
+  proposal:
+    - Include a concrete rollback plan for risky changes.
+  specs:
+    - Write scenarios in Given/When/Then form.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY) for normative requirements.
+  design:
+    - Record rationale for architecture decisions and complex flows.
+  tasks:
+    - Group tasks into reviewable phases and keep each task independently verifiable.
+  apply:
+    guidelines:
+      - Use conventional commit messages without Co-authored-by trailers.
+      - Work on a feature branch and merge with --no-ff.
+    tdd: false
+    test_command: '.\mvnw.cmd -q clean test'
+  verify:
+    test_command: '.\mvnw.cmd -q clean test'
+    build_command: '.\mvnw.cmd -q -DskipTests package'
+    coverage_threshold: 0
+  archive:
+    - Preserve archived changes as an audit trail.
