@@ -4,10 +4,13 @@ import type {
   CourseResponse,
   CreateCourseRequest,
   CreateDemoKeysRequest,
+  CreateDemoLoginRequest,
+  CreatedDemoLoginResponse,
   CreateProfessorRequest,
   CreateStudentRequest,
   DemoKeyJobResponse,
   DemoKeyResponse,
+  DemoLoginResponse,
   DemoRedeemRequest,
   GoogleCompleteResponse,
   GoogleOnboardingRequest,
@@ -110,6 +113,20 @@ export class UniversityApi {
   /** DELETE /api/manager/demo-keys/{id} (204; 409 once redeemed) */
   deleteDemoKey(id: number): Promise<NoContent> {
     return this.send('DELETE', `/api/manager/demo-keys/${enc(id)}`);
+  }
+
+  // ---- Demo logins (ADMIN or MANAGER) ----
+  /** GET /api/admin/demo-logins (passwords are never returned) */
+  listDemoLogins(): Promise<DemoLoginResponse[]> {
+    return this.send('GET', '/api/admin/demo-logins');
+  }
+  /** POST /api/admin/demo-logins (201; the password is only in this response) */
+  createDemoLogin(request: CreateDemoLoginRequest): Promise<CreatedDemoLoginResponse> {
+    return this.send('POST', '/api/admin/demo-logins', { body: request });
+  }
+  /** DELETE /api/admin/demo-logins/{username} (204) */
+  revokeDemoLogin(username: string): Promise<NoContent> {
+    return this.send('DELETE', `/api/admin/demo-logins/${enc(username)}`);
   }
 
   // ---- Students ----

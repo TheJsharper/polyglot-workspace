@@ -1,5 +1,6 @@
 package com.example.project00.domain;
 
+import java.time.Instant;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -57,10 +58,58 @@ public class UserAccount extends BaseEntity {
 	@JoinColumn(name = "professor_id", unique = true)
 	private Professor professor;
 
+	/** Set only for generated recruiter demo logins; the login stops working at this instant. */
+	@Column(name = "demo_expires_at")
+	private Instant demoExpiresAt;
+
+	@Column(name = "demo_created_at")
+	private Instant demoCreatedAt;
+
+	@Column(name = "demo_label", length = 100)
+	private String demoLabel;
+
+	@Column(name = "demo_created_by", length = 254)
+	private String demoCreatedBy;
+
 	private UserAccount(String username, String passwordHash, Role role) {
 		this.username = username;
 		this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
 		this.role = role;
+	}
+
+	/**
+	 * Turns a new account into a read-only, expiring recruiter demo login.
+	 * @param displayName the name shown in the UI
+	 * @param label optional note identifying the recruiter, or {@code null}
+	 * @param createdBy the username of the admin or manager who generated it
+	 * @param createdAt the creation instant
+	 * @param expiresAt the instant after which the login no longer works
+	 * @return this account
+	 */
+	public UserAccount asDemo(String displayName, String label, String createdBy, Instant createdAt,
+			Instant expiresAt) {
+		if (!Objects.requireNonNull(expiresAt, "expiresAt").isAfter(Objects.requireNonNull(createdAt, "createdAt"))) {
+			throw new IllegalArgumentException("A demo login must expire after it is created");
+		}
+		this.displayName = Objects.requireNonNull(displayName, "displayName");
+		this.demoLabel = label == null || label.isBlank() ? null : label.strip();
+		this.demoCreatedBy = Objects.requireNonNull(createdBy, "createdBy");
+		this.demoCreatedAt = createdAt;
+		this.demoExpiresAt = expiresAt;
+		return this;
+	}
+
+	/** @return whether this is a generated recruiter demo login */
+	public boolean isDemo() {
+		return demoExpiresAt != null;
+	}
+
+	/**
+	 * @param now the current instant
+	 * @return whether this is a demo login that has expired
+	 */
+	public boolean isDemoExpired(Instant now) {
+		return demoExpiresAt != null && !now.isBefore(demoExpiresAt);
 	}
 
 	/**

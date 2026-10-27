@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MainLayoutComponent } from '@project-00/layouts-main-layout';
@@ -11,7 +12,7 @@ import { selectDisplayName, selectPictureUrl } from '@project-00/services-univer
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MainLayoutComponent, RouterOutlet],
+  imports: [MainLayoutComponent, RouterOutlet, DatePipe],
   template: `
     <app-main-layout
       [appTitle]="appTitle()"
@@ -28,9 +29,18 @@ import { selectDisplayName, selectPictureUrl } from '@project-00/services-univer
       (authAction)="authAction()"
       (sidenavOpenedChange)="setSidenav($event)"
     >
+      @if (session.user()?.demo) {
+        <p class="demo-banner" role="note">
+          Read-only demo: you are exploring sample data, changes are disabled.
+          @if (session.user()?.demoExpiresAt; as expiresAt) { Access expires {{ expiresAt | date: 'medium' }}. }
+        </p>
+      }
       <router-outlet />
     </app-main-layout>
   `,
+  styles: [`
+    .demo-banner { margin: 0; padding: .6rem 1.5rem; background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); font-weight: 500; }
+  `],
 })
 export class ShellComponent {
   private readonly store = inject(Store);
@@ -47,7 +57,10 @@ export class ShellComponent {
 
   readonly appTitle = input('University');
 
-  protected readonly menuItems = computed(() => menuForRole(this.allItems(), this.session.user()?.role));
+  protected readonly menuItems = computed(() => {
+    const user = this.session.user();
+    return menuForRole(this.allItems(), user?.role, user?.demo === true);
+  });
   protected readonly roles = computed(() => this.session.user()?.availableRoles ?? []);
   private readonly allItems = this.store.selectSignal(selectMenuItems);
   protected readonly displayName = this.store.selectSignal(selectDisplayName);

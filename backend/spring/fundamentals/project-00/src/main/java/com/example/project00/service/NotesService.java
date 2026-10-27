@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.project00.domain.Notes;
 import com.example.project00.repository.NotesRepository;
+import com.example.project00.security.DemoScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,9 @@ public class NotesService {
 	 */
 	@Transactional(readOnly = true)
 	public Notes getById(Long notesId) {
-		return notesRepository.findById(notesId).orElseThrow(() -> new ResourceNotFoundException("Notes", notesId));
+		return notesRepository.findById(notesId)
+			.filter(notes -> DemoScope.visible(notes.getStudent().isDemo()))
+			.orElseThrow(() -> new ResourceNotFoundException("Notes", notesId));
 	}
 
 	/**
@@ -68,7 +71,10 @@ public class NotesService {
 	/** @return notes no professor has reviewed yet */
 	@Transactional(readOnly = true)
 	public List<Notes> findPendingReview() {
-		return notesRepository.findByReviewerIsNull();
+		return notesRepository.findByReviewerIsNull()
+			.stream()
+			.filter(notes -> DemoScope.visible(notes.getStudent().isDemo()))
+			.toList();
 	}
 
 	/**

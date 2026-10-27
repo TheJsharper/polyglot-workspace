@@ -26,6 +26,12 @@ public class TokenService {
 	/** Name of the claim holding the caller's roles. */
 	public static final String ROLES_CLAIM = "roles";
 
+	/** Claim marking an access token of a generated, read-only recruiter demo login. */
+	public static final String DEMO_ACCOUNT_CLAIM = "demo_account";
+
+	/** Non-role authority carried by demo logins; it is turned into {@link #DEMO_ACCOUNT_CLAIM}. */
+	public static final String DEMO_ACCOUNT_AUTHORITY = "DEMO_ACCOUNT";
+
 	private static final String ROLE_PREFIX = "ROLE_";
 	private static final Duration MAX_ACCESS_TOKEN_TTL = Duration.ofMinutes(15);
 
@@ -56,13 +62,19 @@ public class TokenService {
 			.filter(authority -> authority != null && authority.startsWith(ROLE_PREFIX))
 			.map(authority -> authority.substring(ROLE_PREFIX.length()))
 			.toList();
-		JwtClaimsSet claims = JwtClaimsSet.builder()
+		boolean demoAccount = authentication.getAuthorities()
+			.stream()
+			.anyMatch(authority -> DEMO_ACCOUNT_AUTHORITY.equals(authority.getAuthority()));
+		JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
 			.issuer(settings.issuer())
 			.subject(authentication.getName())
 			.issuedAt(now)
 			.expiresAt(now.plus(ttl))
-			.claim(ROLES_CLAIM, roles)
-			.build();
+			.claim(ROLES_CLAIM, roles);
+		if (demoAccount) {
+			builder.claim(DEMO_ACCOUNT_CLAIM, true);
+		}
+		JwtClaimsSet claims = builder.build();
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 		String value = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
 		return new IssuedToken(value, ttl.toSeconds());

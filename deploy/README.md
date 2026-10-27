@@ -27,7 +27,23 @@ deploys. Pull requests only run the tests.
 The browser only talks to the Pages domain. `deploy/cloudflare/functions` proxies `/api/*`, `/oauth2/*` and
 `/login/oauth2/*` to Render, so cookies stay first-party and CORS is not needed.
 
+## Recruiter demo logins
+
+Give each recruiter their own short-lived, read-only login. No dev mode or `project-01` is needed.
+
+1. Sign in on `https://polyglot-university.pages.dev` as `university_admin` (or any ADMIN/MANAGER).
+2. Open **Demo logins** in the sidebar.
+3. Pick a persona (Student, Professor or Admin), a duration (1–30 days, default 7) and an optional label
+   such as the recruiter's company. Click **Generate login**.
+4. Copy the username and password. The password is shown only once. Send both to the recruiter.
+5. The recruiter signs in on the normal login page. They see only the isolated `demo-*` sample data, every
+   change is rejected with 403, and the login stops working when it expires.
+6. Click **Revoke** to end access early. Expired logins are cleaned up automatically.
+
+Optional Render variables: `APP_DEMOLOGINS_ENABLED` (default `true`), `APP_DEMOLOGINS_MAXACTIVE` (default
+`25`) and `APP_DEMOLOGINS_MAXREQUESTSPERMINUTE` (default `120`).
+
 ## Notes
 
 - Free Render and Neon instances sleep when idle; the first request can take up to a minute.
-- Production has no demo-key or manager routes, so `project-01` is not deployed.
+- Production has no demo-key or manager routes, so `project-01` is not deployed. Use demo logins instead.

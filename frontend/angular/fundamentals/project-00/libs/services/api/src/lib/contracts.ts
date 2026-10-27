@@ -59,6 +59,30 @@ export interface MeResponse {
   pictureUrl?: string | null;
   /** Roles the caller can switch to (dev manager only); empty otherwise. */
   availableRoles?: Role[];
+  /** True for a generated, read-only recruiter demo login. */
+  demo?: boolean;
+  /** When the demo login expires (ISO-8601), or null. */
+  demoExpiresAt?: string | null;
+}
+
+// Demo logins (ADMIN or MANAGER). The password is only returned once, on creation.
+export type DemoLoginPersona = 'STUDENT' | 'PROFESSOR' | 'ADMIN';
+export interface CreateDemoLoginRequest {
+  persona: DemoLoginPersona;
+  /** 1 to 30, default 7. */
+  days?: number;
+  label?: string;
+}
+export interface DemoLoginResponse {
+  username: string;
+  persona: DemoLoginPersona;
+  label?: string | null;
+  createdBy: string;
+  createdAt: string;
+  expiresAt: string;
+}
+export interface CreatedDemoLoginResponse extends DemoLoginResponse {
+  password: string;
 }
 
 // Demo keys (MANAGER, dev profile only). The private key is never returned.

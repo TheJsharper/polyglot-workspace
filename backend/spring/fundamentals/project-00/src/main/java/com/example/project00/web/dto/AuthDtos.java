@@ -126,7 +126,10 @@ public final class AuthDtos {
 			@Schema(description = "HTTPS Google avatar URL (googleusercontent.com), or null", nullable = true)
 			String pictureUrl,
 			@Schema(description = "Roles the caller may switch to (dev manager only), otherwise empty")
-			java.util.List<String> availableRoles) {
+			java.util.List<String> availableRoles,
+			@Schema(description = "Whether this is a generated, read-only recruiter demo login") boolean demo,
+			@Schema(description = "When the demo login expires, or null for normal accounts", nullable = true)
+			java.time.Instant demoExpiresAt) {
 	}
 
 	public record SwitchRoleRequest(@jakarta.validation.constraints.NotBlank String role) {

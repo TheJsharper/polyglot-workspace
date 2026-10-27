@@ -38,6 +38,10 @@ public class Student extends BaseEntity {
 	@Column(name = "enrollment_year", nullable = false)
 	private int enrollmentYear;
 
+	/** Whether the student belongs to the isolated recruiter demo dataset. */
+	@Column(nullable = false, columnDefinition = "boolean default false not null")
+	private boolean demo;
+
 	@ManyToMany(mappedBy = "attendees")
 	private Set<Lecture> attendedLectures = new HashSet<>();
 
@@ -55,6 +59,15 @@ public class Student extends BaseEntity {
 		this.studentId = Objects.requireNonNull(studentId, "studentId");
 		this.name = Objects.requireNonNull(name, "name");
 		this.enrollmentYear = enrollmentYear;
+	}
+
+	/**
+	 * Marks a new student as part of the recruiter demo dataset.
+	 * @return this student
+	 */
+	public Student asDemo() {
+		this.demo = true;
+		return this;
 	}
 
 	/** @return a read-only view of the lectures this student attends */

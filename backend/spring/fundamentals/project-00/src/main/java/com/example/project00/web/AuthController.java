@@ -174,7 +174,7 @@ class AuthController {
 			.orElse("");
 		AccountService.AccountProfile profile = accountService.profileOf(authentication.getName());
 		return new MeResponse(authentication.getName(), role, profile.displayName(), profile.pictureUrl(),
-				accountService.switchableRoles(authentication.getName()));
+				accountService.switchableRoles(authentication.getName()), profile.demo(), profile.demoExpiresAt());
 	}
 
 }

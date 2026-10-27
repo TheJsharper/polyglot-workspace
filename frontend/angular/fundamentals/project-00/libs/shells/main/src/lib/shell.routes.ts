@@ -17,7 +17,8 @@ const demoGuard: CanActivateFn = () =>
   inject(DEMO_ENABLED) ? true : inject(Router).createUrlTree(['/login']);
 
 const roleGuard: CanActivateFn = (route) => {
-  const allowed = allowedResources(inject(UniversitySession).user()?.role);
+  const user = inject(UniversitySession).user();
+  const allowed = allowedResources(user?.role, user?.demo === true);
   const path = route.routeConfig?.path ?? '';
   return allowed.includes(path) ? true : inject(Router).createUrlTree(['/university', allowed[0] ?? '']);
 };
@@ -68,6 +69,8 @@ export const shellRoutes: Route[] = [
     children: [
       { path: 'demo-keys', canActivate: [roleGuard], loadComponent: () =>
           import('@project-00/views-university').then((m) => m.DemoKeysComponent) },
+      { path: 'demo-logins', canActivate: [roleGuard], loadComponent: () =>
+          import('@project-00/views-university').then((m) => m.DemoLoginsComponent) },
       ...RESOURCES.map(remoteRoute),
       { path: '', pathMatch: 'full', redirectTo: 'students' },
       { path: '**', redirectTo: 'students' },
