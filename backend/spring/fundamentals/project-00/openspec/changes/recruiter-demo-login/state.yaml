@@ -1,6 +1,6 @@
-change: recruiter-demo-login
-phase: propose
+﻿change: recruiter-demo-login
+phase: spec
 status: done
-next: spec/design
+next: design
 artifact_store: hybrid
-updated_at: 2026-10-27T17:03:00+01:00
+updated_at: 2026-10-27T17:15:00+01:00
