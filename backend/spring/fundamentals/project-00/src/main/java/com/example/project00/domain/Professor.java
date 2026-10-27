@@ -39,6 +39,10 @@ public class Professor extends BaseEntity {
 	@Column(nullable = false)
 	private String department;
 
+	/** Whether the professor belongs to the isolated recruiter demo dataset. */
+	@Column(nullable = false, columnDefinition = "boolean default false not null")
+	private boolean demo;
+
 	@OneToMany(mappedBy = "professor")
 	private Set<Lecture> lectures = new HashSet<>();
 
@@ -56,6 +60,15 @@ public class Professor extends BaseEntity {
 		this.employeeId = Objects.requireNonNull(employeeId, "employeeId");
 		this.name = Objects.requireNonNull(name, "name");
 		this.department = Objects.requireNonNull(department, "department");
+	}
+
+	/**
+	 * Marks a new professor as part of the recruiter demo dataset.
+	 * @return this professor
+	 */
+	public Professor asDemo() {
+		this.demo = true;
+		return this;
 	}
 
 	/** @return a read-only view of the lectures this professor delivers */

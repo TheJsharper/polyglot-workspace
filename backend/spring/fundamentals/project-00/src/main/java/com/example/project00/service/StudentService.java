@@ -6,6 +6,7 @@ import com.example.project00.domain.Student;
 import com.example.project00.repository.NotesRepository;
 import com.example.project00.repository.StudentRepository;
 import com.example.project00.repository.UserAccountRepository;
+import com.example.project00.security.DemoScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class StudentService {
 	 * @throws DuplicateResourceException if the student id is already taken
 	 */
 	public Student enroll(String studentId, String name, int enrollmentYear) {
+		DemoIds.requireNotReserved(studentId);
 		if (studentRepository.findByStudentId(studentId).isPresent()) {
 			throw new DuplicateResourceException("Student", studentId);
 		}
@@ -44,13 +46,14 @@ public class StudentService {
 	@Transactional(readOnly = true)
 	public Student getByStudentId(String studentId) {
 		return studentRepository.findByStudentId(studentId)
+			.filter(student -> DemoScope.visible(student.isDemo()))
 			.orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
 	}
 
 	/** @return all students */
 	@Transactional(readOnly = true)
 	public List<Student> findAll() {
-		return studentRepository.findAll();
+		return studentRepository.findAll().stream().filter(student -> DemoScope.visible(student.isDemo())).toList();
 	}
 
 	/**

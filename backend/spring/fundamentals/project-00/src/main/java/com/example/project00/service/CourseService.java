@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.project00.domain.Course;
 import com.example.project00.repository.CourseRepository;
+import com.example.project00.security.DemoScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class CourseService {
 	 * @throws DuplicateResourceException if the course code is already taken
 	 */
 	public Course create(String courseCode, String title, int credits) {
+		DemoIds.requireNotReserved(courseCode);
 		if (courseRepository.findByCourseCode(courseCode).isPresent()) {
 			throw new DuplicateResourceException("Course", courseCode);
 		}
@@ -42,13 +44,14 @@ public class CourseService {
 	@Transactional(readOnly = true)
 	public Course getByCode(String courseCode) {
 		return courseRepository.findByCourseCode(courseCode)
+			.filter(course -> DemoScope.visible(course.isDemo()))
 			.orElseThrow(() -> new ResourceNotFoundException("Course", courseCode));
 	}
 
 	/** @return all courses */
 	@Transactional(readOnly = true)
 	public List<Course> findAll() {
-		return courseRepository.findAll();
+		return courseRepository.findAll().stream().filter(course -> DemoScope.visible(course.isDemo())).toList();
 	}
 
 	/**

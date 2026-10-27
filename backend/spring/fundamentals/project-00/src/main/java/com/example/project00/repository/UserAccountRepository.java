@@ -71,4 +71,19 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 	 */
 	void deleteByProfessor(Professor professor);
 
+	/** @return all generated recruiter demo logins, newest first */
+	java.util.List<UserAccount> findByDemoExpiresAtIsNotNullOrderByDemoCreatedAtDesc();
+
+	/**
+	 * @param now the current instant
+	 * @return the demo logins that have expired
+	 */
+	java.util.List<UserAccount> findByDemoExpiresAtLessThanEqual(java.time.Instant now);
+
+	/**
+	 * @param now the current instant
+	 * @return the number of demo logins that are still valid
+	 */
+	long countByDemoExpiresAtAfter(java.time.Instant now);
+
 }

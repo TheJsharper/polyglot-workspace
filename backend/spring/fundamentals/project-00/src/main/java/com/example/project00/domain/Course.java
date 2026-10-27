@@ -46,6 +46,10 @@ public class Course extends BaseEntity {
 	@Column(nullable = false)
 	private int credits;
 
+	/** Whether the course belongs to the isolated recruiter demo dataset; its lectures and notes inherit it. */
+	@Column(nullable = false, columnDefinition = "boolean default false not null")
+	private boolean demo;
+
 	@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Lecture> lectures = new HashSet<>();
 
@@ -74,6 +78,15 @@ public class Course extends BaseEntity {
 		this.courseCode = Objects.requireNonNull(courseCode, "courseCode");
 		this.title = Objects.requireNonNull(title, "title");
 		this.credits = credits;
+	}
+
+	/**
+	 * Marks a new course as part of the recruiter demo dataset.
+	 * @return this course
+	 */
+	public Course asDemo() {
+		this.demo = true;
+		return this;
 	}
 
 	/** @return a read-only view of the lectures scheduled for this course */
@@ -112,7 +125,8 @@ public class Course extends BaseEntity {
 	 * @throws NullPointerException if {@code student} is {@code null}
 	 */
 	public void enroll(Student student) {
-		if (enrolledStudents.add(Objects.requireNonNull(student, "student"))) {
+		requireSameDataset(Objects.requireNonNull(student, "student").isDemo(), "Student " + student.getStudentId());
+		if (enrolledStudents.add(student)) {
 			student.addEnrolledCourse(this);
 		}
 	}
@@ -143,7 +157,9 @@ public class Course extends BaseEntity {
 	 * @throws NullPointerException if {@code professor} is {@code null}
 	 */
 	public void assignTeacher(Professor professor) {
-		if (teachers.add(Objects.requireNonNull(professor, "professor"))) {
+		requireSameDataset(Objects.requireNonNull(professor, "professor").isDemo(),
+				"Professor " + professor.getEmployeeId());
+		if (teachers.add(professor)) {
 			professor.addTaughtCourse(this);
 		}
 	}
@@ -166,6 +182,14 @@ public class Course extends BaseEntity {
 	/** @return whether the given professor teaches this course */
 	public boolean isTaughtBy(Professor professor) {
 		return teachers.contains(professor);
+	}
+
+	// Demo and real records are never linked, so a demo caller can never reach real data through associations.
+	private void requireSameDataset(boolean otherDemo, String other) {
+		if (otherDemo != demo) {
+			throw new IllegalArgumentException(other + " and course " + courseCode
+					+ " belong to different datasets (demo and real data cannot be mixed)");
+		}
 	}
 
 }

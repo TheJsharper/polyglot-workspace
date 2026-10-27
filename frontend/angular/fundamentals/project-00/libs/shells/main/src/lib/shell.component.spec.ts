@@ -18,17 +18,34 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const labels = Array.from(el.querySelectorAll('[matListItemTitle]')).map((n) => n.textContent);
-    expect(labels).toEqual(['Students', 'Professors', 'Courses', 'Lectures', 'Notes & reviews']);
+    expect(labels).toEqual(['Students', 'Professors', 'Courses', 'Lectures', 'Notes & reviews', 'Demo logins']);
     expect(el.querySelector('router-outlet')).not.toBeNull();
+    expect(el.querySelector('.demo-banner')).toBeNull();
+  });
+
+  it('shows a read-only banner and hides demo administration for demo logins', async () => {
+    TestBed.overrideProvider(UniversitySession, {
+      useValue: {
+        user: () => ({ username: 'demo-abc', role: 'ADMIN', demo: true, demoExpiresAt: '2999-01-01T00:00:00Z' }),
+        authenticated: () => true,
+      },
+    });
+    const fixture = TestBed.createComponent(ShellComponent);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(el.querySelectorAll('[matListItemTitle]')).map((n) => n.textContent);
+    expect(labels).not.toContain('Demo logins');
+    expect(el.querySelector('.demo-banner')?.textContent).toContain('Read-only demo');
   });
 
   it('filters the menu by role', () => {
-    const ids = (role: string) => menuForRole(SHELL_MENU, role).map((i) => i.id);
+    const ids = (role: string, demo = false) => menuForRole(SHELL_MENU, role, demo).map((i) => i.id);
     expect(ids('STUDENT')).toEqual(['courses', 'lectures', 'notes']);
     expect(ids('PROFESSOR')).toEqual(['students', 'courses', 'lectures', 'notes']);
     expect(menuForRole(SHELL_MENU, 'PROFESSOR')[0].label).toBe('My Students');
-    expect(ids('ADMIN')).toHaveLength(5);
-    expect(ids('MANAGER')).toEqual(['demo-keys']);
+    expect(ids('ADMIN')).toEqual(['students', 'professors', 'courses', 'lectures', 'notes', 'demo-logins']);
+    expect(ids('ADMIN', true)).toEqual(['students', 'professors', 'courses', 'lectures', 'notes']);
+    expect(ids('MANAGER')).toEqual(['demo-keys', 'demo-logins']);
     expect(ids('')).toEqual([]);
   });
 

@@ -37,7 +37,8 @@ class AccountUserDetailsServiceTest {
 		AppSecurityProperties properties = new AppSecurityProperties(
 				new AppSecurityProperties.Admin("admin", "admin-pass"),
 				new AppSecurityProperties.Jwt("x".repeat(32), Duration.ofHours(1), "issuer"));
-		service = new AccountUserDetailsService(userAccountRepository, properties, passwordEncoder);
+		service = new AccountUserDetailsService(userAccountRepository, properties, passwordEncoder,
+				java.time.Clock.systemUTC());
 	}
 
 	@Test

@@ -16,4 +16,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 	 */
 	Optional<Course> findByCourseCode(String courseCode);
 
+	/** @return whether the recruiter demo dataset has been created */
+	boolean existsByDemoTrue();
+
+	/** @return the courses of the recruiter demo dataset */
+	java.util.List<Course> findByDemoTrueOrderByCourseCode();
+
 }

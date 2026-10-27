@@ -8,6 +8,7 @@ import com.example.project00.domain.Student;
 import com.example.project00.repository.CourseRepository;
 import com.example.project00.repository.ProfessorRepository;
 import com.example.project00.repository.UserAccountRepository;
+import com.example.project00.security.DemoScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class ProfessorService {
 	 * @throws DuplicateResourceException if the employee id is already taken
 	 */
 	public Professor hire(String employeeId, String name, String department) {
+		DemoIds.requireNotReserved(employeeId);
 		if (professorRepository.findByEmployeeId(employeeId).isPresent()) {
 			throw new DuplicateResourceException("Professor", employeeId);
 		}
@@ -46,6 +48,7 @@ public class ProfessorService {
 	@Transactional(readOnly = true)
 	public Professor getByEmployeeId(String employeeId) {
 		return professorRepository.findByEmployeeId(employeeId)
+			.filter(professor -> DemoScope.visible(professor.isDemo()))
 			.orElseThrow(() -> new ResourceNotFoundException("Professor", employeeId));
 	}
 
@@ -69,7 +72,7 @@ public class ProfessorService {
 	/** @return all professors */
 	@Transactional(readOnly = true)
 	public List<Professor> findAll() {
-		return professorRepository.findAll();
+		return professorRepository.findAll().stream().filter(professor -> DemoScope.visible(professor.isDemo())).toList();
 	}
 
 	/**

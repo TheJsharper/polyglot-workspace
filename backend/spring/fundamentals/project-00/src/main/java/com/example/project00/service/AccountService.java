@@ -269,8 +269,15 @@ public class AccountService {
 	 * Display data for the signed-in account.
 	 * @param displayName the friendly name to show (never {@code null})
 	 * @param pictureUrl a validated Google avatar URL, or {@code null}
+	 * @param demoExpiresAt when a generated recruiter demo login expires, or {@code null} for normal accounts
 	 */
-	public record AccountProfile(String displayName, String pictureUrl) {
+	public record AccountProfile(String displayName, String pictureUrl, java.time.Instant demoExpiresAt) {
+
+		/** @return whether the account is a generated, read-only recruiter demo login */
+		public boolean demo() {
+			return demoExpiresAt != null;
+		}
+
 	}
 
 	/**
@@ -282,8 +289,9 @@ public class AccountService {
 	@Transactional(readOnly = true)
 	public AccountProfile profileOf(String username) {
 		return userAccountRepository.findByUsername(username)
-			.map(account -> new AccountProfile(account.resolveDisplayName(), account.getPictureUrl()))
-			.orElseGet(() -> new AccountProfile(username, null));
+			.map(account -> new AccountProfile(account.resolveDisplayName(), account.getPictureUrl(),
+					account.getDemoExpiresAt()))
+			.orElseGet(() -> new AccountProfile(username, null, null));
 	}
 
 	private void requireFreeEmail(String email) {
@@ -294,6 +302,7 @@ public class AccountService {
 	}
 
 	private void requireFreeUsername(String username) {
+		DemoIds.requireNotReserved(username);
 		if (MANAGER_USERNAME.equalsIgnoreCase(username) || PERSONAS.values().stream().anyMatch(username::equalsIgnoreCase)) {
 			throw new DuplicateResourceException("Account", username);
 		}

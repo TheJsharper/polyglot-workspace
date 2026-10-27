@@ -10,6 +10,7 @@ import com.example.project00.domain.Professor;
 import com.example.project00.domain.Student;
 import com.example.project00.repository.LectureRepository;
 import com.example.project00.repository.NotesRepository;
+import com.example.project00.security.DemoScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,7 @@ public class LectureService {
 	@Transactional(readOnly = true)
 	public Lecture getById(Long lectureId) {
 		return lectureRepository.findById(lectureId)
+			.filter(lecture -> DemoScope.visible(lecture.getCourse().isDemo()))
 			.orElseThrow(() -> new ResourceNotFoundException("Lecture", lectureId));
 	}
 

@@ -73,12 +73,15 @@ class SecurityConfig {
 			GoogleOAuthProperties googleProperties,
 			ObjectProvider<GoogleLoginSuccessHandler> googleSuccessHandler,
 			@Value("${app.demo.enabled:false}") boolean demoEnabled,
-			@Value("${app.demo.max-requests-per-minute:60}") int demoRequestsPerMinute) throws Exception {
+			@Value("${app.demo.max-requests-per-minute:60}") int demoRequestsPerMinute,
+			@Value("${app.demo-logins.max-requests-per-minute:120}") int demoLoginRequestsPerMinute) throws Exception {
 		boolean devDemoEnabled = demoEnabled && environment.matchesProfiles("dev");
 		CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
 		csrfTokenRepository.setCookieCustomizer(cookie -> cookie.httpOnly(true)
 				.sameSite("Lax")
 				.secure(environment.matchesProfiles("prod")));
+		http.addFilterAfter(new DemoAccountFilter(clock, demoLoginRequestsPerMinute),
+				BearerTokenAuthenticationFilter.class);
 		if (devDemoEnabled) {
 			http.addFilterAfter(new DemoSessionFilter(clock, demoRequestsPerMinute),
 					BearerTokenAuthenticationFilter.class);

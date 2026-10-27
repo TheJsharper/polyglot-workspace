@@ -90,6 +90,9 @@ public class Notes extends BaseEntity {
 	 */
 	public void review(Professor reviewer, int grade, String comment) {
 		Objects.requireNonNull(reviewer, "reviewer");
+		if (reviewer.isDemo() != student.isDemo()) {
+			throw new IllegalArgumentException("Demo and real data cannot be mixed");
+		}
 		if (grade < MIN_GRADE || grade > MAX_GRADE) {
 			throw new IllegalArgumentException(
 					"Grade must be between " + MIN_GRADE + " and " + MAX_GRADE + " but was " + grade);
