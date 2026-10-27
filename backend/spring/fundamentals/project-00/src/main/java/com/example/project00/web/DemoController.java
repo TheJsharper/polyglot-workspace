@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.project00.domain.Role;
+import com.example.project00.security.TrustedClientIpResolver;
 import com.example.project00.service.DemoTokenService;
 import com.example.project00.service.DemoTokenService.Redeemed;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 class DemoController {
 
 	private final DemoTokenService service;
+	private final TrustedClientIpResolver clientIpResolver;
 
 	record RedeemRequest(@NotBlank @Size(max = 2048) String token, @NotNull Role persona) {
 	}
@@ -57,7 +59,8 @@ class DemoController {
 	@SecurityRequirements
 	@PostMapping("/api/demo/redeem")
 	CompletableFuture<RedeemResponse> redeem(@Valid @RequestBody RedeemRequest request, HttpServletRequest http) {
-		return service.redeem(request.token(), request.persona(), http.getRemoteAddr()).thenApply(this::redeemResponse);
+		return service.redeem(request.token(), request.persona(), clientIpResolver.resolve(http))
+			.thenApply(this::redeemResponse);
 	}
 
 }

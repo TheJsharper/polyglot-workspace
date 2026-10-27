@@ -12,9 +12,12 @@ deploys. Pull requests only run the tests.
    `DB_PASSWORD`, `JWT_SECRET` (32+ chars), `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and for Google SSO
    `GOOGLE_SSO_ENABLED`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
    `GOOGLE_REDIRECT_URI=https://<pages-domain>/login/oauth2/code/google`,
-   `GOOGLE_FRONTEND_URL=https://<pages-domain>/sso/callback`. Copy the service's **Deploy Hook** URL.
+   `GOOGLE_FRONTEND_URL=https://<pages-domain>/sso/callback`. Add `PROXY_SHARED_SECRET` as a secret environment
+   variable; the same value must be configured for Cloudflare Pages Functions. Copy the service's **Deploy Hook** URL.
 3. **Cloudflare Pages**: create a project (Direct Upload). In its settings add the variable `API_ORIGIN`
-   (the Render URL, no trailing slash). Register the Google redirect URI above in Google Cloud.
+   (the Render URL, no trailing slash) and the secret `PROXY_SHARED_SECRET` (same value as Render). The Functions
+   forward Cloudflare's `CF-Connecting-IP` through dedicated headers; Render trusts it only when the shared secret
+   matches. Register the Google redirect URI above in Google Cloud.
 4. **GitHub** → Settings → Environments → `production` (optionally require a reviewer), then add:
    - Secrets: `CLOUDFLARE_API_TOKEN` (Pages edit permission), `CLOUDFLARE_ACCOUNT_ID`, `RENDER_DEPLOY_HOOK_URL`.
    - Variable: `CLOUDFLARE_PAGES_PROJECT` (the Pages project name).
