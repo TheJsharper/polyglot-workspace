@@ -29,15 +29,14 @@ async function googleSsoEnabled(): Promise<boolean> {
   }
 }
 
-Promise.all([demoEnabled(), googleSsoEnabled()])
-  .then(([demo, google]) =>
-    bootstrapApplication(App, {
-      ...appConfig,
-      providers: [
-        ...appConfig.providers,
-        { provide: DEMO_ENABLED, useValue: demo },
-        { provide: GOOGLE_SSO_ENABLED, useValue: google },
-      ],
-    }),
-  )
-  .catch((err) => console.error(err));
+export async function bootstrap(): Promise<void> {
+  const [demo, google] = await Promise.all([demoEnabled(), googleSsoEnabled()]);
+  await bootstrapApplication(App, {
+    ...appConfig,
+    providers: [
+      ...appConfig.providers,
+      { provide: DEMO_ENABLED, useValue: demo },
+      { provide: GOOGLE_SSO_ENABLED, useValue: google },
+    ],
+  });
+}
