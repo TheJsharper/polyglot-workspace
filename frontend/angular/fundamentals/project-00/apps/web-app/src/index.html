@@ -20,17 +20,177 @@
         display: grid;
         place-items: center;
         padding: 1.5rem;
-        background: #f8fafc;
         color: #1f2937;
         font-family: Roboto, Arial, sans-serif;
         text-align: center;
       }
 
+      .startup-skeleton {
+        position: absolute;
+        inset: 0;
+        overflow: auto;
+        padding: 1rem clamp(1rem, 4vw, 3rem) 2rem;
+        background: #f8fafc;
+        text-align: left;
+      }
+
+      .startup-skeleton-header {
+        display: flex;
+        align-items: center;
+        gap: clamp(1rem, 4vw, 3rem);
+        max-width: 76rem;
+        height: 3.5rem;
+        margin: 0 auto;
+        padding: 0 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background: #fff;
+      }
+
+      .startup-skeleton-brand {
+        width: 2rem;
+        height: 2rem;
+        flex: 0 0 auto;
+        border-radius: 0.5rem !important;
+      }
+
+      .startup-skeleton-search {
+        width: min(20rem, 40%);
+        height: 2rem;
+        border-radius: 1rem !important;
+      }
+
+      .startup-skeleton-header-actions {
+        display: flex;
+        gap: 1.25rem;
+        margin-left: auto;
+      }
+
+      .startup-skeleton-header-actions .startup-skeleton-block {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+      }
+
+      .startup-skeleton-content {
+        display: grid;
+        grid-template-columns: minmax(10rem, 14rem) minmax(20rem, 38rem) minmax(10rem, 16rem);
+        align-items: start;
+        gap: 1.25rem;
+        max-width: 76rem;
+        margin: 1.5rem auto 0;
+      }
+
+      .startup-skeleton-card {
+        display: grid;
+        gap: 1rem;
+        padding: 1.25rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background: #fff;
+      }
+
+      .startup-skeleton-profile {
+        justify-items: center;
+        padding-top: 1.5rem;
+      }
+
+      .startup-skeleton-avatar {
+        width: 4rem;
+        height: 4rem;
+        border-radius: 50% !important;
+      }
+
+      .startup-skeleton-block {
+        position: relative;
+        overflow: hidden;
+        min-height: 0.8rem;
+        border-radius: 0.35rem;
+        background: #e2e8f0;
+      }
+
+      .startup-skeleton-block::after {
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 75%), transparent);
+        animation: startup-shimmer 1.5s ease-in-out infinite;
+        content: "";
+      }
+
+      .startup-skeleton-line {
+        width: 100%;
+      }
+
+      .startup-skeleton-line-short {
+        width: 58%;
+      }
+
+      .startup-skeleton-heading {
+        width: 65%;
+        height: 1.2rem;
+      }
+
+      .startup-skeleton-caption {
+        width: 40%;
+      }
+
+      .startup-skeleton-post {
+        gap: 1.1rem;
+      }
+
+      .startup-skeleton-post-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .startup-skeleton-post-header .startup-skeleton-avatar {
+        width: 2.75rem;
+        height: 2.75rem;
+      }
+
+      .startup-skeleton-post-identity {
+        display: grid;
+        flex: 1;
+        gap: 0.45rem;
+      }
+
+      .startup-skeleton-post-content {
+        display: grid;
+        gap: 0.6rem;
+      }
+
+      .startup-skeleton-post-image {
+        height: 8rem;
+        border-radius: 0.5rem;
+      }
+
+      .startup-skeleton-side-title {
+        width: 75%;
+        height: 1rem;
+      }
+
+      .startup-skeleton-side-row {
+        display: grid;
+        gap: 0.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
       .startup-card {
+        position: relative;
+        z-index: 1;
         display: grid;
         justify-items: center;
         gap: 0.75rem;
         max-width: 24rem;
+        padding: 1.5rem 2rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.9rem;
+        background: rgb(255 255 255 / 94%);
+        box-shadow: 0 1rem 3rem rgb(15 23 42 / 18%);
+        backdrop-filter: blur(8px);
       }
 
       .startup-spinner {
@@ -80,15 +240,121 @@
         }
       }
 
+      @keyframes startup-shimmer {
+        to {
+          transform: translateX(100%);
+        }
+      }
+
+      @media (max-width: 56rem) {
+        .startup-skeleton-content {
+          grid-template-columns: minmax(10rem, 14rem) minmax(20rem, 38rem);
+          justify-content: center;
+        }
+
+        .startup-skeleton-right {
+          display: none;
+        }
+      }
+
+      @media (max-width: 40rem) {
+        .startup-skeleton {
+          padding: 0.75rem;
+        }
+
+        .startup-skeleton-content {
+          grid-template-columns: minmax(0, 38rem);
+          margin-top: 0.75rem;
+        }
+
+        .startup-skeleton-left,
+        .startup-skeleton-header-actions {
+          display: none;
+        }
+
+        .startup-skeleton-header {
+          height: 3rem;
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .startup-spinner {
           animation-duration: 2s;
+        }
+
+        .startup-skeleton-block::after {
+          animation: none;
         }
       }
     </style>
   </head>
   <body>
     <div id="startup-screen" class="startup-screen">
+      <div class="startup-skeleton" aria-hidden="true">
+        <header class="startup-skeleton-header">
+          <div class="startup-skeleton-block startup-skeleton-brand"></div>
+          <div class="startup-skeleton-block startup-skeleton-search"></div>
+          <div class="startup-skeleton-header-actions">
+            <div class="startup-skeleton-block"></div>
+            <div class="startup-skeleton-block"></div>
+            <div class="startup-skeleton-block"></div>
+          </div>
+        </header>
+        <div class="startup-skeleton-content">
+          <aside class="startup-skeleton-card startup-skeleton-profile startup-skeleton-left">
+            <div class="startup-skeleton-block startup-skeleton-avatar"></div>
+            <div class="startup-skeleton-block startup-skeleton-heading"></div>
+            <div class="startup-skeleton-block startup-skeleton-caption"></div>
+            <div class="startup-skeleton-block startup-skeleton-line"></div>
+            <div class="startup-skeleton-block startup-skeleton-line-short"></div>
+          </aside>
+          <main class="startup-skeleton-feed">
+            <section class="startup-skeleton-card startup-skeleton-post">
+              <div class="startup-skeleton-post-header">
+                <div class="startup-skeleton-block startup-skeleton-avatar"></div>
+                <div class="startup-skeleton-post-identity">
+                  <div class="startup-skeleton-block startup-skeleton-line-short"></div>
+                  <div class="startup-skeleton-block startup-skeleton-caption"></div>
+                </div>
+              </div>
+              <div class="startup-skeleton-post-content">
+                <div class="startup-skeleton-block startup-skeleton-line"></div>
+                <div class="startup-skeleton-block startup-skeleton-line"></div>
+                <div class="startup-skeleton-block startup-skeleton-line-short"></div>
+              </div>
+              <div class="startup-skeleton-block startup-skeleton-post-image"></div>
+            </section>
+            <section class="startup-skeleton-card startup-skeleton-post">
+              <div class="startup-skeleton-post-header">
+                <div class="startup-skeleton-block startup-skeleton-avatar"></div>
+                <div class="startup-skeleton-post-identity">
+                  <div class="startup-skeleton-block startup-skeleton-line-short"></div>
+                  <div class="startup-skeleton-block startup-skeleton-caption"></div>
+                </div>
+              </div>
+              <div class="startup-skeleton-post-content">
+                <div class="startup-skeleton-block startup-skeleton-line"></div>
+                <div class="startup-skeleton-block startup-skeleton-line-short"></div>
+              </div>
+            </section>
+          </main>
+          <aside class="startup-skeleton-card startup-skeleton-right">
+            <div class="startup-skeleton-block startup-skeleton-side-title"></div>
+            <div class="startup-skeleton-side-row">
+              <div class="startup-skeleton-block startup-skeleton-line"></div>
+              <div class="startup-skeleton-block startup-skeleton-caption"></div>
+            </div>
+            <div class="startup-skeleton-side-row">
+              <div class="startup-skeleton-block startup-skeleton-line"></div>
+              <div class="startup-skeleton-block startup-skeleton-caption"></div>
+            </div>
+            <div class="startup-skeleton-side-row">
+              <div class="startup-skeleton-block startup-skeleton-line"></div>
+              <div class="startup-skeleton-block startup-skeleton-caption"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
       <div class="startup-card">
         <div id="startup-loading" role="status" aria-live="polite">
           <div class="startup-spinner" aria-hidden="true"></div>
