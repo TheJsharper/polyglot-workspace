@@ -55,8 +55,9 @@ describe('ShellComponent', () => {
     const store = TestBed.inject(Store);
     const el = fixture.nativeElement as HTMLElement;
 
+    expect(store.selectSignal(selectTheme)()).toBe('system');
     el.querySelector<HTMLButtonElement>('[data-testid="theme-toggle"]')?.click();
-    expect(store.selectSignal(selectTheme)()).toBe('dark');
+    expect(store.selectSignal(selectTheme)()).toBe('light');
 
     el.querySelector<HTMLButtonElement>('[data-testid="menu-toggle"]')?.click();
     expect(store.selectSignal(selectSidenavOpened)()).toBe(false);
