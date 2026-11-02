@@ -1,10 +1,9 @@
 import { withComponentInputBinding } from '@angular/router';
 import type { Routes } from '@angular/router';
-import { provideNativeRouter } from '@ng-native/router';
-import { NativeShellComponent } from './native-shell.component.ts';
-import { DashboardScreenComponent } from './screens/dashboard-screen.component.ts';
-import { HomeScreenComponent } from './screens/home-screen.component.ts';
-import { authGuard } from './university/auth.ts';
+import { provideNativeRouter, withHeaderDefaults } from '@ng-native/router';
+import { headerDefaults } from './theme.ts';
+import { authGuard, universityDefaultGuard, adminRouteGuard } from './university/auth.ts';
+import { DemoLoginsScreenComponent } from './university/screens/demo-logins.component.ts';
 import { LoginScreenComponent } from './university/screens/login-screen.component.ts';
 import { RegisterScreenComponent } from './university/screens/register-screen.component.ts';
 import { CourseDetailScreenComponent, CourseFormScreenComponent, CoursesScreenComponent } from './university/screens/courses.component.ts';
@@ -16,6 +15,7 @@ import { UniversityHomeScreenComponent } from './university/screens/university-h
 import { UniversityShellComponent } from './university/university-shell.component.ts';
 
 export const appRoutes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'university' },
   { path: 'login', component: LoginScreenComponent },
   { path: 'register', component: RegisterScreenComponent },
   {
@@ -23,7 +23,8 @@ export const appRoutes: Routes = [
     component: UniversityShellComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', component: UniversityHomeScreenComponent },
+      { path: '', pathMatch: 'full', canActivate: [universityDefaultGuard], component: UniversityHomeScreenComponent },
+      { path: 'demo-logins', canActivate: [adminRouteGuard], component: DemoLoginsScreenComponent },
       { path: 'students', component: StudentsScreenComponent },
       { path: 'students/new', component: StudentFormScreenComponent },
       { path: 'students/:id', component: StudentDetailScreenComponent },
@@ -46,16 +47,9 @@ export const appRoutes: Routes = [
       { path: 'notes/:id/edit', component: NoteFormScreenComponent },
     ],
   },
-  {
-    path: '',
-    component: NativeShellComponent,
-    children: [
-      { path: '', component: HomeScreenComponent },
-      { path: 'dashboard', component: DashboardScreenComponent },
-      { path: '**', redirectTo: '' },
-    ],
-  },
+  { path: '**', redirectTo: 'university' },
 ];
 
-/** Route params and query params arrive as screen inputs. */
-export const provideAppRouter = () => provideNativeRouter(appRoutes, withComponentInputBinding());
+/** Route params and query params arrive as screen inputs; native headers follow the system colour scheme. */
+export const provideAppRouter = () =>
+  provideNativeRouter(appRoutes, withComponentInputBinding(), withHeaderDefaults(headerDefaults));

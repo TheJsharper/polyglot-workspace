@@ -19,7 +19,7 @@ import { UI } from '../ui.ts';
       } @else {
         <app-field label="Department" [(value)]="department" />
       }
-      <app-field label="Password" [(value)]="password" [secure]="true" />
+      <app-field label="Password" [(value)]="password" [secure]="true" [revealable]="true" />
       <app-button label="Register" [disabled]="task.loading() || !valid()" (press)="submit()" />
       <app-button label="Back to sign in" variant="secondary" (press)="back()" />
     </app-page>
@@ -62,7 +62,7 @@ export class RegisterScreenComponent {
     };
     const created = await this.task.run(async () => {
       await this.session.register(request);
-      return this.session.login({ username: id, password: request.password });
+      return this.session.loginMobile({ username: id, password: request.password });
     });
     if (created) {
       await this.router.navigateByUrl('/university', { replaceUrl: true });

@@ -1,60 +1,113 @@
-import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  Injectable,
+  afterNextRender,
+  computed,
+  inject,
+  input,
+  model,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideEye, lucideEyeOff } from '@ng-icons/lucide';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from '@ng-native/components';
 import type { KeyboardType } from '@ng-native/components';
-import { NativeHeader } from '@ng-native/router';
-
-export const COLORS = {
-  text: '#172033',
-  muted: '#596579',
-  primary: '#2f5bea',
-  danger: '#c62828',
-  surface: '#ffffff',
-  border: '#d8dde6',
-};
+import { ColorScheme, Keyboard } from '@ng-native/device';
+import { NgIcon } from '@ng-native/icons';
+import { NativeHeader, NativeHeaderItem } from '@ng-native/router';
+import { PALETTE } from '../theme.ts';
+import { ThemeToggle } from '../theme-preference.ts';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger';
+
+/**
+ * Puts the keyboard away. RN's `Keyboard.dismiss()` only blurs inputs RN itself tracks, which on Android misses ng-native's
+ * `<text-input>`, so every `app-field` registers here and the focused one is blurred directly as well.
+ */
+@Injectable({ providedIn: 'root' })
+export class SoftKeyboard {
+  private readonly keyboard = inject(Keyboard);
+  private readonly fields = new Set<TextInput>();
+
+  register(field: TextInput): () => void {
+    this.fields.add(field);
+    return () => this.fields.delete(field);
+  }
+
+  dismiss(): void {
+    for (const field of this.fields) {
+      if (field.isFocused()) {
+        field.blur();
+      }
+    }
+    this.keyboard.dismiss();
+  }
+}
 
 @Component({
   selector: 'app-button',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Pressable, Text],
+  imports: [NgIcon, Pressable, Text],
   template: `
     <pressable
       accessibilityRole="button"
+      class="button"
+      [class.primary]="variant() === 'primary'"
+      [class.secondary]="variant() === 'secondary'"
+      [class.danger]="variant() === 'danger'"
+      [class.disabled]="disabled()"
       [accessibilityLabel]="label()"
       [accessibilityState]="{ disabled: disabled() }"
-      [style]="buttonStyle()"
       (press)="onPress()"
     >
-      <text [style]="labelStyle()">{{ label() }}</text>
+      @if (iconSvg(); as svg) {
+        <ng-icon [svg]="svg" [size]="20" />
+      }
+      <text
+        class="label"
+        [class.on-primary]="variant() === 'primary'"
+        [class.on-secondary]="variant() === 'secondary'"
+        [class.on-danger]="variant() === 'danger'"
+      >{{ label() }}</text>
     </pressable>
+  `,
+  styles: `
+    .button {
+      min-height: 44px;
+      flex-direction: row;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      padding-left: 16px;
+      padding-right: 16px;
+      border-radius: 10px;
+    }
+    .primary { background-color: var(--primary); }
+    .secondary { background-color: var(--raised); }
+    .danger { background-color: var(--danger); }
+    .disabled { opacity: 0.5; }
+    .label { font-size: 15px; font-weight: 700; }
+    .on-primary { color: var(--on-primary); }
+    .on-secondary { color: var(--text); }
+    .on-danger { color: var(--on-danger); }
   `,
 })
 export class AppButton {
   readonly label = input.required<string>();
   readonly variant = input<ButtonVariant>('primary');
   readonly disabled = input(false);
+  /** Decorative leading icon as raw SVG markup, e.g. a multi-colour brand mark. */
+  readonly iconSvg = input<string>();
   readonly press = output<void>();
-
-  protected buttonStyle() {
-    const variant = this.variant();
-    return {
-      minHeight: 44,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      paddingHorizontal: 16,
-      borderRadius: 10,
-      opacity: this.disabled() ? 0.5 : 1,
-      backgroundColor: variant === 'primary' ? COLORS.primary : variant === 'danger' ? COLORS.danger : '#e8ecf4',
-    };
-  }
-
-  protected labelStyle() {
-    return { fontSize: 15, fontWeight: '700' as const, color: this.variant() === 'secondary' ? COLORS.text : '#ffffff' };
-  }
+  private readonly keyboard = inject(SoftKeyboard);
 
   protected onPress(): void {
     if (!this.disabled()) {
+      this.keyboard.dismiss();
       this.press.emit();
     }
   }
@@ -63,22 +116,38 @@ export class AppButton {
 @Component({
   selector: 'app-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Text, TextInput, View],
+  imports: [NgIcon, Pressable, Text, TextInput, View],
+  viewProviders: [provideIcons({ lucideEye, lucideEyeOff })],
   template: `
     <view class="field">
       <text class="label">{{ label() }}</text>
-      <text-input
-        class="input"
-        [accessibilityLabel]="label()"
-        [placeholder]="placeholder()"
-        [(value)]="value"
-        [secureTextEntry]="secure()"
-        [keyboardType]="keyboard()"
-        [multiline]="multiline()"
-        [editable]="!readonly()"
-        autoCapitalize="none"
-        [autoCorrect]="false"
-      />
+      <view class="box">
+        <text-input
+          class="input"
+          [accessibilityLabel]="label()"
+          [placeholder]="placeholder()"
+          [placeholderTextColor]="placeholderColor()"
+          [(value)]="value"
+          [secureTextEntry]="secure() && !revealed()"
+          [keyboardType]="keyboard()"
+          [multiline]="multiline()"
+          [editable]="!readonly()"
+          autoCapitalize="none"
+          [autoCorrect]="false"
+        />
+        @if (secure() && revealable()) {
+          <pressable
+            accessibilityRole="button"
+            class="reveal"
+            [accessibilityLabel]="revealed() ? 'Hide ' + label() : 'Show ' + label()"
+            [accessibilityState]="{ checked: revealed() }"
+            [hitSlop]="6"
+            (press)="toggleReveal()"
+          >
+            <ng-icon [name]="revealed() ? 'lucideEyeOff' : 'lucideEye'" [size]="20" color="var(--muted)" [strokeWidth]="2" />
+          </pressable>
+        }
+      </view>
     </view>
   `,
   styles: `
@@ -86,20 +155,32 @@ export class AppButton {
       gap: 6px;
     }
     .label {
-      color: #596579;
+      color: var(--muted);
       font-size: 13px;
       font-weight: 700;
     }
+    .box {
+      flex-direction: row;
+      align-items: center;
+      min-height: 44px;
+      border-width: 1px;
+      border-color: var(--border);
+      border-radius: 10px;
+      background-color: var(--surface);
+    }
     .input {
+      flex: 1;
       min-height: 44px;
       padding-left: 12px;
       padding-right: 12px;
-      border-width: 1px;
-      border-color: #d8dde6;
-      border-radius: 10px;
-      background-color: #ffffff;
-      color: #172033;
+      color: var(--text);
       font-size: 16px;
+    }
+    .reveal {
+      width: 44px;
+      height: 44px;
+      justify-content: center;
+      align-items: center;
     }
   `,
 })
@@ -108,9 +189,27 @@ export class AppField {
   readonly value = model('');
   readonly placeholder = input<string>();
   readonly secure = input(false);
+  /** Adds an eye button to a secure field so users can check what they typed. */
+  readonly revealable = input(false);
   readonly multiline = input(false);
   readonly readonly = input(false);
   readonly keyboard = input<KeyboardType>('default');
+  protected readonly revealed = signal(false);
+  // A prop cannot read the CSS cascade, so the placeholder takes the palette for the current scheme.
+  private readonly scheme = inject(ColorScheme);
+  protected readonly placeholderColor = computed(() => PALETTE[this.scheme.current()].muted);
+  private readonly input = viewChild.required(TextInput);
+
+  constructor() {
+    const keyboard = inject(SoftKeyboard);
+    let unregister: (() => void) | undefined;
+    afterNextRender(() => (unregister = keyboard.register(this.input())));
+    inject(DestroyRef).onDestroy(() => unregister?.());
+  }
+
+  protected toggleReveal(): void {
+    this.revealed.update((revealed) => !revealed);
+  }
 }
 
 @Component({
@@ -137,23 +236,25 @@ export class AppField {
       gap: 12px;
       padding: 14px;
       border-radius: 12px;
-      background-color: #ffffff;
+      border-width: 1px;
+      border-color: var(--border);
+      background-color: var(--surface);
     }
     .main {
       flex: 1;
       gap: 2px;
     }
     .title {
-      color: #172033;
+      color: var(--text);
       font-size: 16px;
       font-weight: 700;
     }
     .subtitle {
-      color: #596579;
+      color: var(--muted);
       font-size: 13px;
     }
     .badge {
-      color: #2f5bea;
+      color: var(--primary);
       font-size: 12px;
       font-weight: 700;
     }
@@ -184,10 +285,11 @@ export interface Choice {
             accessibilityRole="button"
             [accessibilityLabel]="label() + ': ' + option.label"
             [accessibilityState]="{ selected: option.value === selected() }"
-            [style]="chipStyle(option.value === selected())"
+            class="chip"
+            [class.chip-active]="option.value === selected()"
             (press)="select(option.value)"
           >
-            <text [style]="chipText(option.value === selected())">{{ option.label }}</text>
+            <text class="chip-text" [class.chip-text-active]="option.value === selected()">{{ option.label }}</text>
           </pressable>
         } @empty {
           <text class="empty">{{ empty() }}</text>
@@ -200,7 +302,7 @@ export interface Choice {
       gap: 6px;
     }
     .label {
-      color: #596579;
+      color: var(--muted);
       font-size: 13px;
       font-weight: 700;
     }
@@ -210,8 +312,27 @@ export interface Choice {
       gap: 8px;
     }
     .empty {
-      color: #596579;
+      color: var(--muted);
       font-size: 13px;
+    }
+    .chip {
+      padding: 8px 12px;
+      border-radius: 16px;
+      border-width: 1px;
+      border-color: var(--border);
+      background-color: var(--surface);
+    }
+    .chip-active {
+      border-color: var(--primary);
+      background-color: var(--primary);
+    }
+    .chip-text {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .chip-text-active {
+      color: var(--on-primary);
     }
   `,
 })
@@ -225,21 +346,6 @@ export class AppChoice {
 
   protected select(value: string): void {
     this.selected.set(this.clearable() && this.selected() === value ? '' : value);
-  }
-
-  protected chipStyle(active: boolean) {
-    return {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: active ? COLORS.primary : COLORS.border,
-      backgroundColor: active ? COLORS.primary : COLORS.surface,
-    };
-  }
-
-  protected chipText(active: boolean) {
-    return { fontSize: 14, fontWeight: '600' as const, color: active ? '#ffffff' : COLORS.text };
   }
 }
 
@@ -261,12 +367,12 @@ export class AppChoice {
       gap: 12px;
       padding: 14px;
       border-width: 1px;
-      border-color: #c62828;
+      border-color: var(--danger);
       border-radius: 12px;
-      background-color: #fdecea;
+      background-color: var(--error-bg);
     }
     .message {
-      color: #7f1d1d;
+      color: var(--error-fg);
       font-size: 15px;
       font-weight: 600;
     }
@@ -298,7 +404,7 @@ export class AppConfirm {
       gap: 8px;
     }
     .heading {
-      color: #172033;
+      color: var(--text);
       font-size: 18px;
       font-weight: 700;
     }
@@ -312,11 +418,16 @@ export class AppSection {
 @Component({
   selector: 'app-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ActivityIndicator, AppButton, NativeHeader, ScrollView, Text, View],
+  imports: [ActivityIndicator, AppButton, NativeHeader, NativeHeaderItem, ScrollView, Text, ThemeToggle, View],
   host: { style: 'flex: 1' },
   template: `
-    <native-header [title]="title()" />
-    <scroll-view class="scroll" keyboardShouldPersistTaps="handled">
+    <native-header [title]="title()">
+      <native-header-item type="right">
+        <app-theme-toggle />
+      </native-header-item>
+    </native-header>
+    <!-- "handled" lets buttons work with the keyboard up while a tap on empty space or a drag closes it. -->
+    <scroll-view class="scroll" keyboardShouldPersistTaps="handled" (scrollBeginDrag)="keyboard.dismiss()">
       <view class="body">
         @if (loading()) {
           <view class="loading" accessibilityRole="progressbar" accessibilityLabel="Loading">
@@ -344,7 +455,7 @@ export class AppSection {
   styles: `
     .scroll {
       flex: 1;
-      background-color: #f4f5f8;
+      background-color: var(--bg);
     }
     .body {
       padding: 20px 16px 32px 16px;
@@ -356,25 +467,25 @@ export class AppSection {
       gap: 10px;
     }
     .muted {
-      color: #596579;
+      color: var(--muted);
     }
     .error {
       gap: 10px;
       padding: 12px;
       border-radius: 10px;
-      background-color: #fdecea;
+      background-color: var(--error-bg);
     }
     .error-text {
-      color: #b71c1c;
+      color: var(--error-fg);
       font-size: 14px;
     }
     .notice {
       padding: 12px;
       border-radius: 10px;
-      background-color: #e6f4ea;
+      background-color: var(--success-bg);
     }
     .notice-text {
-      color: #1b5e20;
+      color: var(--success-fg);
       font-size: 14px;
     }
   `,
@@ -386,6 +497,7 @@ export class AppPage {
   readonly notice = input<string | null>(null);
   readonly retryable = input(true);
   readonly retry = output<void>();
+  protected readonly keyboard = inject(SoftKeyboard);
 }
 
 @Component({

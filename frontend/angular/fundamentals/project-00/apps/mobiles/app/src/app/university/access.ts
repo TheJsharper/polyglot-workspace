@@ -9,6 +9,7 @@ export class Access {
   readonly username = computed(() => this.session.user()?.username ?? '');
   readonly role = computed(() => this.session.user()?.role);
   readonly isAdmin = computed(() => this.role() === 'ADMIN');
+  readonly isManager = computed(() => this.role() === 'MANAGER');
   readonly isProfessor = computed(() => this.role() === 'PROFESSOR');
   readonly isStudent = computed(() => this.role() === 'STUDENT');
   readonly isStaff = computed(() => this.isAdmin() || this.isProfessor());

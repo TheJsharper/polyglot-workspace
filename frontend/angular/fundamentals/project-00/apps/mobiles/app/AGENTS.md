@@ -21,7 +21,7 @@ nx test app                 # Vitest, in Node against a fake native layer: no si
 nx typecheck app            # TypeScript, without emitting
 ```
 
-`src/main.ts` mounts the root component, `src/app/app.ts`, and provides the native router. The native shell keeps the shared menu entries and Home/Dashboard summary data from `@project-00/services-core`, while its header, left drawer, tab bar and screen rendering use ng-native components. The web Material layout and federated dashboard are not imported into this native app. Run `nx test app` and `nx typecheck app` after a change.
+`src/main.ts` mounts the root component, `src/app/app.ts`, and provides the native router. The native app opens into University resource routes; the University header, role-filtered left drawer and screen rendering use ng-native components. The web Material layout and federated dashboard are not imported into this native app. Run `nx test app` and `nx typecheck app` after a change.
 
 ## Rules that are easy to get wrong
 

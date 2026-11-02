@@ -14,11 +14,11 @@ nx run app:run-android
 nx run app:run-ios
 ```
 
-`start` runs Expo/Metro; scan its QR code with Expo Go or use a simulator. Tests run in Node against a fake native host and do not require a device. `run-android` requires a configured Android SDK/emulator; `run-ios` requires macOS and an iOS simulator. The test and typecheck targets have been verified in this workspace. Device and simulator behavior has not been verified here.
+`start` runs Expo/Metro; scan its QR code with Expo Go or use a simulator. Tests run in Node against a fake native host and do not require a device. `run-android` requires a configured Android SDK/emulator; `run-ios` requires macOS and an iOS simulator. The test and typecheck targets have been verified in this workspace. An Android 11 (API 30) emulator smoke test verified app startup; API-backed University actions still require a reachable University API.
 
 The University API screens (login, register, role-aware CRUD and relationships) and the `EXPO_PUBLIC_API_URL` setting are documented in [the app README](app/README.md).
 
-The app root is [`src/main.ts`](app/src/main.ts); the native shell combines a left drawer, main content outlet and native Home/Dashboard bottom tabs. Shared menu entries and Home/Dashboard stats come from `libs/services/core`; native screens render those values with ng-native components. The browser shell filters the shared menu to University and uses Material/CDK, so browser UI components are not imported into the native runtime. The app's own [`AGENTS.md`](app/AGENTS.md) documents native component, event, styling, routing and testing conventions.
+The app root is [`src/main.ts`](app/src/main.ts); the native app opens directly into the role-filtered University experience. Its native drawer follows the browser University's role-based resources while rendering with ng-native components. The browser shell uses Material/CDK, so browser UI components are not imported into the native runtime. The app's own [`AGENTS.md`](app/AGENTS.md) documents native component, event, styling, routing and testing conventions.
 
 ## Native boundary
 
@@ -39,6 +39,6 @@ ng-native renders Angular components as native views through its renderer and Re
 | Renderer and native navigation | [Architecture](https://ng-native.com/guide/architecture) |
 | DOM and feature limitations | [Known limitations](https://ng-native.com/guide/limitations) |
 
-The app uses `@ng-native/router` with `react-native-screens` for native route stacks and bottom tabs. The left drawer and routed feature pages are native UI. `libs/services/core` retains platform-neutral `MAIN_MENU`, Home stats and Dashboard stats for the native app; the browser shell independently filters its menu to University.
+The app uses `@ng-native/router` with `react-native-screens` for native route stacks. The left drawer and routed feature pages are native UI.
 
 For project-specific mobile work, load the [ng-native mobile skill](../../.github/skills/ng-native-mobile/SKILL.md).

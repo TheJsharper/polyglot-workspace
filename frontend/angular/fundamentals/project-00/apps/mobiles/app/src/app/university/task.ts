@@ -14,7 +14,7 @@ export function errorMessage(error: unknown): string {
     return detail || `Request failed (${error.status})`;
   }
   if (error instanceof Error && /network|fetch|connect/i.test(error.message)) {
-    return 'Cannot reach the University API. Check EXPO_PUBLIC_API_URL and that the server is running.';
+    return 'Cannot reach the University API. Check that the server is running, EXPO_PUBLIC_API_URL, and on Android "adb reverse tcp:8080 tcp:8080".';
   }
   return error instanceof Error ? error.message : 'Something went wrong.';
 }

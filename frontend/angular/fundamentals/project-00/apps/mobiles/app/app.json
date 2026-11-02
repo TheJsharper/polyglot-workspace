@@ -24,7 +24,8 @@
       }
     },
     "plugins": [
-      "@ng-native/metro"
+      "@ng-native/metro",
+      "expo-web-browser"
     ]
   }
 }

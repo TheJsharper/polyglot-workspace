@@ -16,6 +16,7 @@ import { UI } from '../ui.ts';
         <app-button label="New student" (press)="go('new')" />
       }
       <app-field label="Search" [(value)]="query" placeholder="Name or student id" />
+      <app-button label="Refresh students" variant="secondary" [disabled]="task.loading()" (press)="load()" />
       @for (student of filtered(); track student.id) {
         <app-card
           [title]="student.name ?? ''"
