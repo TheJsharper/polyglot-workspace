@@ -98,9 +98,12 @@ class SecurityConfig {
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
 				.permitAll()
-				.requestMatchers(HttpMethod.GET, "/api/auth/google/status", "/api/auth/google/start", "/api/auth/csrf")
+				.requestMatchers(HttpMethod.GET, "/api/auth/google/status", "/api/auth/google/start",
+						"/api/auth/google/mobile/start", "/api/auth/csrf")
 				.permitAll()
-				.requestMatchers(HttpMethod.POST, "/api/auth/google/complete", "/api/auth/refresh", "/api/auth/logout")
+				.requestMatchers(HttpMethod.POST, "/api/auth/google/complete", "/api/auth/google/mobile/complete",
+						"/api/auth/mobile/login", "/api/auth/mobile/refresh", "/api/auth/mobile/logout",
+						"/api/auth/refresh", "/api/auth/logout")
 				.permitAll()
 				.requestMatchers("/oauth2/**", "/login/oauth2/**")
 				.permitAll()
@@ -130,9 +133,7 @@ class SecurityConfig {
 					}
 					LOGGER.warn("Google OAuth authentication failed on {}: {} (error code: {})",
 							request.getServletPath(), exception.getClass().getSimpleName(), errorCode);
-					response.setHeader("Cache-Control", "no-store");
-					response.setHeader("Referrer-Policy", "no-referrer");
-					response.sendRedirect(googleProperties.frontendUrl() + "?error=google_signin_failed");
+					GoogleLoginSuccessHandler.redirectFailure(request, response, googleProperties);
 				}));
 		}
 		return http.build();

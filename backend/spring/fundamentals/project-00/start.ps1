@@ -4,8 +4,12 @@ $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
 if (-not (Test-Path .env)) { throw "Missing .env - copy .env.example to .env and fill in the values." }
-if (-not $env:JAVA_HOME -and (Test-Path "$env:USERPROFILE\.jdks\openjdk-25.0.1")) {
-    $env:JAVA_HOME = "$env:USERPROFILE\.jdks\openjdk-25.0.1"
+$jdk25 = "$env:USERPROFILE\.jdks\openjdk-25.0.1"
+$javaVersion = if ($env:JAVA_HOME -and (Test-Path "$env:JAVA_HOME\release")) { Select-String -Path "$env:JAVA_HOME\release" -Pattern 'JAVA_VERSION="(\d+)' | ForEach-Object { [int]$_.Matches[0].Groups[1].Value } } else { 0 }
+if ($javaVersion -lt 25 -and (Test-Path $jdk25)) {
+    # The pom targets Java 25; an older JAVA_HOME (e.g. 17) cannot run the compiled classes.
+    $env:JAVA_HOME = $jdk25
+    $env:Path = "$jdk25\bin;$env:Path"
 }
 
 & .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"

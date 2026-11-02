@@ -12,6 +12,8 @@ import com.example.project00.service.AccountService;
 import com.example.project00.service.RefreshSessionService;
 import com.example.project00.web.dto.AuthDtos.LoginRequest;
 import com.example.project00.web.dto.AuthDtos.MeResponse;
+import com.example.project00.web.dto.AuthDtos.MobileRefreshRequest;
+import com.example.project00.web.dto.AuthDtos.MobileSessionResponse;
 import com.example.project00.web.dto.AuthDtos.RegisterRequest;
 import com.example.project00.web.dto.AuthDtos.RegisterResponse;
 import com.example.project00.web.dto.AuthDtos.TokenResponse;
@@ -117,6 +119,34 @@ class AuthController {
 		return ResponseEntity.ok()
 			.header("Set-Cookie", refreshCookie(refresh).toString())
 			.body(new TokenResponse(token.value(), "Bearer", token.expiresInSeconds()));
+	}
+
+	@PostMapping("/mobile/login")
+	ResponseEntity<MobileSessionResponse> mobileLogin(@Valid @RequestBody LoginRequest request) {
+		Authentication authentication = authenticationManager
+			.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(request.username(), request.password()));
+		IssuedToken token = tokenService.issue(authentication);
+		String refresh = refreshSessions.issue(authentication.getName());
+		return ResponseEntity.ok()
+			.header("Cache-Control", "no-store")
+			.body(new MobileSessionResponse(new TokenResponse(token.value(), "Bearer", token.expiresInSeconds()), refresh));
+	}
+
+	@PostMapping("/mobile/refresh")
+	ResponseEntity<MobileSessionResponse> mobileRefresh(@Valid @RequestBody MobileRefreshRequest request) {
+		RefreshSessionService.RefreshedSession refreshed = refreshSessions.refresh(request.refreshSecret());
+		if (refreshed == null) {
+			throw new BadCredentialsException("The session has expired");
+		}
+		return ResponseEntity.ok()
+			.header("Cache-Control", "no-store")
+			.body(new MobileSessionResponse(refreshed.access(), refreshed.refreshSecret()));
+	}
+
+	@PostMapping("/mobile/logout")
+	ResponseEntity<Void> mobileLogout(@Valid @RequestBody MobileRefreshRequest request) {
+		refreshSessions.revoke(request.refreshSecret());
+		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/refresh")

@@ -75,6 +75,31 @@ public class GoogleLoginService {
 		return secret;
 	}
 
+	@Transactional
+	public String createMobileTicket(OidcUser identity, String codeChallenge) {
+		if (codeChallenge == null || !codeChallenge.matches("[A-Za-z0-9_-]{43}")) {
+			throw new IllegalArgumentException("A valid mobile PKCE challenge is required");
+		}
+		String subject = identity.getSubject();
+		String email = identity.getEmail();
+		if (subject == null || subject.isBlank() || email == null || email.isBlank()
+				|| !Boolean.TRUE.equals(identity.getEmailVerified())) {
+			throw new BadCredentialsException("Google must provide a verified email address");
+		}
+		String secret = randomSecret();
+		String displayName = identity.getFullName();
+		if (displayName == null || displayName.isBlank()) {
+			displayName = email.substring(0, email.indexOf('@'));
+		}
+		displayName = displayName.strip();
+		if (displayName.length() > 254) {
+			displayName = displayName.substring(0, 254);
+		}
+		tickets.save(new GoogleLoginTicket(hash(secret), subject, email.toLowerCase(Locale.ROOT), displayName,
+				safePictureUrl(identity.getPicture()), null, codeChallenge, clock.instant().plus(TICKET_LIFETIME)));
+		return secret;
+	}
+
 	/**
 	 * Accepts only HTTPS avatar URLs served by Google's user-content CDN so the browser never loads
 	 * an arbitrary third-party URL from an identity claim.
@@ -104,6 +129,17 @@ public class GoogleLoginService {
 
 	@Transactional
 	public GoogleSessionResponse complete(String secret, String browserBinding, GoogleOnboardingRequest onboarding) {
+		return complete(secret, browserBinding, null, onboarding);
+	}
+
+	@Transactional
+	public GoogleSessionResponse completeMobile(String secret, String codeVerifier,
+			GoogleOnboardingRequest onboarding) {
+		return complete(secret, null, codeVerifier, onboarding);
+	}
+
+	private GoogleSessionResponse complete(String secret, String browserBinding, String codeVerifier,
+			GoogleOnboardingRequest onboarding) {
 		var ticketOptional = tickets.findByTokenHashForUpdate(hash(secret));
 		if (ticketOptional.isEmpty()) {
 			throw new BadCredentialsException("Google sign-in expired or was already used");
@@ -112,7 +148,14 @@ public class GoogleLoginService {
 		if (ticket.isConsumed() || !ticket.getExpiresAt().isAfter(clock.instant())) {
 			throw new BadCredentialsException("Google sign-in expired or was already used");
 		}
-		if (browserBinding == null || browserBinding.isBlank() || ticket.getBindingHash() == null
+		if (ticket.getMobileCodeChallenge() != null) {
+			if (codeVerifier == null || !validCodeVerifier(codeVerifier)
+					|| !MessageDigest.isEqual(ticket.getMobileCodeChallenge().getBytes(StandardCharsets.US_ASCII),
+							codeChallenge(codeVerifier).getBytes(StandardCharsets.US_ASCII))) {
+				throw new BadCredentialsException("Google sign-in was not started in this mobile app");
+			}
+		}
+		else if (browserBinding == null || browserBinding.isBlank() || ticket.getBindingHash() == null
 				|| !MessageDigest.isEqual(ticket.getBindingHash().getBytes(StandardCharsets.UTF_8),
 						hash(browserBinding).getBytes(StandardCharsets.UTF_8))) {
 			throw new BadCredentialsException("Google sign-in was not started in this browser");
@@ -142,6 +185,21 @@ public class GoogleLoginService {
 		TokenResponse issued = refreshSessions.issueAccessToken(authentication);
 		String refresh = refreshSessions.issue(account.getUsername());
 		return new GoogleSessionResponse(issued, refresh, created, false);
+	}
+
+	private static boolean validCodeVerifier(String verifier) {
+		return verifier.length() >= 43 && verifier.length() <= 128
+				&& verifier.matches("[A-Za-z0-9._~-]+");
+	}
+
+	private static String codeChallenge(String verifier) {
+		try {
+			byte[] digest = MessageDigest.getInstance("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII));
+			return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+		}
+		catch (java.security.NoSuchAlgorithmException ex) {
+			throw new IllegalStateException("SHA-256 is unavailable", ex);
+		}
 	}
 
 	private static String randomSecret() {

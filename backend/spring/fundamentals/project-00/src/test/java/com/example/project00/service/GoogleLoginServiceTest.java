@@ -9,9 +9,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.Optional;
 
 import com.example.project00.domain.GoogleLoginTicket;
@@ -184,6 +187,36 @@ class GoogleLoginServiceTest {
 		assertThat(saved.getValue().getDisplayName()).isEqualTo("Example Person");
 		assertThat(saved.getValue().getPictureUrl()).isEqualTo(PICTURE);
 		assertThat(saved.getValue().getEmail()).isEqualTo("person@example.com");
+	}
+
+	@Test
+	void bindsMobileTicketsToThePkceVerifier() throws Exception {
+		GoogleLoginTicketRepository tickets = mock(GoogleLoginTicketRepository.class);
+		UserAccountRepository accounts = mock(UserAccountRepository.class);
+		String verifier = "a".repeat(64);
+		String challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(
+				MessageDigest.getInstance("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII)));
+		OidcUser identity = mock(OidcUser.class);
+		when(identity.getSubject()).thenReturn("google-sub");
+		when(identity.getEmail()).thenReturn("person@example.com");
+		when(identity.getEmailVerified()).thenReturn(true);
+		when(identity.getFullName()).thenReturn("Example Person");
+		when(identity.getPicture()).thenReturn(PICTURE);
+		GoogleLoginService service = service(tickets, accounts, mock(AccountService.class),
+				mock(UserDetailsService.class), mock(TokenService.class), mock(RefreshSessionService.class));
+
+		String ticketSecret = service.createMobileTicket(identity, challenge);
+		ArgumentCaptor<GoogleLoginTicket> saved = ArgumentCaptor.forClass(GoogleLoginTicket.class);
+		verify(tickets).save(saved.capture());
+		GoogleLoginTicket ticket = saved.getValue();
+		assertThat(ticket.getBindingHash()).isNull();
+		assertThat(ticket.getMobileCodeChallenge()).isEqualTo(challenge);
+		when(tickets.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(ticket));
+
+		assertThatThrownBy(() -> service.completeMobile(ticketSecret, "b".repeat(64), null))
+				.isInstanceOf(BadCredentialsException.class);
+		assertThat(service.completeMobile(ticketSecret, verifier, null).onboardingRequired()).isTrue();
+		assertThat(ticket.isConsumed()).isFalse();
 	}
 
 	private static GoogleLoginService service(GoogleLoginTicketRepository tickets, UserAccountRepository accounts,

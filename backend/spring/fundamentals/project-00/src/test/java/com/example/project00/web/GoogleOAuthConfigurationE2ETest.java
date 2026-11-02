@@ -34,6 +34,42 @@ class GoogleOAuthConfigurationE2ETest extends EndToEndTestSupport {
 	}
 
 	@Test
+	void mobileStartMarksBrowserSoExpiredSessionFailureStillReturnsToApp() {
+		String state = "a".repeat(64);
+		var start = anonymous.get()
+			.uri("/api/auth/google/mobile/start?state={state}&code_challenge={challenge}", state, "b".repeat(43))
+			.exchange();
+		start.expectStatus().isFound();
+		var startCookies = start.returnResult(Void.class).getResponseHeaders().get("Set-Cookie");
+		assertThat(startCookies).anySatisfy(cookie -> assertThat(cookie).startsWith("JSESSIONID="));
+		assertThat(startCookies)
+			.anySatisfy(cookie -> assertThat(cookie).startsWith("university-google-mobile-state=" + state)
+				.contains("HttpOnly")
+				.doesNotContain("Max-Age"));
+
+		// No session cookie: Spring cannot find the authorization request, as after a session timeout.
+		var callback = anonymous.get()
+			.uri("/login/oauth2/code/google?code=expired&state=unknown")
+			.header("Cookie", "university-google-mobile-state=" + state)
+			.exchange();
+		callback.expectStatus().isFound();
+		var headers = callback.returnResult(Void.class).getResponseHeaders();
+		assertThat(headers.getLocation().toString())
+			.isEqualTo("app://sso/callback?error=google_signin_failed&state=" + state);
+		assertThat(headers.get("Set-Cookie")).anySatisfy(cookie -> assertThat(cookie)
+			.startsWith("university-google-mobile-state=;")
+			.contains("Max-Age=0"));
+	}
+
+	@Test
+	void webCallbackFailureWithoutMobileMarkerReturnsToFrontend() {
+		var callback = anonymous.get().uri("/login/oauth2/code/google?code=expired&state=unknown").exchange();
+		callback.expectStatus().isFound();
+		assertThat(callback.returnResult(Void.class).getResponseHeaders().getLocation().toString())
+			.isEqualTo("http://localhost:4300/sso/callback?error=google_signin_failed");
+	}
+
+	@Test
 	void googleRegistrationConfiguresOidcSignatureVerificationKeys() {
 		assertThat(registrations.findByRegistrationId("google").getProviderDetails().getJwkSetUri())
 			.isEqualTo("https://www.googleapis.com/oauth2/v3/certs");

@@ -21,17 +21,24 @@ import com.example.project00.security.GoogleOAuthProperties;
 import com.example.project00.service.GoogleLoginService;
 import com.example.project00.service.RefreshSessionService;
 import com.example.project00.web.dto.AuthDtos.GoogleCompleteResponse;
+import com.example.project00.web.dto.AuthDtos.GoogleMobileCompleteResponse;
+import com.example.project00.web.dto.AuthDtos.MobileGoogleCompleteRequest;
 import com.example.project00.web.dto.AuthDtos.GoogleOnboardingRequest;
 import com.example.project00.web.dto.AuthDtos.GoogleSessionResponse;
 import com.example.project00.web.dto.AuthDtos.GoogleStatusResponse;
 
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-class GoogleAuthController {
+public class GoogleAuthController {
+
+	public static final String MOBILE_STATE_ATTRIBUTE = GoogleAuthController.class.getName() + ".mobileState";
+	public static final String MOBILE_CHALLENGE_ATTRIBUTE = GoogleAuthController.class.getName() + ".mobileChallenge";
 
 	private final GoogleOAuthProperties googleProperties;
 	private final GoogleLoginService googleLoginService;
@@ -42,10 +49,34 @@ class GoogleAuthController {
 	}
 
 	@GetMapping("/google/start")
-	ResponseEntity<Void> startGoogleSignIn() {
+	ResponseEntity<Void> startGoogleSignIn(HttpServletRequest request, HttpServletResponse response) {
 		if (!googleProperties.enabled()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}
+		// Added on the servlet response: a Set-Cookie header on ResponseEntity would replace Tomcat's session cookie.
+		response.addHeader(HttpHeaders.SET_COOKIE, GoogleLoginSuccessHandler
+			.mobileStateCookie("", java.time.Duration.ZERO, request.isSecure()).toString());
+		return ResponseEntity.status(HttpStatus.FOUND)
+			.header(HttpHeaders.LOCATION, "/oauth2/authorization/google")
+			.header(HttpHeaders.CACHE_CONTROL, "no-store")
+			.build();
+	}
+
+	@GetMapping("/google/mobile/start")
+	ResponseEntity<Void> startMobileGoogleSignIn(@RequestParam String state,
+			@RequestParam("code_challenge") String codeChallenge, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (!googleProperties.enabled()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+		if (!state.matches("[A-Fa-f0-9]{64}") || !codeChallenge.matches("[A-Za-z0-9_-]{43}")) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid mobile sign-in state or PKCE challenge");
+		}
+		var session = request.getSession(true);
+		session.setAttribute(MOBILE_STATE_ATTRIBUTE, state);
+		session.setAttribute(MOBILE_CHALLENGE_ATTRIBUTE, codeChallenge);
+		response.addHeader(HttpHeaders.SET_COOKIE, GoogleLoginSuccessHandler
+			.mobileStateCookie(state, java.time.Duration.ofSeconds(-1), request.isSecure()).toString());
 		return ResponseEntity.status(HttpStatus.FOUND)
 			.header(HttpHeaders.LOCATION, "/oauth2/authorization/google")
 			.header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -68,6 +99,15 @@ class GoogleAuthController {
 					GoogleLoginSuccessHandler.bindingCookie("", java.time.Duration.ZERO).toString())
 			.header(HttpHeaders.CACHE_CONTROL, "no-store")
 			.body(new GoogleCompleteResponse(result.session(), false));
+	}
+
+	@PostMapping("/google/mobile/complete")
+	ResponseEntity<GoogleMobileCompleteResponse> completeMobileGoogleSignIn(@RequestParam String ticket,
+			@Valid @RequestBody MobileGoogleCompleteRequest request) {
+		var result = googleLoginService.completeMobile(ticket, request.codeVerifier(), request.onboarding());
+		return ResponseEntity.ok()
+			.header(HttpHeaders.CACHE_CONTROL, "no-store")
+			.body(new GoogleMobileCompleteResponse(result.session(), result.refreshSecret(), result.onboardingRequired()));
 	}
 
 	@GetMapping("/csrf")

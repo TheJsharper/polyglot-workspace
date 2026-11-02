@@ -3,6 +3,7 @@ package com.example.project00.web.dto;
 import com.example.project00.domain.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
@@ -112,6 +113,20 @@ public final class AuthDtos {
 	}
 
 	public record GoogleCompleteResponse(TokenResponse session, boolean onboardingRequired) {
+	}
+
+	public record GoogleMobileCompleteResponse(TokenResponse session, String refreshSecret,
+			boolean onboardingRequired) {
+	}
+
+	public record MobileSessionResponse(TokenResponse session, String refreshSecret) {
+	}
+
+	public record MobileRefreshRequest(@NotBlank @Size(min = 43, max = 128) String refreshSecret) {
+	}
+
+	public record MobileGoogleCompleteRequest(@NotBlank @Size(min = 43, max = 128) String codeVerifier,
+			@Valid GoogleOnboardingRequest onboarding) {
 	}
 
 	public record GoogleStatusResponse(boolean enabled) {

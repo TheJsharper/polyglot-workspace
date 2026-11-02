@@ -34,6 +34,9 @@ public class GoogleLoginTicket extends BaseEntity {
 	@Column(name = "binding_hash", length = 64)
 	private String bindingHash;
 
+	@Column(name = "mobile_code_challenge", length = 43)
+	private String mobileCodeChallenge;
+
 	@Column(name = "expires_at", nullable = false)
 	private Instant expiresAt;
 
@@ -55,12 +58,18 @@ public class GoogleLoginTicket extends BaseEntity {
 	 */
 	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName,
 			String pictureUrl, String bindingHash, Instant expiresAt) {
+		this(tokenHash, googleSubject, email, displayName, pictureUrl, bindingHash, null, expiresAt);
+	}
+
+	public GoogleLoginTicket(String tokenHash, String googleSubject, String email, String displayName,
+			String pictureUrl, String bindingHash, String mobileCodeChallenge, Instant expiresAt) {
 		this.tokenHash = Objects.requireNonNull(tokenHash);
 		this.googleSubject = Objects.requireNonNull(googleSubject);
 		this.email = Objects.requireNonNull(email);
 		this.displayName = Objects.requireNonNull(displayName);
 		this.pictureUrl = pictureUrl;
 		this.bindingHash = bindingHash;
+		this.mobileCodeChallenge = mobileCodeChallenge;
 		this.expiresAt = Objects.requireNonNull(expiresAt);
 	}
 
