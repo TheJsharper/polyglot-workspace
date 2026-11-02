@@ -51,11 +51,11 @@
     matIconButton
     type="button"
     data-testid="theme-toggle"
-    [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
-    [matTooltip]="theme() === 'dark' ? 'Light theme' : 'Dark theme'"
+    [attr.aria-label]="'Theme: ' + (theme() | titlecase) + '. Change theme'"
+    [matTooltip]="'Theme: ' + (theme() | titlecase)"
     (click)="themeToggle.emit()"
   >
-    <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    <mat-icon>{{ theme() === 'system' ? 'brightness_auto' : theme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
   </button>
 </mat-toolbar>
 

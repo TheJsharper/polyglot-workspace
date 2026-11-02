@@ -1,4 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,6 +22,7 @@ import { map } from 'rxjs';
     MatSidenavModule,
     MatToolbarModule,
     MatTooltipModule,
+    TitleCasePipe,
     RouterLink,
     RouterLinkActive,
   ],
@@ -31,7 +33,7 @@ export class MainLayoutComponent {
   readonly appTitle = input.required<string>();
   readonly menuItems = input<MenuItem[]>([]);
   readonly sidenavOpened = input(true);
-  readonly theme = input<Theme>('light');
+  readonly theme = input<Theme>('system');
   /** Name shown in the header; `null` means signed out. */
   readonly username = input<string | null>(null);
   /** Optional avatar URL; falls back to initials when missing or when it fails to load. */

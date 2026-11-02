@@ -2,7 +2,7 @@ import { DOCUMENT, inject } from '@angular/core';
 import { Actions, ROOT_EFFECTS_INIT, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { concatLatestFrom } from '@ngrx/operators';
-import { DARK_THEME_CLASS, THEME_STORAGE_KEY, isTheme } from '@project-00/services-core';
+import { DARK_THEME_CLASS, LIGHT_THEME_CLASS, THEME_STORAGE_KEY, isTheme } from '@project-00/services-core';
 import { map, tap } from 'rxjs';
 import { LayoutActions, initialLayoutState, selectTheme } from './layout/layout.feature';
 import { MENU_CONFIG } from './navigation/menu-config.token';
@@ -13,7 +13,9 @@ export const restoreTheme$ = createEffect(
     actions$.pipe(
       ofType(ROOT_EFFECTS_INIT),
       map(() => document.defaultView?.localStorage.getItem(THEME_STORAGE_KEY)),
-      map((stored) => LayoutActions.setTheme({ theme: isTheme(stored) ? stored : initialLayoutState.theme }))
+      map((stored) =>
+        LayoutActions.setTheme({ theme: isTheme(stored) ? stored : initialLayoutState.theme })
+      )
     ),
   { functional: true }
 );
@@ -25,6 +27,7 @@ export const applyTheme$ = createEffect(
       concatLatestFrom(() => store.select(selectTheme)),
       tap(([, theme]) => {
         document.documentElement.classList.toggle(DARK_THEME_CLASS, theme === 'dark');
+        document.documentElement.classList.toggle(LIGHT_THEME_CLASS, theme === 'light');
         document.defaultView?.localStorage.setItem(THEME_STORAGE_KEY, theme);
       })
     ),

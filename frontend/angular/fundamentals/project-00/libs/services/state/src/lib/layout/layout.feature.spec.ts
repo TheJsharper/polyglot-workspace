@@ -14,8 +14,12 @@ describe('layoutFeature', () => {
   });
 
   it('toggles and sets the theme', () => {
-    const dark = reducer(initialLayoutState, LayoutActions.toggleTheme());
+    expect(initialLayoutState.theme).toBe('system');
+    const light = reducer(initialLayoutState, LayoutActions.toggleTheme());
+    expect(light.theme).toBe('light');
+    const dark = reducer(light, LayoutActions.toggleTheme());
     expect(dark.theme).toBe('dark');
+    expect(reducer(dark, LayoutActions.toggleTheme()).theme).toBe('system');
     expect(reducer(dark, LayoutActions.setTheme({ theme: 'light' })).theme).toBe('light');
   });
 

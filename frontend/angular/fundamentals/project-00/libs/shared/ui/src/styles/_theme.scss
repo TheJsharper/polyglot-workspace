@@ -3,7 +3,7 @@
 // Material 3 theme shared by the host and remotes. `color-scheme` makes Material emit
 // light-dark() tokens, so toggling the `dark-theme` class on <html> switches the palette.
 html {
-  color-scheme: light;
+  color-scheme: light dark;
 
   @include mat.theme(
     (
@@ -19,6 +19,10 @@ html {
 
   &.dark-theme {
     color-scheme: dark;
+  }
+
+  &.light-theme {
+    color-scheme: light;
   }
 }
 

@@ -12,7 +12,7 @@ describe('provideAppState', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    document.documentElement.classList.remove('dark-theme');
+    document.documentElement.classList.remove('dark-theme', 'light-theme');
   });
 
   function setup() {
@@ -34,11 +34,29 @@ describe('provideAppState', () => {
     expect(document.documentElement.classList.contains('dark-theme')).toBe(true);
   });
 
+  it('uses the system theme when no preference has been saved', async () => {
+    const store = setup();
+    expect(await firstValueFrom(store.select(selectTheme))).toBe('system');
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(false);
+    expect(document.documentElement.classList.contains('light-theme')).toBe(false);
+  });
+
   it('applies and persists theme changes', () => {
     const store = setup();
     store.dispatch(LayoutActions.toggleTheme());
+    expect(document.documentElement.classList.contains('light-theme')).toBe(true);
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(false);
+    expect(localStorage.getItem('app.theme')).toBe('light');
+
+    store.dispatch(LayoutActions.toggleTheme());
     expect(document.documentElement.classList.contains('dark-theme')).toBe(true);
+    expect(document.documentElement.classList.contains('light-theme')).toBe(false);
     expect(localStorage.getItem('app.theme')).toBe('dark');
+
+    store.dispatch(LayoutActions.toggleTheme());
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(false);
+    expect(document.documentElement.classList.contains('light-theme')).toBe(false);
+    expect(localStorage.getItem('app.theme')).toBe('system');
   });
 
   it('redacts passwords from actions sent to the devtools', () => {

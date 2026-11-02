@@ -8,7 +8,7 @@ export interface LayoutState {
 
 export const initialLayoutState: LayoutState = {
   sidenavOpened: true,
-  theme: 'light',
+  theme: 'system',
 };
 
 export const LayoutActions = createActionGroup({

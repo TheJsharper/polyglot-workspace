@@ -36,6 +36,17 @@ describe('MainLayoutComponent', () => {
     expect(theme).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the system theme preference by default and updates its accessible label', async () => {
+    const fixture = await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    const button = el.querySelector<HTMLButtonElement>('[data-testid="theme-toggle"]');
+    expect(button?.getAttribute('aria-label')).toBe('Theme: System. Change theme');
+
+    fixture.componentRef.setInput('theme', 'dark');
+    await fixture.whenStable();
+    expect(button?.getAttribute('aria-label')).toBe('Theme: Dark. Change theme');
+  });
+
   it('shows the Google avatar without a referrer and falls back to initials on error', async () => {
     const fixture = await setup();
     fixture.componentRef.setInput('username', 'Ada Lovelace');

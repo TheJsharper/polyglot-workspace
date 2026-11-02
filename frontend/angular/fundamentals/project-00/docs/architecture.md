@@ -10,6 +10,8 @@ This workspace uses Nx 23 and Angular 22 for a browser application, reusable lib
 
 The static host page shows an animated dashboard skeleton behind the existing loading spinner and elapsed-time status until federation, Angular bootstrap and the blocking initial route navigation complete. The web host opts into blocking initial navigation; other `provideShell()` consumers keep the default non-blocking router behavior. Startup failures show a retry action; the elapsed time is not presented as a percentage because the browser has no reliable overall progress signal.
 
+The browser theme follows the operating system by default. The header theme control cycles through System, Light and Dark; an explicit choice is saved in local storage and applies to both the startup skeleton and the app. Browser UI colors, including the startup screen, use Angular Material system color and elevation tokens; the skeleton background uses the same surface token as the app body.
+
 ## Micro-frontends (Native Federation)
 
 `web-app` is a dynamic Native Federation host. [`main.ts`](../apps/web-app/src/main.ts) calls `initFederation('federation.manifest.json')` before bootstrapping; [`public/federation.manifest.json`](../apps/web-app/public/federation.manifest.json) maps remote names to their `remoteEntry.json` URLs, so deployments can point at other origins without rebuilding the host. The `es-module-shims` polyfill is copied from `node_modules` as an asset and loaded by a deferred classic `<script>` (preceded by `<script type="esms-options">{"shimMode":true}</script>`) in each `index.html`, not via `polyfills`, which keeps the Vite dev server from re-analysing its intentional dynamic `import()` calls.
