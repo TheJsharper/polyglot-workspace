@@ -10,6 +10,7 @@ export class UniversitySession {
   private readonly accessToken = signal<string | null>(null);
   private readonly currentUser = signal<MeResponse | null>(null);
   private expiresAt = 0;
+  private mobileRefreshSecret: string | null = null;
   private expirationTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly user = this.currentUser.asReadonly();
@@ -21,6 +22,14 @@ export class UniversitySession {
     return this.start(await this.api.login(credentials), true);
   }
 
+  async loginMobile(credentials: LoginRequest): Promise<MeResponse> {
+    this.clearLocal();
+    const issued = await this.api.mobileLogin(credentials);
+    this.requireRefreshSecret(issued.refreshSecret);
+    this.mobileRefreshSecret = issued.refreshSecret;
+    return this.start(issued.session, true);
+  }
+
   async redeemDemo(request: DemoRedeemRequest): Promise<MeResponse> {
     this.clearLocal();
     return this.start(await this.api.redeemDemo(request));
@@ -30,6 +39,22 @@ export class UniversitySession {
     const result = await this.api.googleComplete(ticket, onboarding);
     if (result.session) {
       this.clearLocal();
+      await this.start(result.session, true);
+    }
+    return result;
+  }
+
+  async completeGoogleMobile(
+    ticket: string,
+    codeVerifier: string,
+    onboarding?: GoogleOnboardingRequest,
+  ): Promise<GoogleCompleteResponse> {
+    const result = await this.api.googleMobileComplete(ticket, { codeVerifier, onboarding });
+    if (result.session) {
+      const refreshSecret = result.refreshSecret;
+      this.requireRefreshSecret(refreshSecret);
+      this.clearLocal();
+      this.mobileRefreshSecret = refreshSecret;
       await this.start(result.session, true);
     }
     return result;
@@ -103,10 +128,18 @@ export class UniversitySession {
   }
 
   logout(): void {
+    const refreshSecret = this.mobileRefreshSecret;
     this.clearLocal();
-    void this.api.endSession().catch((error: unknown) => {
+    const revoke = refreshSecret ? () => this.api.mobileLogout(refreshSecret) : () => this.api.endSession();
+    void revoke().catch((error: unknown) => {
       console.error('Could not revoke the server session', error);
     });
+  }
+
+  private requireRefreshSecret(value: string | undefined): asserts value is string {
+    if (typeof value !== 'string' || value.length < 32) {
+      throw new Error('The server returned an invalid mobile refresh credential.');
+    }
   }
 
   private clearLocal(): void {
@@ -115,6 +148,7 @@ export class UniversitySession {
       this.expirationTimer = undefined;
     }
     this.expiresAt = 0;
+    this.mobileRefreshSecret = null;
     this.accessToken.set(null);
     this.currentUser.set(null);
   }
@@ -128,7 +162,16 @@ export class UniversitySession {
 
   private async refreshSession(): Promise<void> {
     try {
-      await this.start(await this.api.refresh(), true);
+      const currentRefreshSecret = this.mobileRefreshSecret;
+      if (currentRefreshSecret) {
+        const refreshed = await this.api.mobileRefresh(currentRefreshSecret);
+        this.requireRefreshSecret(refreshed.refreshSecret);
+        this.mobileRefreshSecret = refreshed.refreshSecret;
+        await this.start(refreshed.session, true);
+      }
+      else {
+        await this.start(await this.api.refresh(), true);
+      }
     } catch (error) {
       this.clearLocal();
       console.error('Could not refresh the application session', error);

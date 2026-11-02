@@ -37,6 +37,25 @@ describe('UniversitySession', () => {
     expect(session.authenticated()).toBe(false);
   });
 
+  it('uses the mobile login response and revokes its in-memory refresh secret on logout', async () => {
+    const refreshSecret = 'r'.repeat(43);
+    vi.spyOn(UniversityApi.prototype, 'mobileLogin').mockResolvedValue({
+      session: { accessToken: 'mobile-token', tokenType: 'Bearer', expiresIn: 60 },
+      refreshSecret,
+    });
+    vi.spyOn(UniversityApi.prototype, 'mobileLogout').mockResolvedValue(undefined);
+    vi.spyOn(UniversityApi.prototype, 'me').mockResolvedValue({ username: 'admin', role: 'ADMIN' });
+    const session = TestBed.inject(UniversitySession);
+
+    await session.loginMobile({ username: 'admin', password: 'password-123' });
+    expect(session.user()?.role).toBe('ADMIN');
+    expect(session.authenticated()).toBe(true);
+
+    session.logout();
+    await vi.waitFor(() => expect(UniversityApi.prototype.mobileLogout).toHaveBeenCalledWith(refreshSecret));
+    expect(session.authenticated()).toBe(false);
+  });
+
   it('logs out on unauthorized requests but not on forbidden requests', async () => {
     vi.spyOn(UniversityApi.prototype, 'login').mockResolvedValue({
       accessToken: 'test-token', tokenType: 'Bearer', expiresIn: 60,

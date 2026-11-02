@@ -37,6 +37,14 @@ describe('UniversityApi', () => {
     expect(auth(call(g).init)).toBeUndefined();
   });
 
+  it('builds a mobile Google OAuth URL with state and PKCE challenge', () => {
+    const url = new URL(make(mockFetch(200)).googleMobileStartUrl('state-value', 'challenge-value'));
+    expect(url.origin).toBe('http://localhost:8080');
+    expect(url.pathname).toBe('/api/auth/google/mobile/start');
+    expect(url.searchParams.get('state')).toBe('state-value');
+    expect(url.searchParams.get('code_challenge')).toBe('challenge-value');
+  });
+
   it('URL-encodes path and query params', async () => {
     const f = mockFetch(200, {});
     await make(f).getStudent('a/b c?#');

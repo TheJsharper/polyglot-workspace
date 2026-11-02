@@ -44,7 +44,19 @@ export interface GoogleOnboardingRequest {
 }
 export interface GoogleCompleteResponse {
   session?: TokenResponse;
+  refreshSecret?: string;
   onboardingRequired: boolean;
+}
+export interface GoogleStatusResponse {
+  enabled: boolean;
+}
+export interface MobileSessionResponse {
+  session: TokenResponse;
+  refreshSecret: string;
+}
+export interface MobileGoogleCompleteRequest {
+  codeVerifier: string;
+  onboarding?: GoogleOnboardingRequest;
 }
 export interface DemoRedeemRequest {
   token: string;

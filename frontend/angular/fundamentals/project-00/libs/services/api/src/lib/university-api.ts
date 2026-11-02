@@ -13,7 +13,10 @@ import type {
   DemoLoginResponse,
   DemoRedeemRequest,
   GoogleCompleteResponse,
+  GoogleStatusResponse,
   GoogleOnboardingRequest,
+  MobileGoogleCompleteRequest,
+  MobileSessionResponse,
   EditNotesRequest,
   LectureResponse,
   LoginRequest,
@@ -67,9 +70,33 @@ export class UniversityApi {
   login(request: LoginRequest): Promise<TokenResponse> {
     return this.send('POST', '/api/auth/login', { body: request, anonymous: true });
   }
+  mobileLogin(request: LoginRequest): Promise<MobileSessionResponse> {
+    return this.send('POST', '/api/auth/mobile/login', { body: request, anonymous: true });
+  }
+  mobileRefresh(refreshSecret: string): Promise<MobileSessionResponse> {
+    return this.send('POST', '/api/auth/mobile/refresh', { body: { refreshSecret }, anonymous: true });
+  }
+  mobileLogout(refreshSecret: string): Promise<NoContent> {
+    return this.send('POST', '/api/auth/mobile/logout', { body: { refreshSecret }, anonymous: true });
+  }
+  googleStatus(): Promise<GoogleStatusResponse> {
+    return this.send('GET', '/api/auth/google/status', { anonymous: true });
+  }
+  googleMobileStartUrl(state: string, codeChallenge: string): string {
+    const url = new URL(`${this.base}/api/auth/google/mobile/start`);
+    url.searchParams.set('state', state);
+    url.searchParams.set('code_challenge', codeChallenge);
+    return url.toString();
+  }
   googleComplete(ticket: string, onboarding?: GoogleOnboardingRequest): Promise<GoogleCompleteResponse> {
     return this.send('POST', `/api/auth/google/complete?ticket=${enc(ticket)}`, {
       body: onboarding,
+      anonymous: true,
+    });
+  }
+  googleMobileComplete(ticket: string, request: MobileGoogleCompleteRequest): Promise<GoogleCompleteResponse> {
+    return this.send('POST', `/api/auth/google/mobile/complete?ticket=${enc(ticket)}`, {
+      body: request,
       anonymous: true,
     });
   }
