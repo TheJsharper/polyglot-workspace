@@ -49,7 +49,7 @@ After sign-in, administrators land on Students. The University drawer follows th
 - **PROFESSOR**: schedule, reschedule and cancel lectures for courses they teach; record/remove attendance; reassign delivery for their course's lectures to another assigned professor; review and grade notes; pending-review list.
 - **STUDENT**: own profile; enroll/unenroll themselves; write notes for attended lectures; edit/delete own notes.
 
-Every screen shows explicit loading, error (with Retry on loads) and success states, and every delete or cancel asks for inline confirmation first.
+Every screen shows explicit loading (a pulsing skeleton of a profile block and two post cards, colored by the same System/Light/Dark theme tokens as the web startup skeleton), error (with Retry on loads) and success states, and every delete or cancel asks for inline confirmation first.
 
 ## Light and dark mode
 

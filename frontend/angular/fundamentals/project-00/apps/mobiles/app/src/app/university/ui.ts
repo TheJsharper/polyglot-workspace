@@ -14,13 +14,14 @@ import {
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideEye, lucideEyeOff } from '@ng-icons/lucide';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from '@ng-native/components';
+import { Pressable, ScrollView, Text, TextInput, View } from '@ng-native/components';
 import type { KeyboardType } from '@ng-native/components';
 import { ColorScheme, Keyboard } from '@ng-native/device';
 import { NgIcon } from '@ng-native/icons';
 import { NativeHeader, NativeHeaderItem } from '@ng-native/router';
 import { PALETTE } from '../theme.ts';
 import { ThemeToggle } from '../theme-preference.ts';
+import { AppSkeleton } from './skeleton.ts';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -418,7 +419,7 @@ export class AppSection {
 @Component({
   selector: 'app-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ActivityIndicator, AppButton, NativeHeader, NativeHeaderItem, ScrollView, Text, ThemeToggle, View],
+  imports: [AppButton, AppSkeleton, NativeHeader, NativeHeaderItem, ScrollView, Text, ThemeToggle, View],
   host: { style: 'flex: 1' },
   template: `
     <native-header [title]="title()">
@@ -430,10 +431,7 @@ export class AppSection {
     <scroll-view class="scroll" keyboardShouldPersistTaps="handled" (scrollBeginDrag)="keyboard.dismiss()">
       <view class="body">
         @if (loading()) {
-          <view class="loading" accessibilityRole="progressbar" accessibilityLabel="Loading">
-            <activity-indicator />
-            <text class="muted">Loading…</text>
-          </view>
+          <app-skeleton />
         }
         @if (error(); as message) {
           <view class="error" accessibilityRole="alert">
@@ -460,14 +458,6 @@ export class AppSection {
     .body {
       padding: 20px 16px 32px 16px;
       gap: 14px;
-    }
-    .loading {
-      flex-direction: row;
-      align-items: center;
-      gap: 10px;
-    }
-    .muted {
-      color: var(--muted);
     }
     .error {
       gap: 10px;
