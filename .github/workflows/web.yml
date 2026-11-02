@@ -1,13 +1,28 @@
-name: CI/CD
+name: Web
 
 on:
   pull_request:
+    paths:
+      - 'frontend/angular/fundamentals/project-00/**'
+      - '!frontend/angular/fundamentals/project-00/apps/mobiles/**'
+      - '!frontend/angular/fundamentals/project-00/docs/**'
+      - '!frontend/angular/fundamentals/project-00/**/*.md'
+      - 'deploy/cloudflare/**'
+      - '.github/workflows/web.yml'
   push:
     branches: [main]
+    paths:
+      - 'frontend/angular/fundamentals/project-00/**'
+      - '!frontend/angular/fundamentals/project-00/apps/mobiles/**'
+      - '!frontend/angular/fundamentals/project-00/docs/**'
+      - '!frontend/angular/fundamentals/project-00/**/*.md'
+      - 'deploy/cloudflare/**'
+      - '.github/workflows/web.yml'
 
+# A deploy in flight on main is never cancelled; only superseded pull request runs are.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: web-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -16,23 +31,6 @@ env:
   FRONTEND_DIR: frontend/angular/fundamentals/project-00
 
 jobs:
-  backend-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [project-00, project-01]
-    defaults:
-      run:
-        working-directory: backend/spring/fundamentals/${{ matrix.service }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '25'
-          cache: maven
-      - run: chmod +x mvnw && ./mvnw -B -q clean test
-
   frontend-test:
     runs-on: ubuntu-latest
     defaults:
@@ -46,7 +44,7 @@ jobs:
           cache: npm
           cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
       - run: npm ci
-      - run: npx nx run-many -t lint test -p web-app shells-main layouts-main-layout views-university services-university-state services-api remote-students remote-professors remote-courses remote-lectures remote-notes
+      - run: npx nx run-many -t lint test -p web-app shells-main layouts-main-layout views-university services-university-state services-api services-core services-state services-session shared-ui remote-students remote-professors remote-courses remote-lectures remote-notes
       - run: npx nx run-many -t build -p web-app remote-students remote-professors remote-courses remote-lectures remote-notes
       # One static site: host at the root, each remote under /remotes/<name>/.
       - name: Assemble site
@@ -65,10 +63,10 @@ jobs:
           path: ${{ env.FRONTEND_DIR }}/site
           retention-days: 7
 
-  # Releases only run for pushes to main and only after every test job passed.
+  # Releases only run for pushes to main and only after the web tests passed.
   deploy-frontend:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend-test, frontend-test]
+    needs: [frontend-test]
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -85,14 +83,3 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
         run: npx --yes wrangler@4 pages deploy ../../site --project-name "$PROJECT" --branch main
-
-  deploy-api:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend-test, frontend-test]
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Trigger Render deploy
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"

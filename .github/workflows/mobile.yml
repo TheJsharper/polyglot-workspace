@@ -1,0 +1,57 @@
+name: Mobile
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/angular/fundamentals/project-00/apps/mobiles/**'
+      - 'frontend/angular/fundamentals/project-00/libs/services/api/**'
+      - 'frontend/angular/fundamentals/project-00/libs/services/session/**'
+      - 'frontend/angular/fundamentals/project-00/package.json'
+      - 'frontend/angular/fundamentals/project-00/package-lock.json'
+      - 'frontend/angular/fundamentals/project-00/nx.json'
+      - 'frontend/angular/fundamentals/project-00/tsconfig.base.json'
+      - '!frontend/angular/fundamentals/project-00/**/*.md'
+      - '.github/workflows/mobile.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/angular/fundamentals/project-00/apps/mobiles/**'
+      - 'frontend/angular/fundamentals/project-00/libs/services/api/**'
+      - 'frontend/angular/fundamentals/project-00/libs/services/session/**'
+      - 'frontend/angular/fundamentals/project-00/package.json'
+      - 'frontend/angular/fundamentals/project-00/package-lock.json'
+      - 'frontend/angular/fundamentals/project-00/nx.json'
+      - 'frontend/angular/fundamentals/project-00/tsconfig.base.json'
+      - '!frontend/angular/fundamentals/project-00/**/*.md'
+      - '.github/workflows/mobile.yml'
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  FRONTEND_DIR: frontend/angular/fundamentals/project-00
+
+jobs:
+  # Store builds and submissions (EAS) are added in a later phase; see docs/releases/deployment-web-mobile.md.
+  mobile-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.FRONTEND_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+          cache: npm
+          cache-dependency-path: |
+            ${{ env.FRONTEND_DIR }}/package-lock.json
+            ${{ env.FRONTEND_DIR }}/apps/mobiles/app/package-lock.json
+      - run: npm ci
+      - run: npm ci
+        working-directory: ${{ env.FRONTEND_DIR }}/apps/mobiles/app
+      - run: npx nx run-many -t typecheck test -p app
