@@ -1,7 +1,12 @@
 # Deploying (free tier)
 
-Push to `main` runs `.github/workflows/ci-cd.yml`: tests both backends, lints/tests/builds the frontend, then
-deploys. Pull requests only run the tests.
+Pushes to `main` run three independent workflows, each filtered by the paths it owns:
+
+- `.github/workflows/api.yml`: backend tests, then the Render deploy.
+- `.github/workflows/web.yml`: web lint/test/build, then the Cloudflare Pages deploy.
+- `.github/workflows/mobile.yml`: mobile typecheck and tests (store releases come later).
+
+Pull requests only run the tests. See `frontend/angular/fundamentals/project-00/docs/releases/deployment-web-mobile.md`.
 
 ## One-time setup
 
