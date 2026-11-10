@@ -91,3 +91,8 @@ vite.config.*.timestamp*
 # --- Nx (machine-local; .nx/installation stays trackable) --------------------
 **/.nx/cache/
 **/.nx/workspace-data/
+
+# --- Rust --------------------------------------------------------------------
+**/target/
+*.pdb
+Cargo.lock
