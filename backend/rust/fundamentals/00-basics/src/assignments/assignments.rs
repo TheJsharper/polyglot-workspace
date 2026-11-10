@@ -1,0 +1,26 @@
+pub const MY_ASSIGNMENT_NUMBER: i32 = 5;
+
+pub const MY_ASSIGNMENT_STRING: &str = "Hello";
+
+pub const MY_ASSIGNMENT_BOOLEAN: bool = true;
+
+pub const MY_ASSIGNMENT_FLOAT: f32 = 3.14;
+
+pub const MY_ASSIGNMENT_CHAR: char = 'A';
+
+pub const MY_ASSIGNMENT_UNSIGNED: u32 = 10;
+
+pub const MY_ASSIGNMENT_RESULT: Result<i32, &str> = Ok(42);
+
+pub const MY_ASSIGNMENT_OPTION: Option<i32> = Some(10);
+
+pub const MY_ASSIGNMENT_INCREMENT: i32 = MY_ASSIGNMENT_NUMBER + 3;
+
+pub const MY_ASSIGNMENT_DECREMENT: i32 = MY_ASSIGNMENT_NUMBER - 2;
+
+pub const MY_ASSIGNMENT_MULTIPLY: i32 = MY_ASSIGNMENT_NUMBER * 2;
+
+pub const MY_ASSIGNMENT_DIVIDE: i32 = MY_ASSIGNMENT_NUMBER / 2;
+
+pub const MY_ASSIGNMENT_REMAINDER: i32 = MY_ASSIGNMENT_NUMBER % 2;
+

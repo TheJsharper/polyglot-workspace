@@ -1,0 +1,9 @@
+pub const MY_OPERATOR_NUMBER: i32 = 5+3;
+
+pub const MY_OPERATOR_SUBTRACTION: i32 = 10-4;
+
+pub const MY_OPERATOR_MULTIPLICATION: i32 = 6*7;
+
+pub const MY_OPERATOR_DIVISION: i32 = 20/5;
+
+pub const MY_OPERATOR_REMAINDER: i32 = 20%3;

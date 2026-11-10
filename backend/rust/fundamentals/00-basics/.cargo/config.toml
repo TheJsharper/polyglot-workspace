@@ -1,0 +1,5 @@
+[alias]
+test-all = "test --test run_all"
+test-constants = "test --test constants_test"
+test-operators = "test --test operators_test"
+test-assignments = "test --test assignments_test"
