@@ -31,3 +31,14 @@ pub fn greeting_message(time:i16)-> String{
     }
     
 }
+pub fn get_assign_grade(score:i16)-> &'static str{
+    if score >=90{
+        "Grade: A"
+    }else if score >= 80{
+        "Grade: B"
+    }else if score >= 70{
+        "Grade: C"
+    }else {
+        "Grade: F"
+    }
+}

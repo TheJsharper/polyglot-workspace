@@ -52,5 +52,18 @@ fn test_comparison_message() -> () {
 fn test_greeting_message()->(){
 
     assert_eq!(greeting_message(20), "Good evening");
+
     assert_eq!(greeting_message(17), "Good Day");
+}
+
+#[test]
+fn test_get_assign_grade()->(){
+
+    assert_eq!(get_assign_grade(90),"Grade: A");
+
+    assert_eq!(get_assign_grade(80), "Grade: B");
+
+    assert_eq!(get_assign_grade(70), "Grade: C");
+
+    assert_eq!(get_assign_grade(60),"Grade: F");
 }
