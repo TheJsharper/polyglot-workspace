@@ -1,130 +1,139 @@
-# Loops Module — Result vs Panic Review
+# Loops Module — Test Review
 
-## What happened
+## Current State
 
-We went through three approaches before landing on the right one:
-
-| Attempt               | Problem                                  | Output                          |
-| --------------------- | ---------------------------------------- | ------------------------------- |
-| `error!()` macro      | `core::error` is a module, not a macro   | compilation error               |
-| `panic!()` + `catch_unwind` | panic caught but backtrace still prints | noisy, confusing               |
-| `panic!()` + `#[should_panic]` | always prints panic to stdout         | noisy even on pass              |
-| `Result<T, E>`        | no panic, no noise, clean assertions     | **clean — this is the answer**  |
+| Metric          | Value         |
+| --------------- | ------------- |
+| Total tests     | 16            |
+| All passing     | yes           |
+| Functions tested| 6             |
+| Error path tests| 9             |
+| Happy path tests| 7             |
 
 ---
 
-## Result is like a Promise
+## Test Coverage Map
 
-### JavaScript Promise
+| Function                | Happy | Invalid Input | Boundary | Missing           |
+| ----------------------- | :---: | :-----------: | :------: | ----------------- |
+| `print_to_end`          | yes   | yes (0)       | no       | negative end      |
+| `print_to_start`        | yes   | yes (0)       | no       | negative start    |
+| `print_range`           | yes   | yes (3,1)     | yes      | equal start==end  |
+| `print_sum_to_end`      | yes   | yes (0)       | no       | negative end      |
+| `print_sum_to_start`    | yes   | yes (0)       | no       | negative start    |
+| `print_sum_range`       | yes   | yes (3,1)     | yes      | equal start==end  |
 
-```js
-// Async function returns a Promise
-async function fetchData(url) {
-  if (!url) {
-    throw new Error("URL is required");
-  }
-  const response = await fetch(url);
-  return response.json();
-}
+---
 
-// Caller handles both outcomes
-fetchData("api/data")
-  .then(data => console.log(data))    // success path
-  .catch(err => console.error(err));  // error path
-```
+## What works well
 
-### Rust Result
+### Consistent Result pattern
+
+Every function returns `Result<T, String>`. Every test checks `is_ok()`/`is_err()` before unwrapping. No panics, no noise.
 
 ```rust
-// Function returns a Result
-fn print_to_end(end: i32) -> Result<String, String> {
-    if end < 1 {
-        return Err("End must be greater than or equal to 1".to_string());
-    }
-    // ... build string ...
-    Ok(result)
-}
-
-// Caller handles both outcomes
 let result = print_to_end(3);
-match result {
-    Ok(output) => println!("{}", output),   // success path
-    Err(msg) => eprintln!("{}", msg),       // error path
-}
+assert!(result.is_ok());
+assert_eq!(result.unwrap(), "1\n2\n3\n");
 ```
 
-### The mapping
-
-| JavaScript         | Rust                  | Meaning                        |
-| ------------------ | --------------------- | ------------------------------ |
-| `Promise<T>`       | `Result<T, E>`        | "This might succeed or fail"   |
-| `.then(data => ...)`  | `Ok(value)` / `unwrap()` | success case              |
-| `.catch(err => ...)`  | `Err(msg)` / `unwrap_err()` | error case            |
-| `throw new Error()`   | `return Err(...)`     | signal failure                 |
-| `await promise`       | `result?`             | propagate error upward         |
-| `try/catch`           | `match result { ... }`| handle both branches           |
-
----
-
-## Key difference: sync vs async
-
-Promise is **async** — it represents work that happens later.
-Result is **sync** — the value is already here, you just need to check it.
-
-For async in Rust, you use `Future` (the actual Promise equivalent), but it still returns a `Result` when it resolves. So the pattern composes:
+### Error tests check both the error exists AND the message
 
 ```rust
-// Rust async (closest to JS async/await)
-async fn fetch_data(url: &str) -> Result<Data, Error> {
-    if url.is_empty() {
-        return Err("URL required".into());
-    }
-    // ... async work ...
-    Ok(data)
-}
+let result = print_to_end(0);
+assert!(result.is_err());
+assert_eq!(result.unwrap_err(), "End must be greater than or equal to 1");
 ```
+
+This is better than just `assert!(result.is_err())` — it proves the error message is correct, not just that an error occurred.
 
 ---
 
-## Panic is NOT an error
+## What is missing
 
-A panic in Rust is like an uncaught exception that crashes the whole process. It is not for "the user gave bad input". It is for "something impossible happened and the program cannot continue".
+### 1. No boundary tests for single-value loops
+
+`print_to_end(1)` should produce `"1\n"`. `print_to_start(1)` should produce `"1\n"`. These are the smallest valid inputs.
 
 ```rust
-// WRONG: panic for bad user input
-fn divide(a: i32, b: i32) -> i32 {
-    if b == 0 {
-        panic!("Cannot divide by zero");  // noisy, crashes
-    }
-    a / b
-}
-
-// RIGHT: Result for bad input
-fn divide(a: i32, b: i32) -> Result<i32, String> {
-    if b == 0 {
-        return Err("Cannot divide by zero".to_string());
-    }
-    Ok(a / b)
+#[test]
+fn test_print_to_end_boundary_one() {
+    let result = print_to_end(1);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), "1\n");
 }
 ```
 
+### 2. No equal-range tests
+
+`print_range(3, 3)` and `print_sum_range(3, 3)` are valid inputs (start equals end). They are not tested.
+
+```rust
+#[test]
+fn test_print_range_equal() {
+    let result = print_range(3, 3);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), 3);
+}
+```
+
+### 3. No negative input tests
+
+All invalid tests use `0`. What about `-1`, `-100`? The source checks `end < 1`, so negatives should also fail.
+
+```rust
+#[test]
+fn test_print_to_end_negative() {
+    let result = print_to_end(-5);
+    assert!(result.is_err());
+}
+```
+
+### 4. `print_range` invalid test is incomplete
+
+`test_print_range_invalid` only tests `start > end` (3, 1). But `print_range` also rejects `start < 1` or `end < 1`. Those are covered by `test_print_range_invalid_start` and `test_print_range_invalid_end`, but they test a different error message. The three rejection paths are covered, just split across different test names — that is fine.
+
 ---
 
-## Why catch_unwind printed the backtrace
+## Duplication concern
 
-`catch_unwind` catches the panic so the test passes, but Rust's panic hook runs **before** the catch. The hook prints the message and backtrace to stderr. There is no way to silence it without custom panic hooks.
+`print_range` and `print_sum_range` have nearly identical validation logic and nearly identical tests. The only difference is return type: `print_range` returns the sum as `Result<i32, String>`, and so does `print_sum_range`. They are the same function with different names.
 
-This is why `catch_unwind` exists: to test that a library panics when given bad data, or to prevent a plugin from crashing the host. It is **not** a general error-handling mechanism.
+If this is intentional for learning, it is fine. If not, consider removing one.
 
 ---
 
-## Rule of thumb
+## Improvement: data-driven tests
 
-| Situation                      | Use       |
-| ------------------------------ | --------- |
-| Expected failure, caller should handle | `Result<T, E>` |
-| Programming error, never recoverable     | `panic!()`     |
-| Test that a function panics              | `#[should_panic]` |
-| Catch a panic silently                   | **cannot be done** |
+The matches module uses arrays of expected values. The loops tests repeat the same three-line pattern 16 times. You could compress:
 
-If you want it to behave like a Promise's `.catch()`, use `Result`. Always.
+```rust
+#[test]
+fn test_print_to_end_all() {
+    let cases = [
+        (3, Ok("1\n2\n3\n".to_string())),
+        (1, Ok("1\n".to_string())),
+        (0, Err("End must be greater than or equal to 1".to_string())),
+        (-5, Err("End must be greater than or equal to 1".to_string())),
+    ];
+
+    for (input, expected) in cases {
+        assert_eq!(print_to_end(input), expected, "input: {}", input);
+    }
+}
+```
+
+This cuts 4 tests into 1, and adding a new case is just one line.
+
+---
+
+## Summary of recommendations
+
+| Priority | Action                                    | Effort   |
+| -------- | ----------------------------------------- | -------- |
+| High     | Add `print_to_end(1)` boundary test       | 1 minute |
+| High     | Add `print_to_start(1)` boundary test     | 1 minute |
+| Medium   | Add `print_range(3, 3)` equal-range test  | 1 minute |
+| Medium   | Add negative input tests                  | 2 minutes|
+| Low      | Compress repeated assertions into arrays  | 10 mins  |
+| Low      | Decide if `print_range` and `print_sum_range` are both needed | decision |
