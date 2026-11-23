@@ -24,3 +24,6 @@ mod loops_loops_test;
 
 #[path = "loops/while_loops_test.rs"]
 mod loops_while_loops_test;
+
+#[path = "loops/for_loops_test.rs"]
+mod loops_for_loops_test;
