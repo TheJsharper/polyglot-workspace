@@ -46,3 +46,69 @@ pub fn demonstrate_basic_concatenate_strings_with_format() -> String {
     let s2 = String::from(", world!");
     format!("{}{}", s1, s2)
 }
+
+// --- Basic String Methods ---
+
+pub fn demonstrate_string_length(s: &str) -> usize {
+    s.len()
+}
+
+pub fn demonstrate_string_is_empty(s: &str) -> bool {
+    s.is_empty()
+}
+
+pub fn demonstrate_string_contains(s: &str, substring: &str) -> bool {
+    s.contains(substring)
+}
+
+pub fn demonstrate_string_starts_with(s: &str, prefix: &str) -> bool {
+    s.starts_with(prefix)
+}
+
+pub fn demonstrate_string_ends_with(s: &str, suffix: &str) -> bool {
+    s.ends_with(suffix)
+}
+
+pub fn demonstrate_string_replace(s: &str, from: &str, to: &str) -> String {
+    s.replace(from, to)
+}
+
+pub fn demonstrate_string_to_uppercase(s: &str) -> String {
+    s.to_uppercase()
+}
+
+pub fn demonstrate_string_to_lowercase(s: &str) -> String {
+    s.to_lowercase()
+}
+
+pub fn demonstrate_string_trim(s: &str) -> &str {
+    s.trim()
+}
+
+pub fn demonstrate_string_split<'a>(s: &'a str, delimiter: &str) -> Vec<&'a str> {
+    s.split(delimiter).collect()
+}
+
+pub fn demonstrate_string_find(s: &str, substring: &str) -> Option<usize> {
+    s.find(substring)
+}
+
+pub fn demonstrate_string_slice(s: &str, start: usize, end: usize) -> &str {
+    &s[start..end]
+}
+
+pub fn demonstrate_string_push_char(s: &mut String, c: char) {
+    s.push(c);
+}
+
+pub fn demonstrate_string_clear(s: &mut String) {
+    s.clear();
+}
+
+pub fn demonstrate_string_chars(s: &str) -> Vec<char> {
+    s.chars().collect()
+}
+
+pub fn demonstrate_string_repeat(s: &str, n: usize) -> String {
+    s.repeat(n)
+}
