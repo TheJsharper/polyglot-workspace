@@ -1,0 +1,17 @@
+[package]
+name = "ios"
+version = "0.1.0"
+edition = "2024"
+
+
+[[test]]
+name = "read_test"
+path = "tests/reads/reads_file_test.rs"
+
+[[test]]
+name = "write_file_test"
+path = "tests/writes/writes_file_test.rs"
+
+[[test]]
+name = "run_all"
+path = "tests/run_all.rs"
