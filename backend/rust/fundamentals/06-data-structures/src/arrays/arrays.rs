@@ -50,19 +50,3 @@ pub fn try_set_element<'a>(arr: &mut [&'a str; 3], index: usize, value: &'a str)
 pub fn try_set_vec<'a>(cars: &mut Vec<&'a str>, value: &'a str) {
     cars.push(value);
 }
-
-pub fn create_person(name: &str, age: i32, is_active: bool) -> (&str, i32, bool) {
-    (name, age, is_active)
-}
-
-pub fn get_person_name<'a>(person: &'a (&'a str, i32, bool)) -> &'a str {
-    person.0
-}
-
-pub fn get_person_age(person: &(&str, i32, bool)) -> i32 {
-    person.1
-}
-
-pub fn is_person_active(person: &(&str, i32, bool)) -> bool {
-    person.2
-}

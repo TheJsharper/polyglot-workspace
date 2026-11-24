@@ -17,22 +17,6 @@ fn test_find_array_mut() {
 }
 
 #[test]
-fn test_tuple_person() {
-    let person = create_person("John", 30, true);
-    assert_eq!(get_person_name(&person), "John");
-    assert_eq!(get_person_age(&person), 30);
-    assert!(is_person_active(&person));
-}
-
-#[test]
-fn test_tuple_direct_access() {
-    let person = ("John", 30, true);
-    assert_eq!(person.0, "John");
-    assert_eq!(person.1, 30);
-    assert_eq!(person.2, true);
-}
-
-#[test]
 fn test_mutable_array() {
     let mut numbers = [1, 2, 3, 4, 5];
     assert_eq!(numbers[0], 1);

@@ -56,21 +56,16 @@ fn test_vec_remove() {
 #[test]
 fn test_find_by_lambda() {
     let fruits = vec!["apple", "banana", "cherry", "apricot"];
-    // Find first fruit starting with 'a'
     assert_eq!(find_by(&fruits, |&f| f.starts_with('a')), Some(0));
-    // Find first fruit with length > 6
-    assert_eq!(find_by(&fruits, |&f| f.len() > 6), Some(3)); // "apricot"
-    // Find non-existent
+    assert_eq!(find_by(&fruits, |&f| f.len() > 6), Some(3));
     assert_eq!(find_by(&fruits, |&f| f == "grape"), None);
 }
 
 #[test]
 fn test_find_all_by_lambda() {
     let fruits = vec!["apple", "banana", "cherry", "apricot", "avocado"];
-    // Find all fruits starting with 'a'
     let indices = find_all_by(&fruits, |&f| f.starts_with('a'));
     assert_eq!(indices, vec![0, 3, 4]);
-    // Find all fruits with length 6 (banana=6, cherry=6)
     let indices = find_all_by(&fruits, |&f| f.len() == 6);
     assert_eq!(indices, vec![1, 2]);
 }
