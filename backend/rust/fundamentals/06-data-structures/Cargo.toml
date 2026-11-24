@@ -18,5 +18,9 @@ name = "tuples_test"
 path = "tests/tuples/tuples_test.rs"
 
 [[test]]
+name = "hashmaps_test"
+path = "tests/hashmaps/hashmaps_test.rs"
+
+[[test]]
 name = "run_all"
 path = "tests/run_all.rs"

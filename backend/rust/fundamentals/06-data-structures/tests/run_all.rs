@@ -9,3 +9,6 @@ mod vectors_test;
 
 #[path = "tuples/tuples_test.rs"]
 mod tuples_test;
+
+#[path = "hashmaps/hashmaps_test.rs"]
+mod hashmaps_test;
