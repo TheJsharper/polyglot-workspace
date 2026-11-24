@@ -15,3 +15,6 @@ mod hashmaps_test;
 
 #[path = "structs/structs_test.rs"]
 mod structs_test;
+
+#[path = "enums/enums_test.rs"]
+mod enums_test;
