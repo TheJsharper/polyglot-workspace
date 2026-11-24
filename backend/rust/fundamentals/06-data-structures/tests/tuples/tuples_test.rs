@@ -43,3 +43,58 @@ fn test_tuple_destructuring() {
     assert_eq!(age, 40);
     assert!(active);
 }
+
+#[test]
+fn test_unpack_person() {
+    let person = ("Jenny", 45, false);
+    let (name, age, active) = unpack_person(person);
+    assert_eq!(name, "Jenny");
+    assert_eq!(age, 45);
+    assert!(!active);
+}
+
+#[test]
+fn test_unpack_point() {
+    let point = (10, 20);
+    let (x, y) = unpack_point(point);
+    assert_eq!(x, 10);
+    assert_eq!(y, 20);
+}
+
+#[test]
+fn test_unpack_rgb() {
+    let color = (255, 128, 64);
+    let (r, g, b) = unpack_rgb(color);
+    assert_eq!(r, 255);
+    assert_eq!(g, 128);
+    assert_eq!(b, 64);
+}
+
+#[test]
+fn test_get_user() {
+    let user = get_user();
+    assert_eq!(user.0, "Liam");
+    assert_eq!(user.1, 25);
+    // Unpack the returned tuple
+    let (name, age) = user;
+    assert_eq!(name, "Liam");
+    assert_eq!(age, 25);
+}
+
+#[test]
+fn test_calculate_stats() {
+    let numbers = [10, 20, 30, 40, 50];
+    let (min, max, avg) = calculate_stats(&numbers);
+    assert_eq!(min, 10);
+    assert_eq!(max, 50);
+    assert!((avg - 30.0).abs() < 0.001);
+}
+
+#[test]
+fn test_calculate_stats_empty() {
+    let numbers: [i32; 0] = [];
+    let (min, max, avg) = calculate_stats(&numbers);
+    assert_eq!(min, 0);
+    assert_eq!(max, 0);
+    assert!(avg.is_nan());
+}

@@ -47,6 +47,66 @@ let (name, age, active) = person;
 - More readable than `.0`, `.1`, `.2`
 - Idiomatic Rust pattern
 
+### `test_unpack_person`
+Tests the `unpack_person()` function that demonstrates explicit destructuring.
+- Takes a tuple and returns unpacked values
+- Shows how to work with tuple fields individually
+
+### `test_unpack_point`
+Tests 2D coordinate extraction.
+- Demonstrates destructuring in function parameters
+- Useful for geometric calculations
+
+### `test_unpack_rgb`
+Tests color channel extraction.
+- Separates red, green, blue components
+- Shows tuples for domain-specific data (colors)
+
+### `test_get_user`
+Tests returning a tuple from a function — a common Rust pattern.
+- `get_user()` returns `(String, i32)` — name and age
+- Demonstrates multiple return values without creating a struct
+- Tests both direct access (`user.0`) and destructuring
+
+### `test_calculate_stats`
+Tests a practical use case: returning multiple computed values.
+- Returns `(min, max, avg)` from a slice of numbers
+- Shows tuples for computed results
+- Useful when you need several related outputs
+
+### `test_calculate_stats_empty`
+Tests edge case behavior with empty input.
+- Returns `(0, 0, NaN)` for empty slices
+- Demonstrates defensive handling of empty data
+
+## Returning Tuples from Functions
+
+One of the most common uses of tuples in Rust is returning multiple values:
+
+```rust
+fn get_user() -> (String, i32) {
+    (String::from("Liam"), 25)
+}
+
+fn main() {
+    let user = get_user();
+    println!("User: {} ({} years old)", user.0, user.1);
+
+    // Or destructure directly
+    let (name, age) = get_user();
+}
+```
+
+**Why use tuples for returns?**
+- No need to define a struct for simple cases
+- Lightweight and zero-cost abstraction
+- Works well with destructuring
+
+**When to prefer structs:**
+- More than 2-3 return values
+- Values need methods or implementations
+- Semantic clarity matters (named fields)
+
 ## Tuple Access Methods
 
 | Method | Example | Pros | Cons |
