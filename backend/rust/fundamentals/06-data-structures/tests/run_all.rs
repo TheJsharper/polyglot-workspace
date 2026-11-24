@@ -12,3 +12,6 @@ mod tuples_test;
 
 #[path = "hashmaps/hashmaps_test.rs"]
 mod hashmaps_test;
+
+#[path = "structs/structs_test.rs"]
+mod structs_test;

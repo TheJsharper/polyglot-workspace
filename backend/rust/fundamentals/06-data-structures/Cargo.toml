@@ -22,5 +22,10 @@ name = "hashmaps_test"
 path = "tests/hashmaps/hashmaps_test.rs"
 
 [[test]]
+name = "structs_test"
+path = "tests/structs/structs_test.rs"
+
+
+[[test]]
 name = "run_all"
 path = "tests/run_all.rs"
