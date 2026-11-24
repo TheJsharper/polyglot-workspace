@@ -13,5 +13,9 @@ name = "write_file_test"
 path = "tests/writes/writes_file_test.rs"
 
 [[test]]
+name = "bufreader_test"
+path = "tests/bufreaders/bufreader_test.rs"
+
+[[test]]
 name = "run_all"
 path = "tests/run_all.rs"
