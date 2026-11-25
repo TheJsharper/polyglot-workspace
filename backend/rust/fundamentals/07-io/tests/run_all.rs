@@ -7,5 +7,10 @@ mod writes_file_test;
 #[path = "bufreaders/bufreader_test.rs"]
 mod bufreader_test;
 
+#[path = "bufreaders/bufreaders_line_test.rs"]
+mod bufreaders_line_test;
+
 #[path = "bufwriters/bufwriters_test.rs"]
 mod bufwriters_test;
+
+

@@ -17,6 +17,10 @@ name = "bufreader_test"
 path = "tests/bufreaders/bufreader_test.rs"
 
 [[test]]
+name = "bufreaders_line_test"
+path = "tests/bufreaders/bufreaders_line_test.rs"
+
+[[test]]
 name = "bufwriters_test"
 path = "tests/bufwriters/bufwriters_test.rs"
 
