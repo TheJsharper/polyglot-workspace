@@ -2,6 +2,7 @@ pub mod reads;
 pub mod writes;
 pub mod bufreaders;
 pub mod bufwriters;
+pub mod pipes;
 
 pub use reads::reads_file::*;
 pub use bufreaders::bufreader::*;

@@ -27,3 +27,7 @@ path = "tests/bufwriters/bufwriters_test.rs"
 [[test]]
 name = "run_all"
 path = "tests/run_all.rs"
+
+[[test]]
+name = "pipe_test"
+path = "tests/pipes/pipe_test.rs"

@@ -13,4 +13,7 @@ mod bufreaders_line_test;
 #[path = "bufwriters/bufwriters_test.rs"]
 mod bufwriters_test;
 
+#[path = "pipes/pipe_test.rs"]
+mod pipe_test;
+
 
