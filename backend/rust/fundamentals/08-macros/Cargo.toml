@@ -1,0 +1,10 @@
+[package]
+name = "macro_demo_crate"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[[test]]
+name = "macro_test"
+path = "tests/macros/macro_test.rs"

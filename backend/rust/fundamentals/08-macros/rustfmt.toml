@@ -1,0 +1,12 @@
+# rustfmt is DISABLED for this project — it cannot support the
+# one-blank-line-between-every-code-line style.
+#
+# These settings are the most permissive rustfmt allows,
+# but they will still not insert blank lines between statements.
+# Use VS Code's Shift+Alt+F at your own risk — it will remove blank lines.
+
+blank_lines_upper_bound = 3
+blank_lines_lower_bound = 0
+max_width = 100
+tab_spaces = 4
+edition = "2024"
