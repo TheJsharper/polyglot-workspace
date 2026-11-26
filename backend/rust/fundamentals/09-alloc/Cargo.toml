@@ -1,0 +1,10 @@
+[package]
+name = "alloc_demo_crate"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[[test]]
+name = "alloc_test"
+path = "tests/alloc/alloc_test.rs"
