@@ -476,3 +476,31 @@ pub fn mut_vs_pointer_mut_demo() -> (i32, i32) {
 
     (unsafe { *const_ptr_a }, unsafe { *mut_ptr_b })
 }
+
+/// Proves that mutating through a `*mut T` pointer mutates the original variable.
+///
+/// **Yes — exactly like C.** The pointer and the variable share the same memory.
+/// After `*ptr = new_value`, reading the variable gives `new_value`.
+///
+/// Returns (value_before, value_through_ptr, value_after) = (100, 9999, 9999).
+pub fn pointer_mutates_original_demo() -> (i32, i32, i32) {
+    let mut original = 100;
+
+    let value_before = original;
+
+    let ptr: *mut i32 = &mut original; // pointer to the SAME memory as `original`
+
+    unsafe {
+        *ptr = 9999; // mutate through the pointer
+    }
+
+    let value_through_ptr = unsafe { *ptr };
+    let value_after = original; // reading the variable sees the mutation
+
+    // All three prove the same memory was modified:
+    //   value_before:      100
+    //   value_through_ptr: 9999  ← read via pointer
+    //   value_after:       9999  ← read via variable — SAME memory
+
+    (value_before, value_through_ptr, value_after)
+}

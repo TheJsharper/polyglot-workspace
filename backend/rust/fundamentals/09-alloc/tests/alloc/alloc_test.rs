@@ -241,3 +241,14 @@ fn test_mut_vs_pointer_mut_demo() {
     assert_eq!(through_mut, 2000);
 
 }
+
+#[test]
+fn test_pointer_mutates_original_demo() {
+
+    let (before, through_ptr, after) = pointer_mutates_original_demo();
+
+    assert_eq!(before, 100);
+    assert_eq!(through_ptr, 9999);
+    assert_eq!(after, 9999); // variable sees the pointer's mutation — same memory
+
+}
