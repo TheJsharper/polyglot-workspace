@@ -1,0 +1,10 @@
+[package]
+name = "borrow_demo_crate"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[[test]]
+name = "borrow_test"
+path = "tests/borrow/borrow_test.rs"
