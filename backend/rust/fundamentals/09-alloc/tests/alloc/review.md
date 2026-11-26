@@ -350,3 +350,29 @@ let val = *borrowed;          // i32 — dereference the guard
 | Building Vec/Box/String from scratch | `std::alloc` functions in `unsafe` |
 
 **Rule of thumb:** start with references. Only reach for raw pointers when you're building the abstractions (like `Vec` or `Box`) that everyone else uses.
+
+---
+
+## 9. Demo Functions — Operator Reference
+
+Each function in `alloc_demo.rs` demonstrates a specific operator combination. Here's the map:
+
+```rust
+let mut value = 42;
+let mut_ref = &mut value;    // &mut + * — exclusive mutable borrow
+```
+
+| Demo function | Operators used | What it proves |
+|---|---|---|
+| `borrow_immutable_demo` | `&` + `*` | `&value` creates `&T`; `*ref` reads through it; multiple `&` borrows coexist |
+| `borrow_mutable_demo` | `&mut` + `*` | `&mut value` creates exclusive `&mut T`; `*ref = val` mutates |
+| `raw_const_pointer_demo` | `&` → `*const T` → `*` | `&value` coerces to `*const T`; `unsafe { *ptr }` reads |
+| `raw_mut_pointer_demo` | `&mut` → `*mut T` → `*` | `&mut value` coerces to `*mut T`; `unsafe { *ptr = val }` writes |
+| `deref_all_types_demo` | `*` on all four | `*` works identically on `&T`, `&mut T`, `*const T`, `*mut T` — only the safety gate differs |
+| `borrow_smart_pointers_demo` | `&` + `&*` on Box/Rc | `&boxed` → `&Box<T>`; `&*boxed` → `&T` (deref-then-borrow) |
+| `exclusive_mut_borrow_demo` | `&mut` scoping | Two `&mut` borrows in separate blocks — exclusive enforcement by scope |
+| `raw_pointer_arithmetic_demo` | `ptr.add(n)` | `*ptr.add(1)` is Rust's `*(p + 1)` |
+| `null_pointer_check_demo` | `is_null()` | `ptr.is_null()` is Rust's `p != NULL` |
+| `coercion_chain_demo` | `&` → `*const` → cast `*mut` → `*` | Full pipeline: safe reference → raw const → raw mut (cast) → deref |
+| `type_annotations_demo` | all valid type syntax | Shows `*const mut T` does NOT exist — only `*const T` or `*mut T` |
+| `mut_vs_pointer_mut_demo` | `let mut` vs `*mut T` | `let mut` (variable) and `*mut T` (pointer) are independent — `*const T` can't write even on `mut` value |
