@@ -118,3 +118,104 @@ fn test_alloc_module_description() {
     assert!(description.contains("realloc"));
 
 }
+
+// ─────────────────────────────────────────────
+// Pointer & reference operator tests
+// ─────────────────────────────────────────────
+
+#[test]
+fn test_borrow_immutable_demo() {
+
+    let (first, second) = borrow_immutable_demo();
+
+    assert_eq!(first, 42);
+    assert_eq!(second, 42);
+
+}
+
+#[test]
+fn test_borrow_mutable_demo() {
+
+    let result = borrow_mutable_demo();
+
+    assert_eq!(result, 100);
+
+}
+
+#[test]
+fn test_raw_const_pointer_demo() {
+
+    let value = raw_const_pointer_demo();
+
+    assert_eq!(value, 0xDE);
+
+}
+
+#[test]
+fn test_raw_mut_pointer_demo() {
+
+    let value = raw_mut_pointer_demo();
+
+    assert_eq!(value, 0xAD);
+
+}
+
+#[test]
+fn test_deref_all_types_demo() {
+
+    let (imm, mut_ref, raw_const, raw_mut) = deref_all_types_demo();
+
+    assert_eq!(imm, 42);
+    assert_eq!(mut_ref, 100);
+    assert_eq!(raw_const, 100);
+    assert_eq!(raw_mut, 200);
+
+}
+
+#[test]
+fn test_borrow_smart_pointers_demo() {
+
+    let (box_ref, box_inner, rc_ref, rc_inner) = borrow_smart_pointers_demo();
+
+    assert_eq!(box_ref, 42);
+    assert_eq!(box_inner, 42);
+    assert_eq!(rc_ref, 99);
+    assert_eq!(rc_inner, 99);
+
+}
+
+#[test]
+fn test_exclusive_mut_borrow_demo() {
+
+    let result = exclusive_mut_borrow_demo();
+
+    assert_eq!(result, 111);
+
+}
+
+#[test]
+fn test_raw_pointer_arithmetic_demo() {
+
+    let (at_0, at_1, at_2) = raw_pointer_arithmetic_demo();
+
+    assert_eq!(at_0, 0xAA);
+    assert_eq!(at_1, 0xBB);
+    assert_eq!(at_2, 0xCC);
+
+}
+
+#[test]
+fn test_null_pointer_check_demo() {
+
+    assert!(null_pointer_check_demo());
+
+}
+
+#[test]
+fn test_coercion_chain_demo() {
+
+    let value = coercion_chain_demo();
+
+    assert_eq!(value, 777);
+
+}
