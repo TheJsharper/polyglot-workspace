@@ -1,5 +1,14 @@
 use macro_demo_crate::*;
 
+/// Runs a closure that is expected to panic, without printing panic output to stderr.
+fn assert_panics<F: FnOnce() + std::panic::UnwindSafe>(f: F) {
+    let prev = std::panic::take_hook();
+    std::panic::set_hook(Box::new(|_| {}));
+    let result = std::panic::catch_unwind(f);
+    std::panic::set_hook(prev);
+    assert!(result.is_err());
+}
+
 #[test]
 fn test_format_basic() {
 
@@ -85,7 +94,7 @@ fn test_assert_positive_pass() {
 #[test]
 fn test_assert_positive_fail() {
 
-    assert!(std::panic::catch_unwind(|| assert_positive(-1)).is_err());
+    assert_panics(|| { let _ = assert_positive(-1); });
 
 }
 
@@ -99,7 +108,7 @@ fn test_assert_eq_pass() {
 #[test]
 fn test_assert_eq_fail() {
 
-    assert!(std::panic::catch_unwind(|| assert_eq_demo(10, 20)).is_err());
+    assert_panics(|| { let _ = assert_eq_demo(10, 20); });
 
 }
 
@@ -113,7 +122,7 @@ fn test_assert_ne_pass() {
 #[test]
 fn test_assert_ne_fail() {
 
-    assert!(std::panic::catch_unwind(|| assert_ne_demo(5, 5)).is_err());
+    assert_panics(|| { let _ = assert_ne_demo(5, 5); });
 
 }
 
@@ -127,14 +136,14 @@ fn test_assert_matches_pass_some() {
 #[test]
 fn test_assert_matches_fail_none() {
 
-    assert!(std::panic::catch_unwind(|| assert_matches_demo(None)).is_err());
+    assert_panics(|| { let _ = assert_matches_demo(None); });
 
 }
 
 #[test]
 fn test_assert_matches_fail_negative() {
 
-    assert!(std::panic::catch_unwind(|| assert_matches_demo(Some(-5))).is_err());
+    assert_panics(|| { let _ = assert_matches_demo(Some(-5)); });
 
 }
 
@@ -561,43 +570,27 @@ fn test_try_description() {
 #[test]
 fn test_panic_macro_actually_panics() {
 
-    let panic_result = std::panic::catch_unwind(|| {
-        panic!("test panic");
-    });
-
-    assert!(panic_result.is_err());
+    assert_panics(|| panic!("test panic"));
 
 }
 
 #[test]
 fn test_unreachable_macro_actually_panics() {
 
-    let unreachable_result = std::panic::catch_unwind(|| {
-        unreachable!("this should not be reached");
-    });
-
-    assert!(unreachable_result.is_err());
+    assert_panics(|| unreachable!("this should not be reached"));
 
 }
 
 #[test]
 fn test_todo_macro_actually_panics() {
 
-    let todo_result = std::panic::catch_unwind(|| {
-        todo!();
-    });
-
-    assert!(todo_result.is_err());
+    assert_panics(|| todo!());
 
 }
 
 #[test]
 fn test_unimplemented_macro_actually_panics() {
 
-    let unimplemented_result = std::panic::catch_unwind(|| {
-        unimplemented!();
-    });
-
-    assert!(unimplemented_result.is_err());
+    assert_panics(|| unimplemented!());
 
 }
