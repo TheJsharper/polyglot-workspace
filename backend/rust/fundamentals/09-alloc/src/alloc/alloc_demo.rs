@@ -407,3 +407,72 @@ pub fn coercion_chain_demo() -> i32 {
     // Step 4: *mut T dereference — requires unsafe
     unsafe { *mut_ptr }
 }
+
+/// Correct type annotations for every pointer/reference combination.
+///
+/// **There is no `*const mut T` in Rust.** Raw pointers are either `*const T` or `*mut T`.
+/// The `mut` on `let mut value` is independent from the `mut` in `*mut T`.
+///
+/// Returns (imm_ref, mut_ref, raw_const, raw_mut) all reading the same final value.
+pub fn type_annotations_demo() -> (i32, i32, i32, i32) {
+    // ── References (safe, no unsafe needed) ──
+
+    // &T — immutable reference to an immutable value
+    let imm_value = 10;
+    let imm_ref: &i32 = &imm_value;
+
+    // &mut T — mutable reference to a mutable value
+    let mut mut_value = 20;
+    let mut_ref: &mut i32 = &mut mut_value;
+    *mut_ref = 200;
+
+    // ── Raw pointers (dereference requires unsafe) ──
+
+    // *const T — immutable raw pointer from &T
+    let const_ptr: *const i32 = &imm_value;
+
+    // *mut T — mutable raw pointer from &mut T
+    let mut raw_mut_value = 30;
+    let mut_ptr: *mut i32 = &mut raw_mut_value;
+    unsafe {
+        *mut_ptr = 300;
+    }
+
+    // ── Key point: *const mut T does NOT exist ─
+    // These are the ONLY valid raw pointer types:
+    //   *const T   ← read-only raw pointer
+    //   *mut T     ← writable raw pointer
+    //
+    // Invalid (won't compile):
+    //   let bad: *const mut i32 = ...  // error: expected one of `!`, `(`, `+`, `,`, `::`, `<`, or `>`, found `mut`
+    //   let bad: *mut const i32 = ...  // error: expected one of `!`, `(`, `+`, `,`, `::`, `<`, `>`, or `?`, found `const`
+
+    (
+        *imm_ref,
+        *mut_ref,
+        unsafe { *const_ptr },
+        unsafe { *mut_ptr },
+    )
+}
+
+/// Shows that `let mut` on the variable and `*mut T` on the pointer are independent.
+///
+/// You can have a mutable value with a `*const` pointer (read-only access),
+/// and a mutable value with a `*mut` pointer (read-write access).
+///
+/// Returns (mut_value_through_const_ptr, mut_value_through_mut_ptr).
+pub fn mut_vs_pointer_mut_demo() -> (i32, i32) {
+    // Case 1: immutable value, *const pointer — read-only through pointer
+    let value_a = 100;
+    let const_ptr_a: *const i32 = &value_a;
+    // unsafe { *const_ptr_a = 999; }  // error: cannot assign through *const T
+
+    // Case 2: mutable value, *mut pointer — can READ and WRITE
+    let mut value_b = 200;
+    let mut_ptr_b: *mut i32 = &mut value_b;
+    unsafe {
+        *mut_ptr_b = 2000;
+    }
+
+    (unsafe { *const_ptr_a }, unsafe { *mut_ptr_b })
+}

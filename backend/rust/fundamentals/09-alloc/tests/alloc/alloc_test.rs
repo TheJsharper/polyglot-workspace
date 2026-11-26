@@ -219,3 +219,25 @@ fn test_coercion_chain_demo() {
     assert_eq!(value, 777);
 
 }
+
+#[test]
+fn test_type_annotations_demo() {
+
+    let (imm_ref, mut_ref, raw_const, raw_mut) = type_annotations_demo();
+
+    assert_eq!(imm_ref, 10);
+    assert_eq!(mut_ref, 200);
+    assert_eq!(raw_const, 10);
+    assert_eq!(raw_mut, 300);
+
+}
+
+#[test]
+fn test_mut_vs_pointer_mut_demo() {
+
+    let (through_const, through_mut) = mut_vs_pointer_mut_demo();
+
+    assert_eq!(through_const, 100);
+    assert_eq!(through_mut, 2000);
+
+}
